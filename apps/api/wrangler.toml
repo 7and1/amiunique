@@ -1,0 +1,36 @@
+# AmiUnique.io API Worker Configuration
+name = "amiunique-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+workers_dev = true
+
+# Local dev server port
+[dev]
+port = 8787
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "amiunique-db"
+database_id = "0dcc00ce-c632-40b5-92b3-efd8e7389b28"
+
+# Production environment
+[env.production]
+name = "amiunique-api"
+workers_dev = false
+
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "amiunique-db"
+database_id = "0dcc00ce-c632-40b5-92b3-efd8e7389b28"
+
+# Custom routes (uncomment after domain setup)
+# [env.production.routes]
+# { pattern = "api.amiunique.io/*", zone_name = "amiunique.io" }
