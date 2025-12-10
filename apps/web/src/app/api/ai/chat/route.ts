@@ -5,7 +5,7 @@ export const runtime = 'edge';
 
 const chatSchema = z.object({
   prompt: z.string().min(1),
-  fingerprintData: z.record(z.any()).optional(),
+  fingerprintData: z.record(z.string(), z.any()).optional(),
   context: z.string().optional(),
 });
 
