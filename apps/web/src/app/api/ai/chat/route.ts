@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
     const { prompt, fingerprintData, context } = parsed.data;
     const apiKey = process.env.OPENROUTER_API_KEY;
-    const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
+    const model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
 
     // Always return a response, even if API key is missing
     if (!apiKey) {
