@@ -15,7 +15,7 @@ import {
   getGamepadCount,
   hasVRDisplays,
 } from './collectors/hardware.js';
-import { getNavigatorInfo, getTimezoneInfo, getIntlInfo } from './collectors/system.js';
+import { getNavigatorInfo, getTimezoneInfo, getIntlInfo, getClientHints, getSpeechSynthesisFingerprint } from './collectors/system.js';
 import {
   getStorageCapabilities,
   getAPICapabilities,
@@ -23,6 +23,7 @@ import {
   getMimeTypesFingerprint,
   getPermissions,
   getBatteryStatus,
+  getWebRTCFingerprint,
 } from './collectors/capabilities.js';
 import { getAudioCodecs, getVideoCodecs } from './collectors/media.js';
 import { getLieFlags } from './collectors/lies.js';
@@ -44,6 +45,9 @@ export async function collectFingerprint(): Promise<FingerprintData> {
     mimeTypesHash,
     permissions,
     battery,
+    webrtcData,
+    clientHints,
+    speechData,
   ] = await Promise.all([
     getCanvasFingerprint(),
     getWebGLFingerprint(),
@@ -53,6 +57,9 @@ export async function collectFingerprint(): Promise<FingerprintData> {
     getMimeTypesFingerprint(),
     getPermissions(),
     getBatteryStatus(),
+    getWebRTCFingerprint(),
+    getClientHints(),
+    getSpeechSynthesisFingerprint(),
   ]);
 
   // Get sync collectors
@@ -153,12 +160,31 @@ export async function collectFingerprint(): Promise<FingerprintData> {
     med_video_vp9: videoCodecs.vp9,
     med_video_av1: videoCodecs.av1,
 
+    // Client Hints (modern browsers)
+    ch_available: clientHints.available,
+    ch_brands: clientHints.brands,
+    ch_platform: clientHints.platform,
+    ch_platform_version: clientHints.platformVersion,
+    ch_mobile: clientHints.mobile,
+    ch_model: clientHints.model,
+    ch_architecture: clientHints.architecture,
+    ch_bitness: clientHints.bitness,
+
+    // WebRTC fingerprint
+    rtc_available: webrtcData.available,
+    rtc_local_ip: webrtcData.localIP,
+    rtc_public_ip: webrtcData.publicIP,
+    rtc_stun_available: webrtcData.stunAvailable,
+    rtc_ip_type: webrtcData.ipType,
+    rtc_media_device_count: webrtcData.mediaDeviceCount,
+
     // Auxiliary (volatile)
     aux_battery_level: battery?.level,
     aux_battery_charging: battery?.charging,
     aux_window_width: window.innerWidth,
     aux_window_height: window.innerHeight,
-    aux_webrtc_ip: undefined, // Requires separate collection
+    aux_webrtc_ip: webrtcData.publicIP || webrtcData.localIP || undefined,
+    aux_speech_voices: speechData.voiceCount,
 
     // Lie detection
     ...lies,
@@ -205,6 +231,9 @@ export async function collectFingerprintWithProgress(
     'Video codecs',
     'Battery status',
     'Permissions',
+    'WebRTC fingerprint',
+    'Client Hints',
+    'Speech synthesis',
     'Lie detection',
   ];
 
@@ -272,6 +301,15 @@ export async function collectFingerprintWithProgress(
 
   reportProgress('Permissions');
   const permissions = await getPermissions();
+
+  reportProgress('WebRTC fingerprint');
+  const webrtcData = await getWebRTCFingerprint();
+
+  reportProgress('Client Hints');
+  const clientHints = await getClientHints();
+
+  reportProgress('Speech synthesis');
+  const speechData = await getSpeechSynthesisFingerprint();
 
   reportProgress('Lie detection');
   const partialData: Partial<FingerprintData> = {
@@ -348,11 +386,26 @@ export async function collectFingerprintWithProgress(
     med_video_vp8: videoCodecs.vp8,
     med_video_vp9: videoCodecs.vp9,
     med_video_av1: videoCodecs.av1,
+    ch_available: clientHints.available,
+    ch_brands: clientHints.brands,
+    ch_platform: clientHints.platform,
+    ch_platform_version: clientHints.platformVersion,
+    ch_mobile: clientHints.mobile,
+    ch_model: clientHints.model,
+    ch_architecture: clientHints.architecture,
+    ch_bitness: clientHints.bitness,
+    rtc_available: webrtcData.available,
+    rtc_local_ip: webrtcData.localIP,
+    rtc_public_ip: webrtcData.publicIP,
+    rtc_stun_available: webrtcData.stunAvailable,
+    rtc_ip_type: webrtcData.ipType,
+    rtc_media_device_count: webrtcData.mediaDeviceCount,
     aux_battery_level: battery?.level,
     aux_battery_charging: battery?.charging,
     aux_window_width: window.innerWidth,
     aux_window_height: window.innerHeight,
-    aux_webrtc_ip: undefined,
+    aux_webrtc_ip: webrtcData.publicIP || webrtcData.localIP || undefined,
+    aux_speech_voices: speechData.voiceCount,
     ...lies,
   };
 }

@@ -20,7 +20,9 @@ health.get('/', async (c) => {
 
   try {
     // Test D1 connection
+    const dbStart = Date.now();
     const dbCheck = await c.env.DB.prepare('SELECT 1 as ok').first<{ ok: number }>();
+    const dbLatency = Date.now() - dbStart;
     const dbOk = dbCheck?.ok === 1;
 
     return c.json({
@@ -30,6 +32,7 @@ health.get('/', async (c) => {
       environment: c.env.ENVIRONMENT || 'unknown',
       checks: {
         database: dbOk ? 'ok' : 'error',
+        db_latency_ms: dbLatency,
       },
     });
   } catch (error) {

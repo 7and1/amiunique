@@ -231,6 +231,171 @@ export function isFeatureAllowed(feature: string): boolean {
   return true; // Assume allowed if can't check
 }
 
+// ==================== WEBRTC FINGERPRINT ====================
+
+export interface WebRTCFingerprint {
+  /** Whether WebRTC is available */
+  available: boolean;
+  /** Local IP address (if leaked) */
+  localIP: string | null;
+  /** Public IP address (if leaked via STUN) */
+  publicIP: string | null;
+  /** Whether STUN server is reachable */
+  stunAvailable: boolean;
+  /** Detected IP type: 'ipv4', 'ipv6', 'both', 'none' */
+  ipType: 'ipv4' | 'ipv6' | 'both' | 'none';
+  /** Number of media devices detected */
+  mediaDeviceCount: number;
+  /** Hash of available media device kinds */
+  mediaDeviceHash: string;
+}
+
+/**
+ * Extract IP addresses from WebRTC candidates
+ * This can reveal local and public IPs even through VPNs
+ */
+export async function getWebRTCFingerprint(): Promise<WebRTCFingerprint> {
+  const result: WebRTCFingerprint = {
+    available: typeof RTCPeerConnection !== 'undefined',
+    localIP: null,
+    publicIP: null,
+    stunAvailable: false,
+    ipType: 'none',
+    mediaDeviceCount: 0,
+    mediaDeviceHash: '',
+  };
+
+  if (!result.available) {
+    return result;
+  }
+
+  // Get media devices count (fingerprinting vector)
+  try {
+    if (navigator.mediaDevices?.enumerateDevices) {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      result.mediaDeviceCount = devices.length;
+      const deviceKinds = devices.map(d => d.kind).sort().join(',');
+      result.mediaDeviceHash = await sha256(deviceKinds);
+    }
+  } catch {
+    // Media devices enumeration blocked
+  }
+
+  // WebRTC IP leak detection
+  return new Promise((resolve) => {
+    const updateIPType = () => {
+      const hasIPv4 = (result.localIP?.includes('.') || result.publicIP?.includes('.')) ?? false;
+      const hasIPv6 = (result.localIP?.includes(':') || result.publicIP?.includes(':')) ?? false;
+      if (hasIPv4 && hasIPv6) {
+        result.ipType = 'both';
+      } else if (hasIPv4) {
+        result.ipType = 'ipv4';
+      } else if (hasIPv6) {
+        result.ipType = 'ipv6';
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      updateIPType();
+      resolve(result);
+    }, 3000);
+
+    try {
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ],
+      });
+
+      const localIPs = new Set<string>();
+      const publicIPs = new Set<string>();
+
+      pc.onicecandidate = (event) => {
+        if (!event.candidate) {
+          // Gathering complete
+          clearTimeout(timeout);
+          pc.close();
+          updateIPType();
+          resolve(result);
+          return;
+        }
+
+        const candidate = event.candidate.candidate;
+        if (!candidate) return;
+
+        // Extract IP addresses from ICE candidate
+        // Format: candidate:... typ host/srflx/relay
+        const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}|([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}|([a-f0-9]{1,4}:){1,7}:|:([a-f0-9]{1,4}:){1,7}|([a-f0-9]{1,4}:){1,6}:[a-f0-9]{1,4}/gi;
+        const matches = candidate.match(ipRegex);
+
+        if (matches) {
+          matches.forEach((ip) => {
+            // Filter out mDNS addresses (.local)
+            if (ip.endsWith('.local')) return;
+
+            // Check if it's a local/private IP
+            if (isPrivateIP(ip)) {
+              localIPs.add(ip);
+              if (!result.localIP) result.localIP = ip;
+            } else {
+              publicIPs.add(ip);
+              if (!result.publicIP) {
+                result.publicIP = ip;
+                result.stunAvailable = true;
+              }
+            }
+          });
+        }
+      };
+
+      pc.onicegatheringstatechange = () => {
+        if (pc.iceGatheringState === 'complete') {
+          clearTimeout(timeout);
+          pc.close();
+          updateIPType();
+          resolve(result);
+        }
+      };
+
+      // Create offer to trigger ICE gathering
+      pc.createDataChannel('fp');
+      pc.createOffer()
+        .then((offer) => pc.setLocalDescription(offer))
+        .catch(() => {
+          clearTimeout(timeout);
+          resolve(result);
+        });
+
+    } catch {
+      clearTimeout(timeout);
+      resolve(result);
+    }
+  });
+}
+
+/**
+ * Check if an IP address is private/local
+ */
+function isPrivateIP(ip: string): boolean {
+  // IPv4 private ranges
+  if (ip.startsWith('10.')) return true;
+  if (ip.startsWith('172.')) {
+    const second = parseInt(ip.split('.')[1], 10);
+    if (second >= 16 && second <= 31) return true;
+  }
+  if (ip.startsWith('192.168.')) return true;
+  if (ip.startsWith('127.')) return true;
+  if (ip.startsWith('169.254.')) return true; // Link-local
+
+  // IPv6 private ranges
+  if (ip.toLowerCase().startsWith('fe80:')) return true; // Link-local
+  if (ip.toLowerCase().startsWith('fc') || ip.toLowerCase().startsWith('fd')) return true; // Unique local
+  if (ip === '::1') return true; // Loopback
+
+  return false;
+}
+
 // ==================== BATTERY STATUS ====================
 
 export interface BatteryStatus {

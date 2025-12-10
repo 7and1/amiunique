@@ -7,7 +7,7 @@ items are clarifications called out below so we can track them in this repo.
 ## Summary Table
 | File | Purpose | Status | Follow-ups |
 | --- | --- | --- | --- |
-| `docs/amiunique-lite-blueprint.md` | End-to-end product + architecture plan | ✅ Comprehensive | 🔸 Reference to `/developers/api-docs` still future; add delivery criteria when implementation begins. |
+| `docs/amiunique-lite-blueprint.md` | End-to-end product + architecture plan | ✅ Comprehensive | ✅ `/developers/api-docs` now lives; keep page synced if API docs move again. |
 | `docs/cloudflare-setup.md` | Deployment bootstrap guide | ✅ Actionable | 🔸 Add Cloudflare Pages project configuration + DNS binding steps to close onboarding loop. |
 | `docs/github-secrets.md` | GitHub secrets checklist | ✅ Actionable | 🔸 Note least-privilege scopes for CF tokens so security team can audit. |
 | `docs/templates/ticket.md` | Execution template | ✅ Ready | — |
@@ -16,7 +16,7 @@ items are clarifications called out below so we can track them in this repo.
 ### `amiunique-lite-blueprint.md`
 - Covers vision, architecture, data dictionary, Worker flow, deployment, and sample collectors.
 - Includes concrete schema + hashing contract, so engineers can ship without ambiguity.
-- Still references future endpoints (`/developers/api-docs`, `/scan/history`) and upcoming probes (WebGPU). Action: once those enter sprints, extend the blueprint with acceptance criteria or split into dedicated specs for better traceability.
+- `/developers/api-docs` is now a live redirect to the developer hub; update references if the doc location changes again. Upcoming probes (WebGPU) still remain future work.
 
 ### `cloudflare-setup.md`
 - Documents Wrangler auth, D1 provisioning, env vars, dev/prod commands, and secrets storage.

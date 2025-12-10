@@ -13,9 +13,20 @@ import type { Env } from './types/env.js';
 import analyze from './routes/analyze.js';
 import stats from './routes/stats.js';
 import health from './routes/health.js';
+import deletion from './routes/deletion.js';
+import { handleScheduled } from './scheduled.js';
 
 // Create main app
 const app = new Hono<{ Bindings: Env }>();
+
+// Request ID middleware - adds unique request ID for tracing
+app.use('*', async (c, next) => {
+  // Use Cloudflare Ray ID if available, otherwise generate UUID
+  const requestId = c.req.header('cf-ray') || crypto.randomUUID();
+  c.set('requestId', requestId);
+  c.header('X-Request-Id', requestId);
+  await next();
+});
 
 // Global middleware
 app.use('*', timing());
@@ -48,6 +59,7 @@ app.use(
 app.route('/api/analyze', analyze);
 app.route('/api/stats', stats);
 app.route('/api/health', health);
+app.route('/api/deletion', deletion);
 
 // Root endpoint
 app.get('/', (c) => {
@@ -57,6 +69,7 @@ app.get('/', (c) => {
     description: 'Browser fingerprinting detection API with 80+ dimensions',
     endpoints: {
       analyze: 'POST /api/analyze',
+      deletion: 'POST /api/deletion',
       stats: 'GET /api/stats',
       health: 'GET /api/health',
     },
@@ -78,15 +91,21 @@ app.notFound((c) => {
 
 // Error handler
 app.onError((err, c) => {
-  console.error('Unhandled error:', err);
+  const requestId = c.get('requestId') || 'unknown';
+  console.error(`[${requestId}] Unhandled error:`, err);
   return c.json(
     {
       success: false,
       error: 'Internal Server Error',
       message: c.env.ENVIRONMENT === 'development' ? err.message : 'An unexpected error occurred',
+      request_id: requestId,
     },
     500
   );
 });
 
-export default app;
+// Export with scheduled handler for cron triggers
+export default {
+  fetch: app.fetch,
+  scheduled: handleScheduled,
+};

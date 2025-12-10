@@ -131,6 +131,38 @@ export interface FingerprintData {
   /** AV1 video support */
   med_video_av1: string;
 
+  // ==================== CLIENT HINTS (Modern browsers only) ====================
+  /** Client Hints API availability */
+  ch_available: boolean;
+  /** Browser brands from Client Hints */
+  ch_brands: string[];
+  /** Platform from Client Hints */
+  ch_platform: string;
+  /** Platform version from Client Hints */
+  ch_platform_version: string;
+  /** Mobile flag from Client Hints */
+  ch_mobile: boolean;
+  /** Device model from Client Hints */
+  ch_model: string;
+  /** CPU architecture from Client Hints */
+  ch_architecture: string;
+  /** CPU bitness from Client Hints */
+  ch_bitness: string;
+
+  // ==================== WEBRTC FINGERPRINT ====================
+  /** WebRTC API availability */
+  rtc_available: boolean;
+  /** Local IP leaked via WebRTC */
+  rtc_local_ip: string | null;
+  /** Public IP leaked via WebRTC/STUN */
+  rtc_public_ip: string | null;
+  /** STUN server reachability */
+  rtc_stun_available: boolean;
+  /** IP type detected */
+  rtc_ip_type: 'ipv4' | 'ipv6' | 'both' | 'none';
+  /** Media device count */
+  rtc_media_device_count: number;
+
   // ==================== AUXILIARY (Volatile - not in hash) ====================
   /** Battery percentage (if available) */
   aux_battery_level?: number;
@@ -140,8 +172,10 @@ export interface FingerprintData {
   aux_window_width: number;
   /** Browser window inner height */
   aux_window_height: number;
-  /** WebRTC local/public IP leak (if available) */
+  /** WebRTC local/public IP leak (if available) - DEPRECATED: use rtc_* fields */
   aux_webrtc_ip?: string;
+  /** Speech synthesis voice count */
+  aux_speech_voices: number;
 
   // ==================== LIE DETECTION (Spoofing checks) ====================
   /** OS spoofing detected (UA vs platform mismatch) */
@@ -154,6 +188,10 @@ export interface FingerprintData {
   lie_timezone_mismatch: boolean;
   /** GPU spoofing detected (WebGL renderer vs UA mismatch) */
   lie_webgl_mismatch: boolean;
+  /** Headless browser detected (Puppeteer, Playwright, etc.) */
+  lie_headless: boolean;
+  /** Browser automation detected (Selenium, WebDriver, etc.) */
+  lie_automation: boolean;
 }
 
 /**
@@ -239,6 +277,8 @@ export interface AnalysisResult {
     resolution_mismatch: boolean;
     timezone_mismatch: boolean;
     webgl_mismatch: boolean;
+    headless: boolean;
+    automation: boolean;
   };
 }
 

@@ -238,6 +238,55 @@ export function TestResultJsonLd({
   );
 }
 
+interface StatsDatasetJsonLdProps {
+  name: string;
+  description: string;
+  url: string;
+  lastUpdated: string;
+  total: number;
+}
+
+export function StatsDatasetJsonLd({ name, description, url, lastUpdated, total }: StatsDatasetJsonLdProps) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name,
+    description,
+    url,
+    dateModified: lastUpdated,
+    license: 'https://opensource.org/licenses/MIT',
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'application/json',
+        contentUrl: `${url}#live-api`,
+      },
+    ],
+    variableMeasured: [
+      'browser',
+      'operatingSystem',
+      'deviceType',
+      'country',
+      'screenResolution',
+    ],
+    datasetTimeInterval: 'P30D',
+    includedInDataCatalog: {
+      '@type': 'DataCatalog',
+      name: 'AmiUnique.io Fingerprint Statistics',
+      url: 'https://amiunique.io/stats',
+    },
+    measurementTechnique: 'Browser fingerprint collection with client + edge metadata',
+    size: total,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 // Default FAQ items for the homepage
 export const defaultFAQs = [
   {

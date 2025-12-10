@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
 
 export const metadata: Metadata = {
   title: 'Scan Your Browser Fingerprint | AmiUnique.io',
@@ -7,5 +8,15 @@ export const metadata: Metadata = {
 };
 
 export default function ScanLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: 'https://amiunique.io' },
+          { name: 'Scan', url: 'https://amiunique.io/scan' },
+        ]}
+      />
+      {children}
+    </>
+  );
 }

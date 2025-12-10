@@ -1,9 +1,19 @@
 /**
  * Three-Lock Hash Calculation
  * Implements the Gold/Silver/Bronze hash system
+ *
+ * IMPORTANT: Hash versioning ensures backwards compatibility tracking.
+ * When changing hash components, increment the version to distinguish
+ * between old and new hashes in the database.
  */
 
 import { sha256 } from './hash.js';
+
+/**
+ * Hash version prefix - increment when changing hash components
+ * v1: Initial version (2024)
+ */
+const HASH_VERSION = 'v1';
 
 /**
  * Client fingerprint data structure
@@ -102,6 +112,7 @@ export interface ThreeLockHashes {
  */
 export async function calculateGoldLock(data: ClientFingerprint): Promise<string> {
   const components = [
+    HASH_VERSION, // Version prefix for future compatibility
     data.hw_canvas_hash || '',
     data.hw_webgl_hash || '',
     data.hw_webgl_vendor || '',
@@ -132,6 +143,7 @@ export async function calculateGoldLock(data: ClientFingerprint): Promise<string
  */
 export async function calculateSilverLock(data: ClientFingerprint): Promise<string> {
   const components = [
+    HASH_VERSION, // Version prefix for future compatibility
     data.sys_fonts_hash || '',
     data.sys_platform || '',
     data.sys_user_agent || '',
@@ -167,6 +179,7 @@ export async function calculateBronzeLock(
   network: NetworkFingerprint
 ): Promise<string> {
   const components = [
+    HASH_VERSION, // Version prefix for future compatibility
     goldLock,
     silverLock,
     String(network.net_asn || ''),

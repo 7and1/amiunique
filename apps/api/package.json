@@ -9,6 +9,7 @@
     "deploy": "wrangler deploy",
     "build": "wrangler deploy --dry-run --outdir=dist --env=\"\"",
     "lint": "tsc --noEmit",
+    "test": "vitest run --coverage",
     "db:create": "wrangler d1 create amiunique-db",
     "db:migrate": "wrangler d1 execute amiunique-db --file=./schema.sql",
     "db:migrate:local": "wrangler d1 execute amiunique-db --local --file=./schema.sql",

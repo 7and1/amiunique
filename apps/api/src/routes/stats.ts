@@ -4,6 +4,7 @@
  */
 
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { Env } from '../types/env.js';
 import { statsLimiter } from '../middleware/rate-limit.js';
 
@@ -11,6 +12,23 @@ const stats = new Hono<{ Bindings: Env }>();
 
 // Apply rate limiting to all stats routes
 stats.use('*', statsLimiter);
+
+/**
+ * Set cache control headers with edge caching support
+ * - max-age: Browser cache duration (half of CDN)
+ * - s-maxage: CDN/Edge cache duration
+ * - stale-while-revalidate: Serve stale while fetching fresh
+ * - stale-if-error: Serve stale if origin errors
+ */
+function setCache(c: Context<{ Bindings: Env }>, seconds = 30) {
+  const browserCache = Math.floor(seconds / 2);
+  c.header(
+    'Cache-Control',
+    `public, max-age=${browserCache}, s-maxage=${seconds}, stale-while-revalidate=60, stale-if-error=300`
+  );
+  // Cloudflare-specific directive for longer edge caching
+  c.header('CDN-Cache-Control', `max-age=${seconds}`);
+}
 
 /**
  * Validate and bound limit parameter (1-100)
@@ -30,25 +48,80 @@ function parseDays(value: string | undefined, defaultVal = 30): number {
 
 /**
  * GET /api/stats - Global statistics
+ * Uses pre-aggregated cache with fallback to live query
  */
 stats.get('/', async (c) => {
   const db = c.env.DB;
 
   try {
+    // First try to get from cache (fast path)
+    const cached = await db
+      .prepare('SELECT * FROM stats_cache WHERE id = ?')
+      .bind('global')
+      .first<{
+        total_fingerprints: number;
+        unique_full_hash: number;
+        unique_hardware_hash: number;
+        updated_at: number;
+      }>();
+
+    // If cache exists and is fresh (< 5 minutes old), use it
+    const cacheAge = cached ? Date.now() - cached.updated_at : Infinity;
+    const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+    if (cached && cacheAge < CACHE_TTL_MS) {
+      // Set longer edge cache for cached responses
+      c.header('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+      c.header('X-Cache-Source', 'pre-aggregated');
+
+      return c.json({
+        success: true,
+        data: {
+          total_fingerprints: cached.total_fingerprints,
+          unique_sessions: cached.unique_full_hash,
+          unique_devices: cached.unique_hardware_hash,
+          updated_at: cached.updated_at,
+        },
+      });
+    }
+
+    // Cache miss or stale - compute live (slow path)
     const [total, uniqueFull, uniqueHardware] = await Promise.all([
       db.prepare('SELECT COUNT(*) as count FROM visits').first<{ count: number }>(),
       db.prepare('SELECT COUNT(DISTINCT full_hash) as count FROM visits').first<{ count: number }>(),
       db.prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits').first<{ count: number }>(),
     ]);
 
+    const now = Date.now();
+    const statsData = {
+      total_fingerprints: total?.count || 0,
+      unique_sessions: uniqueFull?.count || 0,
+      unique_devices: uniqueHardware?.count || 0,
+      updated_at: now,
+    };
+
+    // Update cache asynchronously (don't block response)
+    const cacheWritePromise = db
+      .prepare(
+        `INSERT OR REPLACE INTO stats_cache (id, total_fingerprints, unique_full_hash, unique_hardware_hash, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .bind('global', statsData.total_fingerprints, statsData.unique_sessions, statsData.unique_devices, now)
+      .run();
+
+    // In tests or non-Worker environments executionCtx is absent; fall back to a best-effort write
+    try {
+      c.executionCtx.waitUntil(cacheWritePromise);
+    } catch {
+      cacheWritePromise.catch(err => console.error('Failed to update stats cache', err));
+    }
+
+    setCache(c, 30);
+    c.header('X-Cache-Source', 'live-query');
+
     return c.json({
       success: true,
-      data: {
-        total_fingerprints: total?.count || 0,
-        unique_sessions: uniqueFull?.count || 0,
-        unique_devices: uniqueHardware?.count || 0,
-        updated_at: Date.now(),
-      },
+      data: statsData,
     });
   } catch (error) {
     console.error('Stats error:', error);
@@ -89,6 +162,7 @@ stats.get('/browsers', async (c) => {
       percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
     }));
 
+    setCache(c, 60);
     return c.json({
       success: true,
       data: {
@@ -130,6 +204,7 @@ stats.get('/os', async (c) => {
       percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
     }));
 
+    setCache(c, 60);
     return c.json({
       success: true,
       data: {
@@ -168,6 +243,7 @@ stats.get('/devices', async (c) => {
       percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
     }));
 
+    setCache(c, 60);
     return c.json({
       success: true,
       data: {
@@ -209,6 +285,7 @@ stats.get('/countries', async (c) => {
       percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
     }));
 
+    setCache(c, 60);
     return c.json({
       success: true,
       data: {
@@ -250,6 +327,7 @@ stats.get('/screens', async (c) => {
       percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
     }));
 
+    setCache(c, 60);
     return c.json({
       success: true,
       data: {
@@ -291,6 +369,7 @@ stats.get('/gpus', async (c) => {
       percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
     }));
 
+    setCache(c, 60);
     return c.json({
       success: true,
       data: {
@@ -330,6 +409,7 @@ stats.get('/daily', async (c) => {
       .bind(startTime)
       .all<{ date: string; total_visits: number; unique_devices: number }>();
 
+    setCache(c, 30);
     return c.json({
       success: true,
       data: {

@@ -7,6 +7,7 @@ import { analyzeFingerprint } from '@/lib/api';
 import { saveToHistory } from '@/lib/history';
 
 type ScanPhase = 'idle' | 'collecting' | 'analyzing' | 'complete' | 'error';
+type ScanMode = 'full' | 'lite';
 
 interface ScanProgress {
   dimension: string;
@@ -19,8 +20,10 @@ interface ScanFlowContextValue {
   progress: ScanProgress;
   error: string | null;
   result: AnalysisResult | null;
-  startScan: () => Promise<void>;
+  startScan: (mode?: ScanMode) => Promise<void>;
   reset: () => void;
+  mode: ScanMode;
+  durationMs: number | null;
 }
 
 const defaultProgress: ScanProgress = {
@@ -36,23 +39,29 @@ export function ScanFlowProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<ScanProgress>(defaultProgress);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<ScanMode>('full');
+  const [durationMs, setDurationMs] = useState<number | null>(null);
   const scanPromiseRef = useRef<Promise<void> | null>(null);
 
-  const startScan = useCallback(() => {
+  const startScan = useCallback((mode: ScanMode = 'full') => {
     if (scanPromiseRef.current) {
       return scanPromiseRef.current;
     }
 
     const run = async () => {
       try {
+        setMode(mode);
+        const startedAt = Date.now();
         setError(null);
         setResult(null);
         setPhase('collecting');
         setProgress(defaultProgress);
 
-        const fingerprint = await collectFingerprintWithProgress((dimension, index, total) => {
-          setProgress({ dimension, index, total });
-        });
+        const fingerprint = mode === 'lite'
+          ? await import('./collect-lite').then(m => m.collectFingerprintLite((dimension, index, total) => setProgress({ dimension, index, total })))
+          : await collectFingerprintWithProgress((dimension, index, total) => {
+              setProgress({ dimension, index, total });
+            });
 
         setPhase('analyzing');
         setProgress(prev => ({
@@ -68,10 +77,12 @@ export function ScanFlowProvider({ children }: { children: ReactNode }) {
         }
         saveToHistory(analysis);
         setPhase('complete');
+        setDurationMs(Date.now() - startedAt);
       } catch (err) {
         console.error('Fingerprint scan failed:', err);
         setError(err instanceof Error ? err.message : 'Unexpected scan error');
         setPhase('error');
+        setDurationMs(null);
       }
     };
 
@@ -88,15 +99,18 @@ export function ScanFlowProvider({ children }: { children: ReactNode }) {
     setProgress(defaultProgress);
     setError(null);
     setResult(null);
+    setDurationMs(null);
   }, []);
 
-  const value = useMemo(() => ({ phase, progress, error, result, startScan, reset }), [
+  const value = useMemo(() => ({ phase, progress, error, result, startScan, reset, mode, durationMs }), [
     phase,
     progress,
     error,
     result,
     startScan,
     reset,
+    mode,
+    durationMs,
   ]);
 
   return <ScanFlowContext.Provider value={value}>{children}</ScanFlowContext.Provider>;

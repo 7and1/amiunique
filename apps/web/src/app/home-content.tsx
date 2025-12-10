@@ -43,7 +43,8 @@ function StatCardsSkeleton() {
 }
 
 export function HomeContent() {
-  const { data: stats, loading } = useGlobalStats();
+  const { data: stats, loading, error, refresh } = useGlobalStats();
+  const isCached = Boolean((stats as any)?._cached);
 
   const totalFingerprints = stats?.total_fingerprints ?? 0;
   const uniqueSessions = stats?.unique_sessions ?? 0;
@@ -85,7 +86,7 @@ export function HomeContent() {
             </div>
             <div className="flex flex-wrap items-center gap-6">
               <ScanButton />
-              <LiveCounter baseline={totalFingerprints} updatedAt={stats?.updated_at} />
+              <LiveCounter baseline={totalFingerprints} updatedAt={stats?.updated_at} refresh={refresh} />
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               {pillars.map(pillar => (
@@ -110,6 +111,23 @@ export function HomeContent() {
                     </p>
                   </div>
                 ))}
+              </div>
+            )}
+            {error && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                Live counters are temporarily unavailable; we’ll retry automatically.
+                <button
+                  type="button"
+                  onClick={refresh}
+                  className="ml-3 inline-flex items-center rounded-lg border border-amber-200 px-3 py-1 text-xs font-semibold transition hover:bg-amber-100 dark:border-amber-500/40 dark:hover:bg-amber-500/10"
+                >
+                  Retry now
+                </button>
+              </div>
+            )}
+            {isCached && !error && (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                Served from local cache (≤120s)
               </div>
             )}
           </div>

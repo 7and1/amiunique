@@ -181,3 +181,174 @@ export async function getMediaDevicesInfo(): Promise<{
     return { audioinput: 0, audiooutput: 0, videoinput: 0 };
   }
 }
+
+// ==================== CLIENT HINTS API ====================
+
+export interface ClientHintsData {
+  /** Whether Client Hints API is available */
+  available: boolean;
+  /** Browser brand names (e.g., "Chromium", "Chrome") */
+  brands: string[];
+  /** Full browser brand with versions */
+  brandsWithVersion: { brand: string; version: string }[];
+  /** Platform name (e.g., "Windows", "macOS") */
+  platform: string;
+  /** Platform version */
+  platformVersion: string;
+  /** Mobile device indicator */
+  mobile: boolean;
+  /** Device model (for mobile devices) */
+  model: string;
+  /** CPU architecture (e.g., "x86", "arm") */
+  architecture: string;
+  /** CPU bitness ("32" or "64") */
+  bitness: string;
+  /** Full version of the browser */
+  fullVersion: string;
+  /** Is "wow64" (Windows 32-bit on 64-bit) */
+  wow64: boolean;
+}
+
+/**
+ * Get User-Agent Client Hints (modern browsers only)
+ * Provides more accurate and structured browser/device info than UA string
+ * @returns Promise with Client Hints data
+ */
+export async function getClientHints(): Promise<ClientHintsData> {
+  const result: ClientHintsData = {
+    available: false,
+    brands: [],
+    brandsWithVersion: [],
+    platform: '',
+    platformVersion: '',
+    mobile: false,
+    model: '',
+    architecture: '',
+    bitness: '',
+    fullVersion: '',
+    wow64: false,
+  };
+
+  // Check if Navigator.userAgentData is available (Chromium 90+)
+  const nav = navigator as unknown as {
+    userAgentData?: {
+      brands: { brand: string; version: string }[];
+      mobile: boolean;
+      platform: string;
+      getHighEntropyValues?: (hints: string[]) => Promise<{
+        platform?: string;
+        platformVersion?: string;
+        model?: string;
+        architecture?: string;
+        bitness?: string;
+        fullVersionList?: { brand: string; version: string }[];
+        uaFullVersion?: string;
+        wow64?: boolean;
+      }>;
+    };
+  };
+
+  if (!nav.userAgentData) {
+    return result;
+  }
+
+  result.available = true;
+
+  // Low entropy values (always available without permission)
+  if (nav.userAgentData.brands) {
+    result.brands = nav.userAgentData.brands.map(b => b.brand);
+    result.brandsWithVersion = nav.userAgentData.brands.map(b => ({
+      brand: b.brand,
+      version: b.version,
+    }));
+  }
+  result.mobile = nav.userAgentData.mobile;
+  result.platform = nav.userAgentData.platform || '';
+
+  // High entropy values (require async call, may be restricted)
+  if (nav.userAgentData.getHighEntropyValues) {
+    try {
+      const highEntropyValues = await nav.userAgentData.getHighEntropyValues([
+        'platform',
+        'platformVersion',
+        'model',
+        'architecture',
+        'bitness',
+        'fullVersionList',
+        'uaFullVersion',
+        'wow64',
+      ]);
+
+      result.platform = highEntropyValues.platform || result.platform;
+      result.platformVersion = highEntropyValues.platformVersion || '';
+      result.model = highEntropyValues.model || '';
+      result.architecture = highEntropyValues.architecture || '';
+      result.bitness = highEntropyValues.bitness || '';
+      result.wow64 = highEntropyValues.wow64 ?? false;
+
+      if (highEntropyValues.fullVersionList?.length) {
+        result.fullVersion = highEntropyValues.fullVersionList[0]?.version || '';
+        result.brandsWithVersion = highEntropyValues.fullVersionList.map(b => ({
+          brand: b.brand,
+          version: b.version,
+        }));
+      } else if (highEntropyValues.uaFullVersion) {
+        result.fullVersion = highEntropyValues.uaFullVersion;
+      }
+    } catch {
+      // High entropy values not available or blocked
+    }
+  }
+
+  return result;
+}
+
+// ==================== SPEECH SYNTHESIS FINGERPRINT ====================
+
+/**
+ * Get available speech synthesis voices
+ * The list of voices is a fingerprinting vector
+ * @returns Promise with voice count and hash
+ */
+export async function getSpeechSynthesisFingerprint(): Promise<{
+  available: boolean;
+  voiceCount: number;
+  voiceListHash: string;
+}> {
+  if (!('speechSynthesis' in window)) {
+    return { available: false, voiceCount: 0, voiceListHash: '' };
+  }
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      resolve({ available: true, voiceCount: 0, voiceListHash: '' });
+    }, 1000);
+
+    const getVoices = () => {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        clearTimeout(timeout);
+        const voiceList = voices
+          .map(v => `${v.name}|${v.lang}|${v.localService}`)
+          .sort()
+          .join(',');
+        // Use a simple hash since we can't import sha256 here
+        const simpleHash = voiceList.split('').reduce((a, b) => {
+          const hash = ((a << 5) - a) + b.charCodeAt(0);
+          return hash & hash;
+        }, 0).toString(16);
+        resolve({
+          available: true,
+          voiceCount: voices.length,
+          voiceListHash: simpleHash,
+        });
+      }
+    };
+
+    // Try immediately
+    getVoices();
+
+    // Also listen for voiceschanged event (some browsers load voices async)
+    speechSynthesis.addEventListener('voiceschanged', getVoices, { once: true });
+  });
+}

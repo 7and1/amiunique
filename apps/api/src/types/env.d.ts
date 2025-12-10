@@ -6,6 +6,9 @@ export interface Env {
   /** D1 Database binding */
   DB: D1Database;
 
+  /** KV Namespace for distributed rate limiting */
+  RATE_LIMIT_KV: KVNamespace;
+
   /** Environment name */
   ENVIRONMENT: string;
 }

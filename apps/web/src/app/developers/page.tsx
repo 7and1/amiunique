@@ -62,6 +62,20 @@ const endpoints = [
 }`,
   },
   {
+    method: 'POST',
+    path: '/api/deletion',
+    description: 'Queue GDPR/CCPA deletion for Gold/Silver/Bronze hashes and get a receipt.',
+    response: `{
+  "success": true,
+  "data": {
+    "id": "req_bronze_123",
+    "status": "pending",
+    "created_at": 1701234567890,
+    "sla_hours": 24
+  }
+}`,
+  },
+  {
     method: 'GET',
     path: '/api/stats',
     description: 'Global counters including total fingerprints, unique sessions, and device counts.',

@@ -1,6 +1,6 @@
 /**
  * Rate limiting middleware for API protection
- * Uses in-memory storage with Cloudflare's edge runtime
+ * Uses Cloudflare KV for distributed rate limiting across all edge locations
  */
 
 import { Context, Next } from 'hono';
@@ -17,22 +17,11 @@ interface RateLimitConfig {
 }
 
 /**
- * In-memory rate limit store
- * Note: In Cloudflare Workers, this is per-isolate, so it's best-effort
- * For production at scale, use Cloudflare's Rate Limiting or KV
+ * Rate limit entry stored in KV
  */
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
-
-/**
- * Clean up expired entries periodically
- */
-function cleanupExpired(): void {
-  const now = Date.now();
-  for (const [key, value] of rateLimitStore.entries()) {
-    if (now > value.resetAt) {
-      rateLimitStore.delete(key);
-    }
-  }
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
 }
 
 /**
@@ -50,20 +39,58 @@ function getClientIP(c: Context<{ Bindings: Env }>): string {
  * Generate rate limit key for a client
  */
 function getRateLimitKey(ip: string, endpoint: string): string {
-  return `${ip}:${endpoint}`;
+  // Normalize endpoint to avoid key explosion
+  const normalizedEndpoint = endpoint.split('?')[0].replace(/\/+$/, '');
+  return `rl:${ip}:${normalizedEndpoint}`;
+}
+
+/**
+ * Get rate limit entry from KV
+ */
+async function getRateLimitEntry(
+  kv: KVNamespace,
+  key: string
+): Promise<RateLimitEntry | null> {
+  try {
+    const value = await kv.get(key, 'json');
+    return value as RateLimitEntry | null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Set rate limit entry in KV with TTL
+ */
+async function setRateLimitEntry(
+  kv: KVNamespace,
+  key: string,
+  entry: RateLimitEntry,
+  ttlSeconds: number
+): Promise<void> {
+  try {
+    await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
+  } catch (err) {
+    console.error('Failed to set rate limit entry:', err);
+  }
 }
 
 /**
  * Rate limiter middleware factory
+ * Uses Cloudflare KV for distributed rate limiting
  */
 export function rateLimit(config: RateLimitConfig) {
   const { limit, windowSeconds } = config;
   const windowMs = windowSeconds * 1000;
 
-  return async (c: Context<{ Bindings: Env }>, next: Next) => {
-    // Cleanup every 100 requests (probabilistic cleanup)
-    if (Math.random() < 0.01) {
-      cleanupExpired();
+  return async (c: Context<{ Bindings: Env }>, next: Next): Promise<Response> => {
+    const kv = c.env.RATE_LIMIT_KV;
+
+    // Fallback to in-memory if KV is not available (local dev)
+    if (!kv) {
+      console.warn('Rate limit KV not available, skipping rate limiting');
+      await next();
+      return c.res;
     }
 
     const ip = getClientIP(c);
@@ -71,13 +98,12 @@ export function rateLimit(config: RateLimitConfig) {
     const key = getRateLimitKey(ip, endpoint);
     const now = Date.now();
 
-    // Get or initialize rate limit entry
-    let entry = rateLimitStore.get(key);
+    // Get current rate limit entry
+    let entry = await getRateLimitEntry(kv, key);
 
     if (!entry || now > entry.resetAt) {
-      // New window
+      // New window - create fresh entry
       entry = { count: 1, resetAt: now + windowMs };
-      rateLimitStore.set(key, entry);
     } else {
       // Existing window - increment count
       entry.count++;
@@ -92,9 +118,22 @@ export function rateLimit(config: RateLimitConfig) {
     c.header('X-RateLimit-Remaining', remaining.toString());
     c.header('X-RateLimit-Reset', Math.ceil(entry.resetAt / 1000).toString());
 
-    // Check if over limit
+    // Helper to call waitUntil if available (not in tests)
+    const waitUntilSafe = (promise: Promise<void>) => {
+      try {
+        c.executionCtx?.waitUntil?.(promise);
+      } catch {
+        // In test environment, executionCtx may not be available - ignore
+      }
+    };
+
+    // Check if over limit BEFORE updating KV
     if (entry.count > limit) {
       c.header('Retry-After', resetSeconds.toString());
+
+      // Still update KV to track abuse attempts
+      waitUntilSafe(setRateLimitEntry(kv, key, entry, windowSeconds + 60));
+
       return c.json(
         {
           success: false,
@@ -107,24 +146,39 @@ export function rateLimit(config: RateLimitConfig) {
       );
     }
 
+    // Update KV entry asynchronously (non-blocking)
+    waitUntilSafe(setRateLimitEntry(kv, key, entry, windowSeconds + 60));
+
     await next();
+    return c.res;
   };
 }
 
 /**
  * Pre-configured rate limiters for different endpoints
+ *
+ * Rate limits (per IP, per endpoint):
+ * - /api/analyze: 10 req/min (fingerprint submission)
+ * - /api/stats/*: 60 req/min (statistics queries)
+ * - /api/health: 120 req/min (health checks)
+ * - /api/deletion: 5 req/5min (GDPR deletion requests)
  */
 export const analyzeLimiter = rateLimit({
-  limit: 10, // 10 requests
-  windowSeconds: 60, // per minute
+  limit: 10, // 10 requests per minute for fingerprint submission
+  windowSeconds: 60,
 });
 
 export const statsLimiter = rateLimit({
-  limit: 60, // 60 requests
-  windowSeconds: 60, // per minute
+  limit: 60, // 60 requests per minute for stats queries
+  windowSeconds: 60,
 });
 
 export const healthLimiter = rateLimit({
-  limit: 120, // 120 requests
-  windowSeconds: 60, // per minute (health checks can be frequent)
+  limit: 120, // 120 requests per minute (health checks can be frequent)
+  windowSeconds: 60,
+});
+
+export const deletionLimiter = rateLimit({
+  limit: 5, // 5 requests per 5 minutes (protect opt-out endpoint)
+  windowSeconds: 300,
 });

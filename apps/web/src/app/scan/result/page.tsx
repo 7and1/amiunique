@@ -19,9 +19,13 @@ import {
   Palette,
   Headphones,
   Eye,
+  Download,
 } from 'lucide-react';
 import { cn, formatHash, getRiskBadgeClass, valueToDisplay, getCategoryColor } from '@/lib/utils';
-import { TestResultJsonLd } from '@/components/seo/json-ld';
+import { TestResultJsonLd, BreadcrumbJsonLd } from '@/components/seo/json-ld';
+import { SharePanel } from '@/components/ui/share-panel';
+import { RarityBadge, estimateRarity } from '@/components/ui/rarity-badge';
+import { FingerprintComparisonPanel } from '@/components/ui/fingerprint-comparison';
 
 export default function ResultPage() {
   const router = useRouter();
@@ -44,6 +48,31 @@ export default function ResultPage() {
     await navigator.clipboard.writeText(hash);
     setCopiedHash(type);
     setTimeout(() => setCopiedHash(null), 2000);
+  };
+
+  const downloadHashes = (format: 'txt' | 'json') => {
+    const payload = {
+      hashes,
+      risk: analysisResult.tracking_risk,
+      uniqueness: analysisResult.uniqueness_display,
+    };
+    let content = '';
+    let mime = 'text/plain';
+    let filename = 'amiunique-hashes.txt';
+    if (format === 'json') {
+      content = JSON.stringify(payload, null, 2);
+      mime = 'application/json';
+      filename = 'amiunique-hashes.json';
+    } else {
+      content = `Gold: ${hashes.gold}\nSilver: ${hashes.silver}\nBronze: ${hashes.bronze}\nRisk: ${analysisResult.tracking_risk}\nUniqueness: ${analysisResult.uniqueness_display}`;
+    }
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const toggleCategory = (category: string) => {
@@ -104,6 +133,13 @@ export default function ResultPage() {
           dimensionsAnalyzed: Object.keys(details).length,
         }}
       />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: 'https://amiunique.io' },
+          { name: 'Scan', url: 'https://amiunique.io/scan' },
+          { name: 'Results', url: 'https://amiunique.io/scan/result' },
+        ]}
+      />
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
@@ -111,12 +147,15 @@ export default function ResultPage() {
           <p className="text-muted-foreground">
             Analyzed {Object.keys(details).length}+ dimensions
           </p>
-          <Link
-            href="/scan/history"
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm text-muted-foreground transition hover:border-white/60"
-          >
-            View local history
-          </Link>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <Link
+              href="/scan/history"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm text-muted-foreground transition hover:border-white/60"
+            >
+              View local history
+            </Link>
+            <SharePanel result={result} />
+          </div>
         </div>
 
         {/* Main Result Card */}
@@ -176,9 +215,30 @@ export default function ResultPage() {
           </div>
         </div>
 
+        {/* Fingerprint Comparison */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <FingerprintComparisonPanel currentResult={result} />
+        </div>
+
         {/* Three Lock Hashes */}
         <div className="max-w-4xl mx-auto mb-8">
-          <h3 className="text-xl font-semibold mb-4 text-center">Three-Lock Identity Hashes</h3>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between mb-4">
+            <h3 className="text-xl font-semibold text-center sm:text-left">Three-Lock Identity Hashes</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => downloadHashes('txt')}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <Download className="w-4 h-4" /> TXT
+              </button>
+              <button
+                onClick={() => downloadHashes('json')}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <Download className="w-4 h-4" /> JSON
+              </button>
+            </div>
+          </div>
           <div className="grid md:grid-cols-3 gap-4">
             {/* Gold Lock */}
             <div className="p-4 rounded-xl border-2 border-yellow-400/50 bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900/20 dark:to-slate-900">
@@ -248,6 +308,48 @@ export default function ResultPage() {
           </div>
         </div>
 
+        {/* Risk Mitigation */}
+        <div className="max-w-4xl mx-auto mb-10">
+          <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+            <h3 className="text-lg font-semibold">How to reduce your tracking risk</h3>
+            <div className="flex gap-2">
+              <a
+                href="https://support.mozilla.org/en-US/kb/resist-fingerprinting"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Browser Hardening Guide
+              </a>
+              <a
+                href="https://www.eff.org/deeplinks/2019/12/deep-dive-browser-fingerprinting"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200"
+              >
+                EFF Deep Dive
+              </a>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[{
+              title: 'Rotate network & IP',
+              body: 'Use a trusted VPN and rotate exit IPs; avoid reusing rare ASNs for sensitive browsing.',
+            }, {
+              title: 'Normalize device signals',
+              body: 'Match common screen resolutions (1920x1080), standard fonts, and disable custom theming when possible.',
+            }, {
+              title: 'Limit high-entropy APIs',
+              body: 'Disable WebGL/Canvas in hardened profiles, or use Tor/Firefox RFP to standardize outputs.',
+            }].map(card => (
+              <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{card.title}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{card.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Lie Detection */}
         <div className="max-w-4xl mx-auto mb-8">
           <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -311,14 +413,20 @@ export default function ResultPage() {
 
                   {isExpanded && (
                     <div className="border-t divide-y">
-                      {dims.map(({ key, value, label }) => (
-                        <div key={key} className="flex items-center justify-between p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                          <span className="text-muted-foreground capitalize">{label}</span>
-                          <span className="font-mono text-xs max-w-[50%] truncate text-right">
-                            {valueToDisplay(value)}
-                          </span>
-                        </div>
-                      ))}
+                      {dims.map(({ key, value, label }) => {
+                        const rarity = estimateRarity(key, value);
+                        return (
+                          <div key={key} className="flex items-center justify-between p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground capitalize">{label}</span>
+                              <RarityBadge level={rarity} />
+                            </div>
+                            <span className="font-mono text-xs max-w-[40%] truncate text-right">
+                              {valueToDisplay(value)}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -3,6 +3,7 @@ name = "amiunique-api"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 workers_dev = true
+account_id = "fe394f7c37b25babc4e351d704a6a97c"
 
 # Local dev server port
 [dev]
@@ -16,7 +17,22 @@ ENVIRONMENT = "development"
 [[d1_databases]]
 binding = "DB"
 database_name = "amiunique-db"
-database_id = "0dcc00ce-c632-40b5-92b3-efd8e7389b28"
+database_id = "fdfac737-7ed4-430b-bd22-90321043368a"
+
+# KV Namespace for distributed rate limiting
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "79ad630aad4d49dfa8935f484aabb13e"  # Preview environment
+preview_id = "79ad630aad4d49dfa8935f484aabb13e"
+
+# Scheduled triggers for background jobs
+# - Process deletion requests (GDPR compliance)
+# - Refresh stats cache
+[triggers]
+crons = [
+  "0 * * * *",   # Every hour: process deletion requests
+  "*/5 * * * *"  # Every 5 minutes: refresh stats cache
+]
 
 # Production environment
 [env.production]
@@ -29,7 +45,17 @@ ENVIRONMENT = "production"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "amiunique-db"
-database_id = "0dcc00ce-c632-40b5-92b3-efd8e7389b28"
+database_id = "fdfac737-7ed4-430b-bd22-90321043368a"
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "d62a475316da4064b47cf2c80b92b924"  # Production environment
+
+[env.production.triggers]
+crons = [
+  "0 * * * *",   # Every hour: process deletion requests
+  "*/5 * * * *"  # Every 5 minutes: refresh stats cache
+]
 
 # Custom routes (uncomment after domain setup)
 # [env.production.routes]

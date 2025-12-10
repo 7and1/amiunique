@@ -14,9 +14,10 @@ import {
 } from 'lucide-react';
 import { useStatsPageData } from '@/hooks/use-stats';
 import { StatsPageSkeleton } from '@/components/ui/skeleton';
+import { DistributionPieChart, DistributionBarChart, TrendsAreaChart } from '@/components/charts';
 
 export function StatsContent() {
-  const { stats, browsers, os, devices, trends, loading, error } = useStatsPageData();
+  const { stats, browsers, os, devices, trends, loading, error, refresh } = useStatsPageData();
 
   if (loading) {
     return <StatsPageSkeleton />;
@@ -33,6 +34,15 @@ export function StatsContent() {
   const osList = os?.data?.distribution ?? [];
   const deviceList = devices?.data?.distribution ?? [];
   const trendList = trends?.trends ?? [];
+  const lastUpdated = safeStats.updated_at ? new Date(safeStats.updated_at) : null;
+  const isCached = Boolean((safeStats as any)?._cached);
+  const sourceLabel = (safeStats as any)?._source === 'edge-cache'
+    ? 'Edge cache'
+    : (safeStats as any)?._source === 'local-cache'
+      ? 'Local cache'
+      : 'Origin';
+
+  const hasError = Boolean(error);
 
   // Calculate week-over-week growth
   const latestDay = trendList[trendList.length - 1];
@@ -60,6 +70,31 @@ export function StatsContent() {
             </span>{' '}
             browser fingerprints analyzed worldwide.
           </p>
+              {lastUpdated && (
+                <p className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-3 justify-center">
+                  Last updated: {lastUpdated.toLocaleString()}
+                  {isCached && (
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                      Cached (≤120s)
+                    </span>
+                  )}
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    Source: {sourceLabel}
+                  </span>
+                </p>
+              )}
+          {hasError && (
+            <div className="flex items-center justify-center gap-3 text-sm text-amber-600 dark:text-amber-300">
+              <span>Live data is temporarily unavailable; showing cached counters.</span>
+              <button
+                type="button"
+                onClick={refresh}
+                className="rounded-lg border border-amber-200 px-3 py-1 text-xs font-semibold transition hover:bg-amber-100 dark:border-amber-500/40 dark:hover:bg-amber-500/10"
+              >
+                Retry now
+              </button>
+            </div>
+          )}
         </header>
 
         {/* Educational Context Section */}
@@ -157,84 +192,86 @@ export function StatsContent() {
           ))}
         </section>
 
-        {/* Quick Distribution Preview */}
+        {/* Quick Distribution Preview with Charts */}
         <section className="grid gap-8 lg:grid-cols-3">
-          {/* Top Browsers */}
+          {/* Top Browsers - Horizontal Bar Chart */}
           <div className="rounded-3xl border border-white/20 bg-white/80 p-6 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">
               <Globe className="h-4 w-4 text-indigo-500" />
               Top Browsers
             </div>
-            <div className="space-y-3">
-              {browserList.slice(0, 5).map((item, i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-900 dark:text-white">{item.name}</span>
-                    <span className="font-mono text-slate-500 dark:text-slate-400">{item.percentage}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
-                      style={{ width: `${item.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {browserList.length > 0 ? (
+              <DistributionBarChart
+                data={browserList.slice(0, 6)}
+                height={220}
+                layout="vertical"
+                gradientFrom="#6366f1"
+                gradientTo="#a855f7"
+              />
+            ) : (
+              <div className="flex h-[220px] items-center justify-center text-sm text-slate-500">
+                No data available
+              </div>
+            )}
           </div>
 
-          {/* Top OS */}
+          {/* Top OS - Horizontal Bar Chart */}
           <div className="rounded-3xl border border-white/20 bg-white/80 p-6 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">
               <BarChart3 className="h-4 w-4 text-teal-500" />
               Operating Systems
             </div>
-            <div className="space-y-3">
-              {osList.slice(0, 5).map((item, i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-900 dark:text-white">{item.name}</span>
-                    <span className="font-mono text-slate-500 dark:text-slate-400">{item.percentage}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500"
-                      style={{ width: `${item.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {osList.length > 0 ? (
+              <DistributionBarChart
+                data={osList.slice(0, 6)}
+                height={220}
+                layout="vertical"
+                gradientFrom="#14b8a6"
+                gradientTo="#22c55e"
+              />
+            ) : (
+              <div className="flex h-[220px] items-center justify-center text-sm text-slate-500">
+                No data available
+              </div>
+            )}
           </div>
 
-          {/* Device Mix */}
+          {/* Device Mix - Pie Chart */}
           <div className="rounded-3xl border border-white/20 bg-white/80 p-6 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">
               <Zap className="h-4 w-4 text-amber-500" />
               Device Types
             </div>
-            <div className="grid grid-cols-3 gap-3 mt-4">
-              {deviceList.map((item, i) => {
-                const colors = ['from-indigo-500 to-purple-500', 'from-sky-500 to-cyan-500', 'from-amber-500 to-orange-500'];
-                return (
-                  <div
-                    key={i}
-                    className="relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center dark:border-slate-700 dark:bg-slate-800"
-                  >
-                    <p className="text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent" style={{
-                      backgroundImage: `linear-gradient(to right, var(--tw-gradient-stops))`,
-                    }}>
-                      <span className={`bg-gradient-to-r ${colors[i % 3]} bg-clip-text text-transparent`}>
-                        {item.percentage}%
-                      </span>
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 capitalize">{item.name}</p>
-                  </div>
-                );
-              })}
-            </div>
+            {deviceList.length > 0 ? (
+              <DistributionPieChart
+                data={deviceList}
+                height={220}
+                colors={['#6366f1', '#0ea5e9', '#f59e0b']}
+                showLegend={true}
+              />
+            ) : (
+              <div className="flex h-[220px] items-center justify-center text-sm text-slate-500">
+                No data available
+              </div>
+            )}
           </div>
         </section>
+
+        {/* Trends Area Chart - Full Width */}
+        {trendList.length > 0 && (
+          <section className="rounded-3xl border border-white/20 bg-white/80 p-6 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+                <TrendingUp className="h-4 w-4 text-indigo-500" />
+                Daily Fingerprint Trends
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Last {trendList.length} days
+              </span>
+            </div>
+            <TrendsAreaChart data={trendList} height={320} showGrid={true} />
+          </section>
+        )}
 
         {/* Deep Dive Cards */}
         <section className="grid gap-6 md:grid-cols-2">

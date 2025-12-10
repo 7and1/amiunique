@@ -65,3 +65,59 @@ export function clearHistory() {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(HISTORY_KEY);
 }
+
+/**
+ * Get the most recent previous scan (excluding the current one)
+ */
+export function getPreviousScan(currentBronzeHash: string): ScanHistoryEntry | null {
+  const history = readHistory();
+  // Find first entry that's not the current scan
+  return history.find(entry => entry.id !== currentBronzeHash) ?? null;
+}
+
+/**
+ * Compare two fingerprint results and identify changed dimensions
+ */
+export interface FingerprintComparison {
+  hashesChanged: {
+    gold: boolean;
+    silver: boolean;
+    bronze: boolean;
+  };
+  previousScan: ScanHistoryEntry;
+  timeSinceLastScan: number;
+  summary: 'identical' | 'minor_changes' | 'significant_changes' | 'device_changed';
+}
+
+export function compareWithPrevious(
+  current: AnalysisResult,
+  previous: ScanHistoryEntry
+): FingerprintComparison {
+  const goldChanged = current.hashes.gold !== previous.hashes.gold;
+  const silverChanged = current.hashes.silver !== previous.hashes.silver;
+  const bronzeChanged = current.hashes.bronze !== previous.hashes.bronze;
+
+  const timeSinceLastScan = Date.now() - previous.createdAt;
+
+  let summary: FingerprintComparison['summary'];
+  if (!goldChanged && !silverChanged && !bronzeChanged) {
+    summary = 'identical';
+  } else if (goldChanged) {
+    summary = 'device_changed';
+  } else if (silverChanged) {
+    summary = 'significant_changes';
+  } else {
+    summary = 'minor_changes';
+  }
+
+  return {
+    hashesChanged: {
+      gold: goldChanged,
+      silver: silverChanged,
+      bronze: bronzeChanged,
+    },
+    previousScan: previous,
+    timeSinceLastScan,
+    summary,
+  };
+}

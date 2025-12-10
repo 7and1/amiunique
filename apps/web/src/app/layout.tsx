@@ -1,17 +1,20 @@
 import type { Metadata, Viewport } from 'next';
-import Link from 'next/link';
 import { Mail, Github } from 'lucide-react';
 import '@/styles/globals.css';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { ClientShell } from '@/components/layout/client-shell';
 import { Toaster } from '@/components/ui/toast';
+import { HeaderNav } from '@/components/layout/header-nav';
+import Link from 'next/link';
 import {
   OrganizationJsonLd,
   WebApplicationJsonLd,
   FAQJsonLd,
   defaultFAQs,
 } from '@/components/seo/json-ld';
+import { SkipToContent } from '@/components/a11y';
+import { FingerprintAssistant } from '@/components/ai';
 
 const fontSans = GeistSans;
 const fontMono = GeistMono;
@@ -112,7 +115,8 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="preconnect" href="https://api.amiunique.io" />
         <script
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
           suppressHydrationWarning
@@ -122,35 +126,14 @@ export default function RootLayout({
         <FAQJsonLd questions={defaultFAQs} />
       </head>
       <body className="bg-background text-foreground antialiased">
+        <SkipToContent />
         <ClientShell>
           <div className="relative flex min-h-screen flex-col">
             <div className="pointer-events-none absolute inset-0 -z-10 opacity-80">
               <div className="absolute inset-x-0 top-0 h-[300px] bg-gradient-to-b from-indigo-200/50 via-transparent to-transparent dark:from-indigo-900/20" />
             </div>
-          <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:border-white/5 dark:bg-slate-950/80">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4">
-              <Link href="/" className="flex items-center gap-3 text-sm font-semibold tracking-tight">
-                <img src="/favicon.svg" alt="AmiUnique.io" className="h-10 w-10" />
-                <div className="flex flex-col">
-                  <span className="text-base font-semibold">AmiUnique.io</span>
-                  <span className="text-xs text-muted-foreground">Quantify your browser identity</span>
-                </div>
-              </Link>
-              <nav className="flex items-center gap-6 text-sm font-medium">
-                {[
-                  { label: 'Scan', href: '/scan' },
-                  { label: 'Statistics', href: '/stats' },
-                  { label: 'Developers', href: '/developers' },
-                  { label: 'Privacy', href: '/legal/privacy' },
-                ].map(link => (
-                  <Link key={link.href} href={link.href} className="text-muted-foreground transition-colors hover:text-foreground">
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-          </header>
-          <main className="flex-1">{children}</main>
+          <HeaderNav />
+          <main id="main-content" className="flex-1" tabIndex={-1}>{children}</main>
             <footer className="border-t border-white/20 bg-white/80 py-10 backdrop-blur-xl dark:border-white/5 dark:bg-slate-950/70">
               <div className="container mx-auto px-4">
                 <div className="flex flex-col items-start justify-between gap-6 text-sm text-muted-foreground md:flex-row md:items-center">
@@ -201,6 +184,7 @@ export default function RootLayout({
             </footer>
           </div>
         </ClientShell>
+          <FingerprintAssistant />
           <Toaster />
       </body>
     </html>

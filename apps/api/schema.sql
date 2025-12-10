@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS visits (
 );
 
 -- Performance Indexes for common queries
+-- Single column indexes
 CREATE INDEX IF NOT EXISTS idx_visits_full_hash ON visits(full_hash);
 CREATE INDEX IF NOT EXISTS idx_visits_hardware_hash ON visits(hardware_hash);
 CREATE INDEX IF NOT EXISTS idx_visits_software_hash ON visits(software_hash);
@@ -40,6 +41,21 @@ CREATE INDEX IF NOT EXISTS idx_visits_browser ON visits(meta_browser);
 CREATE INDEX IF NOT EXISTS idx_visits_os ON visits(meta_os);
 CREATE INDEX IF NOT EXISTS idx_visits_country ON visits(meta_country);
 CREATE INDEX IF NOT EXISTS idx_visits_device_type ON visits(meta_device_type);
+
+-- Composite indexes for common query patterns
+-- Stats queries by date and browser/os
+CREATE INDEX IF NOT EXISTS idx_visits_created_browser ON visits(created_at, meta_browser);
+CREATE INDEX IF NOT EXISTS idx_visits_created_os ON visits(created_at, meta_os);
+CREATE INDEX IF NOT EXISTS idx_visits_created_device ON visits(created_at, meta_device_type);
+CREATE INDEX IF NOT EXISTS idx_visits_created_country ON visits(created_at, meta_country);
+
+-- Distribution queries - covering indexes for GROUP BY with count
+CREATE INDEX IF NOT EXISTS idx_visits_browser_device ON visits(meta_browser, meta_device_type);
+CREATE INDEX IF NOT EXISTS idx_visits_os_device ON visits(meta_os, meta_device_type);
+CREATE INDEX IF NOT EXISTS idx_visits_country_device ON visits(meta_country, meta_device_type);
+
+-- Hash lookup with date range (for trend analysis)
+CREATE INDEX IF NOT EXISTS idx_visits_hardware_created ON visits(hardware_hash, created_at);
 
 -- ============================================
 -- Statistics Cache Table (Pre-aggregated)
@@ -85,10 +101,16 @@ CREATE TABLE IF NOT EXISTS deletion_requests (
     hash_value TEXT NOT NULL,
     email TEXT,
     reason TEXT,
-    status TEXT DEFAULT 'pending',          -- pending, completed, rejected
+    status TEXT DEFAULT 'pending',          -- pending, completed, rejected, failed
     created_at INTEGER NOT NULL,
-    completed_at INTEGER
+    completed_at INTEGER,
+    -- Retry mechanism fields
+    retry_count INTEGER DEFAULT 0,          -- Number of processing attempts
+    last_error TEXT,                        -- Last error message if failed
+    last_attempt_at INTEGER                 -- Timestamp of last processing attempt
 );
 
 CREATE INDEX IF NOT EXISTS idx_deletion_hash ON deletion_requests(hash_value);
 CREATE INDEX IF NOT EXISTS idx_deletion_status ON deletion_requests(status);
+-- Composite index for efficient pending request queries (used by scheduled worker)
+CREATE INDEX IF NOT EXISTS idx_deletion_status_created ON deletion_requests(status, created_at);

@@ -208,13 +208,22 @@ analyze.post('/', async (c) => {
     }
 
     // 11. Calculate results
-    const exactMatchCount = (uniqueCheck?.count || 0) + 1; // Include current visit
-    const hardwareMatchCount = (hardwareCheck?.count || 0) + 1;
-    const totalFingerprints = (totalCount?.count || 0) + 1;
+    // Note: COUNT queries ran BEFORE INSERT, so they don't include current visit
+    // previousExactMatches = fingerprints with same full_hash before this visit
+    const previousExactMatches = uniqueCheck?.count || 0;
+    const previousHardwareMatches = hardwareCheck?.count || 0;
+    const previousTotal = totalCount?.count || 0;
 
-    const isUnique = exactMatchCount === 1;
+    // For display, include current visit in counts
+    const exactMatchCount = previousExactMatches + 1;
+    const hardwareMatchCount = previousHardwareMatches + 1;
+    const totalFingerprints = previousTotal + 1;
+
+    // isUnique = true only if NO previous matches existed (this is the first with this fingerprint)
+    const isUnique = previousExactMatches === 0;
     const uniquenessRatio = 1 / exactMatchCount;
-    const isDeviceTracked = hardwareMatchCount > exactMatchCount;
+    // Cross-browser tracking = same hardware seen with different full fingerprints
+    const isDeviceTracked = previousHardwareMatches > previousExactMatches;
 
     // 12. Determine tracking risk level
     let trackingRisk: 'low' | 'medium' | 'high' | 'critical' = 'low';

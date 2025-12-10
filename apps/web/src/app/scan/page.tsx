@@ -1,10 +1,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { useScanFlow } from '@/lib/scan-flow';
+import { CircularProgress } from '@/components/ui/circular-progress';
 
 const DIMENSION_LABELS = [
   'Canvas fingerprint',
@@ -38,13 +39,29 @@ const stateMeta: Record<IconState, { icon: ReactNode; bg: string }> = {
 
 export default function ScanPage() {
   const router = useRouter();
-  const { phase, progress, error, startScan } = useScanFlow();
+  const { phase, progress, error, startScan, durationMs, mode } = useScanFlow();
+  const [lowBandwidth, setLowBandwidth] = useState(false);
+  const prefetchedRef = useRef(false);
+
+  const hasStoredResult = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(sessionStorage.getItem('scanResult'));
+  }, []);
+
+  // Smart prefetch: Start loading result page when analyzing begins
+  useEffect(() => {
+    if (phase === 'analyzing' && !prefetchedRef.current) {
+      // Prefetch the result page to reduce perceived load time
+      router.prefetch('/scan/result');
+      prefetchedRef.current = true;
+    }
+  }, [phase, router]);
 
   useEffect(() => {
     if (phase === 'idle') {
-      startScan().catch(() => {});
+      startScan(lowBandwidth ? 'lite' : 'full').catch(() => {});
     }
-  }, [phase, startScan]);
+  }, [phase, startScan, lowBandwidth]);
 
   useEffect(() => {
     if (phase === 'complete') {
@@ -90,39 +107,98 @@ export default function ScanPage() {
             </div>
           </div>
 
+          {/* Accessible live region for screen readers */}
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          >
+            {scanStateLabel}. {subtitle}.
+            {progress.total > 0 && ` Step ${Math.min(progress.index + 1, progress.total)} of ${progress.total}.`}
+          </div>
+
           <h1 className="text-2xl font-bold mb-2">{scanStateLabel}</h1>
           <p className="text-muted-foreground mb-8 text-sm sm:text-base">{subtitle}</p>
 
-          {(phase === 'collecting' || phase === 'analyzing' || phase === 'idle') && (
-            <div className="mb-6">
-              <div className="progress-bar">
-                <div className="progress-bar-fill" style={{ width: `${percent}%` }} />
-              </div>
-              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                <span>{phase === 'analyzing' ? 'Analyzing fingerprint…' : progress.dimension}</span>
-                {progress.total > 0 && (
-                  <span>
-                    {Math.min(progress.index, progress.total)}/{progress.total}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-4">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 dark:border-slate-700 dark:bg-slate-800">
+              Mode: {lowBandwidth ? 'Lite' : 'Full'}
+            </span>
+            {durationMs && (
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 dark:border-slate-700 dark:bg-slate-800">
+                Duration: {(durationMs / 1000).toFixed(1)}s
+              </span>
+            )}
+            {lowBandwidth && (
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                ~40% faster than full scan
+              </span>
+            )}
+          </div>
 
           {(phase === 'collecting' || phase === 'analyzing' || phase === 'idle') && (
-            <div className="flex justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+            <div className="mb-6 flex flex-col items-center">
+              {/* Circular Progress */}
+              <CircularProgress
+                value={percent}
+                size="lg"
+                dimension={phase === 'analyzing' ? 'Analyzing fingerprint…' : progress.dimension}
+                showValue={true}
+                colorClass={phase === 'analyzing' ? 'stroke-emerald-500' : 'stroke-primary-500'}
+              />
+
+              {/* Step counter */}
+              {progress.total > 0 && (
+                <div className="mt-4 text-sm text-muted-foreground">
+                  Step {Math.min(progress.index + 1, progress.total)} of {progress.total}
+                </div>
+              )}
             </div>
           )}
 
           {phase === 'error' && (
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={() => startScan(lowBandwidth ? 'lite' : 'full').catch(() => {})}
+                className="mt-4 px-6 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
+              >
+                Retry Scan
+              </button>
+              <button
+                onClick={() => {
+                  const payload = { phase, progress, error };
+                  navigator.clipboard.writeText(JSON.stringify(payload, null, 2)).catch(() => {});
+                }}
+                className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Copy Debug Info
+              </button>
+            </div>
+          )}
+
+          {hasStoredResult && (
             <button
-              onClick={() => startScan().catch(() => {})}
-              className="mt-4 px-6 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
+              onClick={() => router.push('/scan/result')}
+              className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200"
             >
-              Retry Scan
+              Skip to previous results
             </button>
           )}
+
+          <div className="mt-8 inline-flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <input
+              id="low-bandwidth"
+              type="checkbox"
+              checked={lowBandwidth}
+              onChange={e => setLowBandwidth(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="low-bandwidth" className="flex flex-col items-start text-left">
+              <span className="font-semibold">Lite Mode</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Skip audio, fonts, plugins for faster core fingerprinting</span>
+            </label>
+          </div>
 
           {(phase === 'collecting' || phase === 'analyzing') && (
             <div className="mt-8 p-4 rounded-lg bg-slate-100 dark:bg-slate-800 text-left">
