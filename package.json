@@ -19,7 +19,7 @@
     "deploy:web": "pnpm --filter @amiunique/web deploy",
     "deploy": "pnpm build && pnpm deploy:api && pnpm deploy:web",
     "db:create": "wrangler d1 create amiunique-db",
-    "db:migrate": "wrangler d1 execute amiunique-db --file=./apps/api/schema.sql"
+    "db:migrate": "wrangler d1 execute amiunique-db --file=./apps/api/schema.sql --config=./apps/api/wrangler.toml --remote"
   },
   "engines": {
     "node": ">=18.18.0"
