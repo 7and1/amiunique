@@ -1,0 +1,29 @@
+{
+  "name": "@amiunique/api",
+  "version": "1.0.0",
+  "description": "AmiUnique.io Cloudflare Worker API with D1 database",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir=dist --env=\"\"",
+    "lint": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "db:create": "wrangler d1 create amiunique-db",
+    "db:migrate": "wrangler d1 execute amiunique-db --file=./schema.sql",
+    "db:migrate:local": "wrangler d1 execute amiunique-db --local --file=./schema.sql",
+    "db:query": "wrangler d1 execute amiunique-db --command",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "0.7.5",
+    "hono": "^4.3.0",
+    "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^4.51.0"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "amiunique",
+  "version": "1.0.0",
+  "description": "AmiUnique.io - Browser fingerprinting detection platform with 80+ dimensions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "turbo clean && rm -rf node_modules",
+    "dev:web": "pnpm --filter @amiunique/web dev",
+    "dev:api": "pnpm --filter @amiunique/api dev",
+    "build:web": "pnpm --filter @amiunique/web build",
+    "build:api": "pnpm --filter @amiunique/api build",
+    "deploy:api": "pnpm --filter @amiunique/api deploy -- --env production",
+    "deploy:web": "pnpm --filter @amiunique/web deploy",
+    "deploy": "pnpm build && pnpm deploy:api && pnpm deploy:web",
+    "db:create": "wrangler d1 create amiunique-db",
+    "db:migrate": "wrangler d1 execute amiunique-db --file=./apps/api/schema.sql"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "keywords": [
+    "fingerprinting",
+    "browser",
+    "privacy",
+    "cloudflare",
+    "workers",
+    "d1"
+  ],
+  "author": "AmiUnique.io Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "1.57.0",
+    "@types/node": "^20.10.0",
+    "@vitest/coverage-v8": "4.0.15",
+    "jsdom": "27.2.0",
+    "prettier": "^3.1.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "4.0.15",
+    "wrangler": "^4.51.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "typescript": "5.4.5"
+    }
+  }
+}

@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="50%" style="stop-color:#1e293b"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="50%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24"/>
+      <stop offset="100%" style="stop-color:#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#94a3b8"/>
+      <stop offset="100%" style="stop-color:#64748b"/>
+    </linearGradient>
+    <linearGradient id="bronze" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fb923c"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.1">
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#6366f1" stroke-width="0.5"/>
+    </pattern>
+    <rect width="1200" height="630" fill="url(#grid)"/>
+  </g>
+
+  <!-- Decorative circles -->
+  <circle cx="100" cy="100" r="200" fill="#6366f1" opacity="0.05"/>
+  <circle cx="1100" cy="530" r="250" fill="#8b5cf6" opacity="0.05"/>
+
+  <!-- Main content area -->
+  <g transform="translate(80, 80)">
+    <!-- Fingerprint icon -->
+    <g transform="translate(0, 50)">
+      <circle cx="80" cy="80" r="70" fill="#1e293b" stroke="url(#accent)" stroke-width="3"/>
+      <g transform="translate(40, 40)" stroke="#6366f1" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 40C2 21.7 17.7 6 36 6a30 30 0 0 1 24 12"/>
+        <path d="M11 59.5C12 54 13 45 13 36c0-2.1.4-4.1 1-6"/>
+        <path d="M51.9 63c.4-1.8 1.3-6.9 1.5-9"/>
+        <path d="M36 30a6 6 0 0 0-6 6c0 3.1-.3 7.5-.8 12"/>
+        <path d="M23.9 66c.6-2 1.4-4 1.7-6"/>
+        <path d="M42 39.4c0 7.1 0 19.1-3 26.6"/>
+        <path d="M2 48h.03"/>
+        <path d="M65.4 48c.6-6 .4-16-.4-18"/>
+        <path d="M25 20.4a18 18 0 0 1 27 15.6c0 1.4 0 3.5-.1 6"/>
+      </g>
+    </g>
+
+    <!-- Title -->
+    <text x="200" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="white">
+      AmiUnique.io
+    </text>
+
+    <!-- Subtitle -->
+    <text x="200" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#94a3b8">
+      Browser Fingerprinting Detection Platform
+    </text>
+
+    <!-- Three Lock badges -->
+    <g transform="translate(200, 200)">
+      <!-- Gold Lock -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="200" height="60" rx="12" fill="url(#gold)" opacity="0.2"/>
+        <rect x="0" y="0" width="200" height="60" rx="12" fill="none" stroke="url(#gold)" stroke-width="2"/>
+        <text x="20" y="38" font-family="system-ui, sans-serif" font-size="24" fill="#fbbf24" font-weight="600">Gold Lock</text>
+      </g>
+
+      <!-- Silver Lock -->
+      <g transform="translate(220, 0)">
+        <rect x="0" y="0" width="200" height="60" rx="12" fill="url(#silver)" opacity="0.2"/>
+        <rect x="0" y="0" width="200" height="60" rx="12" fill="none" stroke="url(#silver)" stroke-width="2"/>
+        <text x="20" y="38" font-family="system-ui, sans-serif" font-size="24" fill="#94a3b8" font-weight="600">Silver Lock</text>
+      </g>
+
+      <!-- Bronze Lock -->
+      <g transform="translate(440, 0)">
+        <rect x="0" y="0" width="200" height="60" rx="12" fill="url(#bronze)" opacity="0.2"/>
+        <rect x="0" y="0" width="200" height="60" rx="12" fill="none" stroke="url(#bronze)" stroke-width="2"/>
+        <text x="20" y="38" font-family="system-ui, sans-serif" font-size="24" fill="#fb923c" font-weight="600">Bronze Lock</text>
+      </g>
+    </g>
+
+    <!-- Feature highlights -->
+    <g transform="translate(0, 320)">
+      <text x="0" y="0" font-family="system-ui, sans-serif" font-size="48" fill="white" font-weight="600">
+        80+ Dimensions
+      </text>
+      <text x="0" y="60" font-family="system-ui, sans-serif" font-size="24" fill="#64748b">
+        Canvas, WebGL, Audio, Fonts, Network, and more
+      </text>
+    </g>
+
+    <!-- Stats bar -->
+    <g transform="translate(0, 420)">
+      <rect x="0" y="0" width="1000" height="80" rx="16" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+
+      <g transform="translate(40, 28)">
+        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Total Fingerprints</text>
+        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">2M+</text>
+      </g>
+
+      <line x1="250" y1="15" x2="250" y2="65" stroke="#334155" stroke-width="1"/>
+
+      <g transform="translate(290, 28)">
+        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Global Latency</text>
+        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">&lt;100ms</text>
+      </g>
+
+      <line x1="500" y1="15" x2="500" y2="65" stroke="#334155" stroke-width="1"/>
+
+      <g transform="translate(540, 28)">
+        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Privacy First</text>
+        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">GDPR Ready</text>
+      </g>
+
+      <line x1="750" y1="15" x2="750" y2="65" stroke="#334155" stroke-width="1"/>
+
+      <g transform="translate(790, 28)">
+        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Open Source</text>
+        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">100% Free</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="620" width="1200" height="10" fill="url(#accent)"/>
+</svg>
