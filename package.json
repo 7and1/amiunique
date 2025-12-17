@@ -15,8 +15,8 @@
     "dev:api": "pnpm --filter @amiunique/api dev",
     "build:web": "pnpm --filter @amiunique/web build",
     "build:api": "pnpm --filter @amiunique/api build",
-    "deploy:api": "pnpm --filter @amiunique/api deploy -- --env production",
-    "deploy:web": "pnpm --filter @amiunique/web deploy",
+    "deploy:api": "pnpm --filter @amiunique/api run deploy -- --env production",
+    "deploy:web": "pnpm --filter @amiunique/web run deploy",
     "deploy": "pnpm build && pnpm deploy:api && pnpm deploy:web",
     "db:create": "wrangler d1 create amiunique-db",
     "db:migrate": "wrangler d1 execute amiunique-db --file=./apps/api/schema.sql --config=./apps/api/wrangler.toml --remote"
