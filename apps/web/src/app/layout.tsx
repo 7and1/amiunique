@@ -167,7 +167,7 @@ export default function RootLayout({
                       privacy@amiunique.io
                     </a>
                     <a
-                      href="https://github.com/nicemeng/amiunique"
+                      href="https://github.com/7and1/amiunique/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"

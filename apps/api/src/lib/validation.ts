@@ -77,12 +77,31 @@ export const FingerprintSchema = z.object({
   med_video_vp9: z.string().max(16).optional(),
   med_video_av1: z.string().max(16).optional(),
 
+  // Client Hints (8 dimensions - modern browsers)
+  ch_available: z.boolean().optional(),
+  ch_brands: z.array(z.string().max(64)).max(16).optional(),
+  ch_platform: z.string().max(64).optional(),
+  ch_platform_version: z.string().max(64).optional(),
+  ch_mobile: z.boolean().optional(),
+  ch_model: z.string().max(128).optional(),
+  ch_architecture: z.string().max(32).optional(),
+  ch_bitness: z.string().max(16).optional(),
+
+  // WebRTC fingerprint (6 dimensions)
+  rtc_available: z.boolean().optional(),
+  rtc_local_ip: z.string().max(128).nullable().optional(),
+  rtc_public_ip: z.string().max(128).nullable().optional(),
+  rtc_stun_available: z.boolean().optional(),
+  rtc_ip_type: z.enum(['ipv4', 'ipv6', 'both', 'none']).optional(),
+  rtc_media_device_count: z.number().int().min(0).max(256).optional(),
+
   // Auxiliary (volatile)
   aux_battery_level: z.number().min(0).max(1).optional(),
   aux_battery_charging: z.boolean().optional(),
   aux_window_width: z.number().int().min(0).max(10000).optional(),
   aux_window_height: z.number().int().min(0).max(10000).optional(),
   aux_webrtc_ip: z.string().max(128).optional(),
+  aux_speech_voices: z.number().int().min(0).max(1000).optional(),
 
   // Lie detection
   lie_os_mismatch: z.boolean().optional(),
@@ -90,6 +109,8 @@ export const FingerprintSchema = z.object({
   lie_resolution_mismatch: z.boolean().optional(),
   lie_timezone_mismatch: z.boolean().optional(),
   lie_webgl_mismatch: z.boolean().optional(),
+  lie_headless: z.boolean().optional(),
+  lie_automation: z.boolean().optional(),
 }).passthrough(); // Allow additional fields for future expansion
 
 export type ValidatedFingerprint = z.infer<typeof FingerprintSchema>;
