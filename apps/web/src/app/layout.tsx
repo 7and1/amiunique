@@ -116,7 +116,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <link rel="preconnect" href="https://api.amiunique.io" />
+        <link rel="preconnect" href="https://amiunique-api.7and1.workers.dev" />
         <script
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
           suppressHydrationWarning

@@ -7,7 +7,7 @@ import type { FingerprintData, AnalysisResult, GlobalStats } from '@amiunique/co
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.API_URL ||
-  'https://api.amiunique.io';
+  'https://amiunique-api.7and1.workers.dev';
 
 // Short timeout for build-time fetches to prevent static generation hangs
 const BUILD_TIMEOUT = 5000;

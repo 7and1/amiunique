@@ -33,7 +33,7 @@ const integrationSteps = [
   },
   {
     name: 'Submit to API',
-    text: 'POST the collected fingerprint data to https://api.amiunique.io/api/analyze',
+    text: 'POST the collected fingerprint data to https://amiunique-api.7and1.workers.dev/api/analyze',
   },
   {
     name: 'Process response',
@@ -154,7 +154,7 @@ const collectorSnippet = `import { collectFingerprint } from '@amiunique/core';
 const fingerprint = await collectFingerprint();
 
 // Submit to API
-const response = await fetch('https://api.amiunique.io/api/analyze', {
+const response = await fetch('https://amiunique-api.7and1.workers.dev/api/analyze', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(fingerprint),
@@ -469,7 +469,7 @@ export default function DevelopersPage() {
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-400">Base URL</p>
               <p className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
-                https://api.amiunique.io
+                https://amiunique-api.7and1.workers.dev
               </p>
             </div>
           </div>
