@@ -1,0 +1,67 @@
+# AmiUnique.io API Worker Configuration - EXAMPLE
+# Copy this file to wrangler.toml and replace placeholder values
+# DO NOT commit wrangler.toml with real credentials to public repos!
+
+name = "amiunique-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+workers_dev = true
+
+# Local dev server port
+[dev]
+port = 8787
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+# D1 Database binding
+# Create your database: wrangler d1 create amiunique-db
+# Then copy the database_id from the output
+[[d1_databases]]
+binding = "DB"
+database_name = "amiunique-db"
+database_id = "YOUR_D1_DATABASE_ID"  # Replace with actual ID
+
+# KV Namespace for distributed rate limiting
+# Create namespaces:
+# wrangler kv namespace create "RATE_LIMIT_KV"
+# wrangler kv namespace create "RATE_LIMIT_KV" --preview
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "YOUR_KV_NAMESPACE_ID"          # Replace with actual ID
+preview_id = "YOUR_KV_PREVIEW_ID"    # Replace with actual preview ID
+
+# Scheduled triggers for background jobs
+[triggers]
+crons = [
+  "0 * * * *",   # Every hour: process deletion requests
+  "*/5 * * * *"  # Every 5 minutes: refresh stats cache
+]
+
+# Production environment
+[env.production]
+name = "amiunique-api"
+workers_dev = false
+
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "amiunique-db"
+database_id = "YOUR_D1_DATABASE_ID"  # Replace with actual production ID
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "YOUR_PRODUCTION_KV_ID"         # Replace with actual production KV ID
+
+[env.production.triggers]
+crons = [
+  "0 * * * *",   # Every hour: process deletion requests
+  "*/5 * * * *"  # Every 5 minutes: refresh stats cache
+]
+
+# Custom routes (uncomment and configure after domain setup)
+# [env.production.routes]
+# route = { pattern = "api.amiunique.io/*", zone_name = "amiunique.io" }

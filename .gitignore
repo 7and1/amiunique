@@ -21,6 +21,7 @@ out/
 .wrangler/
 .mf/
 wrangler.toml.local
+apps/api/wrangler.toml
 .claude/
 
 # IDE

@@ -1,181 +1,223 @@
-# AmiUnique.io 生产部署报告
+# Deployment Guide
 
-**部署时间**: 2025-12-09
-**部署状态**: ✅ 核心基础设施已完成，待配置域名
+This document explains how to deploy AmiUnique.io to Cloudflare using GitHub Actions.
 
----
+## Prerequisites
 
-## 📦 已部署组件
+1. **Cloudflare Account** - Sign up at https://dash.cloudflare.com
+2. **GitHub Repository** - Fork or clone this repo
+3. **Cloudflare Resources** - Create required D1 database and KV namespaces
 
-### 1. Cloudflare D1 数据库
-- **名称**: `amiunique-db`
-- **区域**: WNAM (Western North America)
-- **表结构**: visits, deletion_requests, stats_cache, scheduled_jobs
-- **索引**: 三锁哈希索引 + Meta 字段索引
+## Step 1: Create Cloudflare Resources
 
-### 2. Cloudflare KV (分布式限流)
-- **Preview/Dev**: Create via `wrangler kv:namespace create "RATE_LIMIT_KV" --preview`
-- **Production**: Create via `wrangler kv:namespace create "RATE_LIMIT_KV"`
+### Create D1 Database
 
-### 3. Cloudflare Worker API
-- **Worker 名称**: `amiunique-api`
-- **Cron 触发器**: 每小时 GDPR 删除 + 每 5 分钟统计刷新
-
-### 4. Cloudflare Pages 前端
-- **生产 URL**: https://amiunique.pages.dev
-- **状态**: ✅ 可访问
-
----
-
-## ⚠️ 待解决: API Worker 访问
-
-**问题**: workers.dev 子域名无法访问 (https://amiunique-api.difft.workers.dev 超时)
-
-**解决方案（三选一）**:
-
-1. **配置自定义域名（推荐）**
-   - 在 `apps/api/wrangler.toml` 取消注释路由配置
-   - 设置 `pattern = "api.amiunique.io/*"`
-   - 重新部署: `wrangler deploy --env production`
-
-2. **启用 workers.dev**
-   - Cloudflare Dashboard → Workers & Pages → Settings
-   - 检查并启用 workers.dev subdomain
-
-3. **本地测试**
-   ```bash
-   cd apps/api && wrangler dev --remote
-   ```
-
----
-
-## 🔧 配置前端 API URL
-
-1. Cloudflare Dashboard → Pages → amiunique → Settings → Environment variables
-2. 添加: `NEXT_PUBLIC_API_URL = https://api.amiunique.io`
-3. 重新部署:
-   ```bash
-   cd apps/web
-   pnpm build
-   wrangler pages deploy out --project-name=amiunique
-   ```
-
----
-
-## ✅ 验证清单
-
-### API Worker
-- [ ] Health check: `curl https://api-url/api/health`
-- [ ] Stats: `curl https://api-url/api/stats`
-- [ ] Analyze: `curl -X POST https://api-url/api/analyze -H "Content-Type: application/json" -d '{"hw_canvas_hash":"test"}'`
-
-### 前端
-- [x] 页面加载: https://amiunique.pages.dev
-- [ ] 指纹扫描功能
-- [ ] 结果显示和图表
-
-### 数据库
 ```bash
-wrangler d1 execute amiunique-db --remote --command="SELECT COUNT(*) FROM visits"
+cd apps/api
+wrangler d1 create amiunique-db
 ```
 
----
+Copy the `database_id` from the output.
 
-## 📝 下一步
-
-1. **立即**: 确认 Cloudflare workers.dev 子域名状态
-2. **短期**: 配置自定义域名 api.amiunique.io
-3. **完成**: 设置前端 API URL 环境变量
-4. **验证**: 端到端功能测试
-
-**部署账户**: (configured via GitHub Secrets)
-
----
-
-## 🤖 自动部署 (GitHub Actions)
-
-### 工作流配置
-
-已创建 `.github/workflows/deploy.yml`，自动部署流程：
-
-**触发条件**:
-- 推送到 `main` 分支
-- 手动触发 (GitHub Actions 页面)
-
-**部署步骤**:
-1. ✅ 安装依赖 (pnpm)
-2. ✅ 构建所有包
-3. ✅ 部署 API 到 Cloudflare Workers
-4. ✅ 部署 Web 到 Cloudflare Pages
-5. ✅ 通知部署结果
-
-### GitHub Secrets 配置
-
-**必需的 Secrets** (在 GitHub 仓库设置中添加):
+### Create KV Namespaces
 
 ```bash
-CLOUDFLARE_API_TOKEN    # Cloudflare API 令牌
-CLOUDFLARE_ACCOUNT_ID   # Your Cloudflare account ID
-OPENROUTER_API_KEY      # (可选) AI 聊天功能
+# Development namespace
+wrangler kv namespace create "RATE_LIMIT_KV"
+
+# Preview namespace
+wrangler kv namespace create "RATE_LIMIT_KV" --preview
+
+# Production namespace (if different from dev)
+wrangler kv namespace create "RATE_LIMIT_KV_PROD"
 ```
 
-**通过 GitHub CLI 配置**:
+Copy the `id` values from the outputs.
+
+### Initialize Database Schema
 
 ```bash
-# 确保已登录 GitHub CLI
-gh auth status
+wrangler d1 execute amiunique-db --file=./schema.sql --remote
+```
 
-# 添加 Cloudflare secrets
-gh secret set CLOUDFLARE_API_TOKEN -b"your-token-here"
-gh secret set CLOUDFLARE_ACCOUNT_ID -b"your-account-id"
+## Step 2: Configure GitHub Secrets
 
-# 添加 OpenRouter API key (可选)
-gh secret set OPENROUTER_API_KEY -b"sk-or-v1-your-key-here"
+Go to your GitHub repository settings: **Settings → Secrets and variables → Actions → New repository secret**
 
-# 验证 secrets 已添加
+Add the following secrets:
+
+| Secret Name | Description | How to Get |
+|-------------|-------------|------------|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token | [Create token](https://dash.cloudflare.com/profile/api-tokens) with `Workers Scripts:Edit` permission |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID | Found in dashboard URL: `dash.cloudflare.com/<account_id>` |
+| `D1_DATABASE_ID` | D1 database ID | From `wrangler d1 create` output |
+| `KV_NAMESPACE_ID` | Development KV namespace ID | From `wrangler kv namespace create` output |
+| `KV_PREVIEW_ID` | Preview KV namespace ID | From preview creation output |
+| `KV_NAMESPACE_ID_PROD` | Production KV namespace ID | Same as `KV_NAMESPACE_ID` or separate production namespace |
+
+### Using GitHub CLI (Automated)
+
+```bash
+# Set variables
+CLOUDFLARE_API_TOKEN="your_token_here"
+CLOUDFLARE_ACCOUNT_ID="your_account_id_here"
+D1_DATABASE_ID="your_d1_id_here"
+KV_NAMESPACE_ID="your_kv_id_here"
+KV_PREVIEW_ID="your_preview_kv_id_here"
+KV_NAMESPACE_ID_PROD="your_prod_kv_id_here"
+
+# Create secrets
+gh secret set CLOUDFLARE_API_TOKEN --body "$CLOUDFLARE_API_TOKEN"
+gh secret set CLOUDFLARE_ACCOUNT_ID --body "$CLOUDFLARE_ACCOUNT_ID"
+gh secret set D1_DATABASE_ID --body "$D1_DATABASE_ID"
+gh secret set KV_NAMESPACE_ID --body "$KV_NAMESPACE_ID"
+gh secret set KV_PREVIEW_ID --body "$KV_PREVIEW_ID"
+gh secret set KV_NAMESPACE_ID_PROD --body "$KV_NAMESPACE_ID_PROD"
+
+# Verify secrets
 gh secret list
 ```
 
-**手动配置** (如果不使用 CLI):
-1. 访问: https://github.com/7and1/amiunique/settings/secrets/actions
-2. 点击 "New repository secret"
-3. 添加上述三个 secrets
+## Step 3: Local Development Setup
 
-### 查看完整配置指南
-
-参见: `.github/SECRETS.md`
-
----
-
-## 🚀 快速部署流程
-
-### 自动部署 (推荐)
+1. **Copy wrangler.toml template:**
 
 ```bash
-# 1. 配置 GitHub Secrets (一次性)
-gh secret set CLOUDFLARE_API_TOKEN -b"your-token"
-gh secret set CLOUDFLARE_ACCOUNT_ID -b"your-account-id"
-
-# 2. 提交并推送代码
-git add .
-git commit -m "feat: add AI chat assistant and deployment workflow"
-git push origin main
-
-# 3. GitHub Actions 自动部署！
-# 查看进度: https://github.com/7and1/amiunique/actions
-```
-
-### 手动部署
-
-```bash
-# API
 cd apps/api
-wrangler deploy --env production
-
-# Web
-cd apps/web
-pnpm build
-wrangler pages deploy .next --project-name=amiunique
+cp wrangler.toml.example wrangler.toml
 ```
 
----
+2. **Edit wrangler.toml with your IDs:**
+
+```toml
+[[d1_databases]]
+database_id = "YOUR_ACTUAL_D1_ID"
+
+[[kv_namespaces]]
+id = "YOUR_ACTUAL_KV_ID"
+preview_id = "YOUR_ACTUAL_PREVIEW_KV_ID"
+```
+
+⚠️ **IMPORTANT**: `wrangler.toml` is in `.gitignore` to prevent accidental commits!
+
+3. **Start development server:**
+
+```bash
+# From project root
+pnpm dev          # Start all services
+pnpm dev:api      # API only
+pnpm dev:web      # Frontend only
+```
+
+## Step 4: Deploy
+
+### Automatic Deployment (Recommended)
+
+Push to `main` branch to trigger automatic deployment via GitHub Actions:
+
+```bash
+git add .
+git commit -m "Deploy updates"
+git push origin main
+```
+
+GitHub Actions will:
+1. ✅ Build API Worker
+2. ✅ Deploy to Cloudflare Workers
+3. ✅ Build Next.js web app
+4. ✅ Deploy to Cloudflare Pages
+5. ✅ Report deployment status
+
+### Manual Deployment
+
+```bash
+# Deploy API Worker
+pnpm deploy:api
+
+# Deploy Web App
+pnpm deploy:web
+
+# Deploy both
+pnpm deploy
+```
+
+## Step 5: Verify Deployment
+
+1. **Check GitHub Actions:**
+   - Go to **Actions** tab in your repo
+   - Verify "Deploy to Cloudflare" workflow succeeded
+
+2. **Test API endpoint:**
+   ```bash
+   curl https://amiunique-api.<your-subdomain>.workers.dev/api/health
+   ```
+
+3. **Test Web App:**
+   - Visit: `https://amiunique.pages.dev`
+   - Run a fingerprint scan
+
+## Security Best Practices
+
+✅ **DO:**
+- Use GitHub Secrets for sensitive data
+- Rotate API tokens regularly
+- Enable branch protection rules
+- Review deployment logs for errors
+
+❌ **DON'T:**
+- Commit `wrangler.toml` with real IDs
+- Share API tokens in public channels
+- Disable security checks
+- Use production credentials in development
+
+## Troubleshooting
+
+### Deployment fails with "binding DB must have a valid id"
+
+**Solution:** Verify `D1_DATABASE_ID` secret is set correctly in GitHub.
+
+### "Permission denied" during deployment
+
+**Solution:** Check that your `CLOUDFLARE_API_TOKEN` has `Workers Scripts:Edit` permission.
+
+### Web app shows 404 errors
+
+**Solution:** Ensure Pages project name matches: `--project-name=amiunique` in deploy command.
+
+### How to rollback deployment?
+
+```bash
+# List recent deployments
+wrangler deployments list
+
+# Rollback to specific version
+wrangler rollback <deployment-id>
+```
+
+## Custom Domain Setup
+
+1. Add domain to Cloudflare
+2. Configure DNS records:
+   ```
+   api.amiunique.io → CNAME to amiunique-api.workers.dev
+   www.amiunique.io → CNAME to amiunique.pages.dev
+   ```
+3. Uncomment routes in `wrangler.toml.example`
+
+## CI/CD Pipeline
+
+The deployment workflow (`.github/workflows/deploy.yml`) runs on:
+- ✅ Push to `main` branch
+- ✅ Pull requests (build only, no deploy)
+- ✅ Manual trigger via workflow_dispatch
+
+### Workflow Jobs
+
+1. **deploy-api** - Build and deploy Worker
+2. **deploy-web** - Build and deploy Pages
+3. **notify** - Report deployment status
+
+## Support
+
+- Issues: https://github.com/7and1/amiunique/issues
+- Docs: https://developers.cloudflare.com/workers/

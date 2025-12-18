@@ -1,71 +1,164 @@
-name: CI & Deploy
+name: Deploy to Cloudflare
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
+# Prevent concurrent deployments
 concurrency:
-  group: ci-deploy-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  # Build and deploy API Worker
+  deploy-api:
+    name: Deploy API Worker
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+    permissions:
+      contents: read
+      deployments: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
         with:
-          version: 9
+          version: 9.0.0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-        continue-on-error: true
+      - name: Build API Worker
+        run: pnpm build:api
 
-      - name: Build
-        run: pnpm build
-
-      # Replace placeholder IDs with actual values from secrets
-      - name: Configure wrangler.toml
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Create wrangler.toml with secrets
+        working-directory: apps/api
         run: |
-          cd apps/api
-          sed -i 's/YOUR_D1_DATABASE_ID/${{ secrets.D1_DATABASE_ID }}/g' wrangler.toml
-          sed -i 's/YOUR_KV_NAMESPACE_ID/${{ secrets.KV_NAMESPACE_ID }}/g' wrangler.toml
-          sed -i 's/YOUR_KV_PREVIEW_ID/${{ secrets.KV_PREVIEW_ID }}/g' wrangler.toml
-          sed -i 's/YOUR_PRODUCTION_KV_ID/${{ secrets.KV_PRODUCTION_ID }}/g' wrangler.toml
+          cat > wrangler.toml << 'TOML'
+          name = "amiunique-api"
+          main = "src/index.ts"
+          compatibility_date = "2024-01-01"
+          workers_dev = true
 
-      - name: Apply D1 schema (production)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: pnpm db:migrate
+          [dev]
+          port = 8787
 
-      - name: Deploy Worker API
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: pnpm deploy:api
+          [vars]
+          ENVIRONMENT = "development"
 
-      - name: Deploy Frontend
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "amiunique-db"
+          database_id = "${{ secrets.D1_DATABASE_ID }}"
+
+          [[kv_namespaces]]
+          binding = "RATE_LIMIT_KV"
+          id = "${{ secrets.KV_NAMESPACE_ID }}"
+          preview_id = "${{ secrets.KV_PREVIEW_ID }}"
+
+          [triggers]
+          crons = [
+            "0 * * * *",
+            "*/5 * * * *"
+          ]
+
+          [env.production]
+          name = "amiunique-api"
+          workers_dev = false
+
+          [env.production.vars]
+          ENVIRONMENT = "production"
+
+          [[env.production.d1_databases]]
+          binding = "DB"
+          database_name = "amiunique-db"
+          database_id = "${{ secrets.D1_DATABASE_ID }}"
+
+          [[env.production.kv_namespaces]]
+          binding = "RATE_LIMIT_KV"
+          id = "${{ secrets.KV_NAMESPACE_ID_PROD }}"
+
+          [env.production.triggers]
+          crons = [
+            "0 * * * *",
+            "*/5 * * * *"
+          ]
+          TOML
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env production
+          workingDirectory: apps/api
+          wranglerVersion: '4.51.0'
+
+  # Build and deploy Web App to Cloudflare Pages
+  deploy-web:
+    name: Deploy Web App
+    runs-on: ubuntu-latest
+    needs: deploy-api
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Web App
+        run: pnpm build:web
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: pnpm deploy:web -- --commit-dirty=true
+          NODE_ENV: production
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/web/out --project-name=amiunique
+          wranglerVersion: '4.51.0'
+
+  # Notify deployment status
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy-api, deploy-web]
+    if: always()
+    steps:
+      - name: Check deployment status
+        run: |
+          if [ "${{ needs.deploy-api.result }}" == "success" ] && [ "${{ needs.deploy-web.result }}" == "success" ]; then
+            echo "✅ All deployments successful!"
+            echo "🌐 API: https://amiunique-api.7and1.workers.dev"
+            echo "🌐 Web: https://amiunique.pages.dev"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
