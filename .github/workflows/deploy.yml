@@ -76,7 +76,7 @@ jobs:
 
           [env.production]
           name = "amiunique-api"
-          workers_dev = false
+          workers_dev = true
 
           [env.production.vars]
           ENVIRONMENT = "production"
