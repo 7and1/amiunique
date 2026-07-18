@@ -1,3 +1,9 @@
+-- Bring the legacy production deletion table up to the current retry schema.
+-- This migration targets databases created before these columns were added to schema.sql.
+ALTER TABLE deletion_requests ADD COLUMN retry_count INTEGER DEFAULT 0;
+ALTER TABLE deletion_requests ADD COLUMN last_error TEXT;
+ALTER TABLE deletion_requests ADD COLUMN last_attempt_at INTEGER;
+
 -- Remove request-scoped network metadata persisted by earlier releases.
 -- Aggregate country statistics remain in visits.meta_country.
 UPDATE visits
