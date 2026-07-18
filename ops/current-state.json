@@ -11,7 +11,10 @@
     "GitHub-hosted runners are blocked before job startup by an account billing/spending-limit gate"
   ],
   "last_known_good": "2026-07-18 production Worker, Pages, D1 privacy migration, IPBot, headers, and 12/12 Chrome acceptance",
-  "latest_smoke_artifacts": ["/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020"],
+  "latest_smoke_artifacts": [
+    "/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020",
+    "/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111933"
+  ],
   "openclaw_project": "oc-amiunique-9d723bfb",
   "openclaw_role": "local testing, preview, browser QA, and artifact collection",
   "operator_notes": [
@@ -24,7 +27,9 @@
   "production_urls": ["https://amiunique.io"],
   "project": "amiunique",
   "project_root": ".",
+  "repository_visibility": "public",
   "schema_version": 1,
+  "source_repository": "https://github.com/7and1/amiunique/",
   "smoke_command": "PLAYWRIGHT_BASE_URL=https://amiunique.io PLAYWRIGHT_CHANNEL=chrome pnpm --filter @amiunique/web test:e2e",
   "state_files": {
     "human": "PROJECT_STATE.md",
@@ -32,5 +37,5 @@
     "machine": "ops/current-state.json"
   },
   "status_rule": "Confirm historical deployment from recorded state, public URLs, and smoke evidence before drawing conclusions from current authentication.",
-  "updated_at": "2026-07-18T11:12:18Z"
+  "updated_at": "2026-07-18T11:19:55Z"
 }

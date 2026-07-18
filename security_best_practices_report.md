@@ -149,6 +149,11 @@ security-header checks, and real-browser acceptance all passed before the reposi
   `X-Content-Type-Options`, `X-Frame-Options`, and Referrer-Policy.
 - Production Chrome acceptance: 12/12 Playwright checks passed; artifact
   `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020`.
+- Public repository acceptance: anonymous HTTP and Git access passed; a real Chrome footer click
+  opened `https://github.com/7and1/amiunique/`; artifact
+  `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111933`.
+- GitHub secret scanning, push protection, vulnerability alerts, automated security fixes, and
+  protected `main` settings are enabled.
 
 GitHub Actions was also triggered, but GitHub rejected every job before runner startup because of the
 account billing/spending-limit gate. No application step failed, and no secret was exposed in logs.

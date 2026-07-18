@@ -8,6 +8,7 @@ Current production-state summary. Keep this file short and factual.
 - Platform: Cloudflare Pages + Workers
 - Production URL: `https://amiunique.io`
 - Custom domain: `amiunique.io`
+- Source: public at `https://github.com/7and1/amiunique/`
 - Deploy path: OpenClaw + Wrangler direct deployment; GitHub Actions is the preferred automated path
   after the account runner billing gate is cleared
 - Smoke command: `PLAYWRIGHT_BASE_URL=https://amiunique.io PLAYWRIGHT_CHANNEL=chrome pnpm --filter @amiunique/web test:e2e`
@@ -16,7 +17,9 @@ Current production-state summary. Keep this file short and factual.
   Chrome acceptance passed on 2026-07-18
 - Worker version: `8b98237b-047d-414f-ba90-3d342e6478e0`
 - Pages deployment: `73ef358e-2c0c-4a0e-9572-b2a06946789d`
-- Latest smoke artifact: `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020`
+- Latest smoke artifacts:
+  - `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020`
+  - `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111933`
 
 ## Known Warnings
 
