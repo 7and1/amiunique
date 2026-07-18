@@ -36,7 +36,7 @@ Configure these in your repository:
 5. **KV_PREVIEW_ID**
    - **Description**: KV namespace preview ID (can be same as KV_NAMESPACE_ID)
 
-6. **KV_PRODUCTION_ID**
+6. **KV_NAMESPACE_ID_PROD**
    - **Description**: KV namespace ID for production environment
    - **How to get**: Create a separate KV namespace for production
 
@@ -46,6 +46,27 @@ Configure these in your repository:
    - **Description**: OpenRouter API key for AI chat assistant
    - **How to get**: https://openrouter.ai/keys
    - **Note**: If not provided, AI chat uses intelligent fallback responses
+
+### Optional: IPBot IP Intelligence
+
+8. **IPBOT_API_ORIGIN** (optional)
+   - **Description**: IPBot API origin URL (e.g. `https://api.ipbot.com`)
+   - **Usage**: Injected as a wrangler `[vars]` entry; enables `ip_intel` enrichment in `/api/analyze`
+
+9. **IPBOT_API_KEY** (optional)
+   - **Description**: IPBot API key, sent as `X-API-Key`. Uploaded to the Worker as a
+     wrangler secret by the deploy workflow (never a `[vars]` entry, never committed)
+   - **Note**: If either IPBot secret is missing, IP intel lookups are skipped and
+     `/api/analyze` returns `ip_intel: null` (fail-open)
+   - **Local dev**: put both values in `apps/api/.dev.vars` (gitignored)
+
+### Non-secret Worker Binding
+
+`IP_INTEL_RATE_LIMITER`, `ANALYZE_RATE_LIMITER`, `DELETION_RATE_LIMITER`,
+`STATS_RATE_LIMITER`, and `HEALTH_RATE_LIMITER` are configured directly in
+`wrangler.toml.example` and the deploy workflow as native Cloudflare Rate Limiting bindings. They
+do not require GitHub secrets. Keep every development and production namespace ID unique within
+the Cloudflare account.
 
 ## CLI Setup Commands
 
@@ -63,7 +84,7 @@ gh secret set CLOUDFLARE_ACCOUNT_ID --body "your-account-id"
 gh secret set D1_DATABASE_ID --body "your-d1-id"
 gh secret set KV_NAMESPACE_ID --body "your-kv-id"
 gh secret set KV_PREVIEW_ID --body "your-kv-preview-id"
-gh secret set KV_PRODUCTION_ID --body "your-kv-production-id"
+gh secret set KV_NAMESPACE_ID_PROD --body "your-kv-production-id"
 
 # Verify secrets
 gh secret list
@@ -82,6 +103,7 @@ After adding secrets, verify they're accessible:
 ## Deployment Trigger
 
 Once secrets are configured, deployment will trigger automatically on:
+
 - Every push to `main` branch
 - Manual workflow dispatch from Actions tab
 
@@ -96,14 +118,17 @@ Once secrets are configured, deployment will trigger automatically on:
 ## Troubleshooting
 
 ### Deployment fails with "Unauthorized"
+
 - Check CLOUDFLARE_API_TOKEN has correct permissions
 - Verify token hasn't expired
 - Regenerate token if needed
 
 ### D1/KV binding errors
+
 - Verify D1_DATABASE_ID matches your database
-- Check KV_PRODUCTION_ID is set for production deploys
+- Check KV_NAMESPACE_ID_PROD is set for production deploys
 
 ### AI chat not working
+
 - Add OPENROUTER_API_KEY secret
 - Or: AI chat will use fallback mode (still functional)
