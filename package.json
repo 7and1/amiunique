@@ -22,7 +22,7 @@
     "db:migrate": "wrangler d1 execute amiunique-db --file=./apps/api/schema.sql --config=./apps/api/wrangler.toml --remote"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=20.9.0"
   },
   "packageManager": "pnpm@9.0.0",
   "keywords": [
@@ -38,17 +38,32 @@
   "devDependencies": {
     "@playwright/test": "1.57.0",
     "@types/node": "^20.10.0",
-    "@vitest/coverage-v8": "4.0.15",
-    "jsdom": "27.2.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "jsdom": "29.1.1",
     "prettier": "^3.1.0",
-    "turbo": "^2.0.0",
+    "turbo": "2.9.14",
     "typescript": "^5.3.0",
-    "vitest": "4.0.15",
-    "wrangler": "^4.51.0"
+    "vite": "7.3.5",
+    "vitest": "4.1.10",
+    "wrangler": "4.112.0"
   },
   "pnpm": {
     "overrides": {
-      "typescript": "5.4.5"
+      "typescript": "5.4.5",
+      "@babel/core@<=7.29.0": "7.29.6",
+      "ajv@<6.14.0": "6.14.0",
+      "brace-expansion@<1.1.13": "1.1.13",
+      "brace-expansion@>=2.0.0 <2.0.3": "2.0.3",
+      "esbuild@>=0.27.3 <0.28.1": "0.28.1",
+      "flatted@<3.4.2": "3.4.2",
+      "js-yaml@>=4.0.0 <=4.1.1": "4.2.0",
+      "minimatch@<3.1.4": "3.1.4",
+      "minimatch@>=9.0.0 <9.0.7": "9.0.7",
+      "picomatch@<2.3.2": "2.3.2",
+      "picomatch@>=4.0.0 <4.0.4": "4.0.4",
+      "postcss@<8.5.10": "8.5.10",
+      "rollup@>=4.0.0 <4.59.0": "4.59.0",
+      "vite@>=7.0.0 <7.3.5": "7.3.5"
     }
   }
 }

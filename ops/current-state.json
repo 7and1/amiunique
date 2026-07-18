@@ -1,0 +1,34 @@
+{
+  "auth_requirements": [
+    "GitHub Actions Cloudflare deployment secrets",
+    "Wrangler authentication for direct production operations"
+  ],
+  "custom_domains": ["amiunique.io"],
+  "deploy_command": "GitHub Actions: Deploy to Cloudflare",
+  "kind": "cloudflare",
+  "known_warnings": [
+    "Static Next.js bootstrap requires script-src 'unsafe-inline'"
+  ],
+  "last_known_good": "2026-07-18 security audit, dependency audit, lint, tests, build, and local browser E2E",
+  "latest_smoke_artifacts": [
+    "/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-104047"
+  ],
+  "openclaw_project": "oc-amiunique-9d723bfb",
+  "openclaw_role": "local testing, preview, browser QA, and artifact collection",
+  "operator_notes": [],
+  "pages_project": "amiunique",
+  "pages_url": "https://amiunique.io",
+  "platform": "cloudflare",
+  "production_urls": ["https://amiunique.io"],
+  "project": "amiunique",
+  "project_root": ".",
+  "schema_version": 1,
+  "smoke_command": "PLAYWRIGHT_BASE_URL=https://amiunique.io PLAYWRIGHT_CHANNEL=chrome pnpm --filter @amiunique/web test:e2e",
+  "state_files": {
+    "human": "PROJECT_STATE.md",
+    "ledger": "ops/deploy-ledger.jsonl",
+    "machine": "ops/current-state.json"
+  },
+  "status_rule": "Confirm historical deployment from recorded state, public URLs, and smoke evidence before drawing conclusions from current authentication.",
+  "updated_at": "2026-07-18T10:45:39Z"
+}

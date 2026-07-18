@@ -91,7 +91,7 @@ describe('FingerprintSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should allow additional unknown fields (passthrough)', () => {
+    it('should strip additional unknown fields before persistence', () => {
       const withExtra = {
         hw_canvas_hash: 'abc123',
         future_field: 'some value',
@@ -101,7 +101,8 @@ describe('FingerprintSchema', () => {
       const result = FingerprintSchema.safeParse(withExtra);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.future_field).toBe('some value');
+        expect(result.data).not.toHaveProperty('future_field');
+        expect(result.data).not.toHaveProperty('another_unknown');
       }
     });
   });
@@ -126,13 +127,17 @@ describe('FingerprintSchema', () => {
     });
 
     it('should reject strings exceeding max length', () => {
-      expect(FingerprintSchema.safeParse({
-        hw_canvas_hash: 'x'.repeat(200), // max 128
-      }).success).toBe(false);
+      expect(
+        FingerprintSchema.safeParse({
+          hw_canvas_hash: 'x'.repeat(200), // max 128
+        }).success
+      ).toBe(false);
 
-      expect(FingerprintSchema.safeParse({
-        hw_webgl_vendor: 'x'.repeat(300), // max 256
-      }).success).toBe(false);
+      expect(
+        FingerprintSchema.safeParse({
+          hw_webgl_vendor: 'x'.repeat(300), // max 256
+        }).success
+      ).toBe(false);
     });
 
     it('should reject non-integer cpu cores', () => {
@@ -150,21 +155,27 @@ describe('FingerprintSchema', () => {
     });
 
     it('should validate sys_languages array', () => {
-      expect(FingerprintSchema.safeParse({
-        sys_languages: ['en-US', 'en', 'de'],
-      }).success).toBe(true);
+      expect(
+        FingerprintSchema.safeParse({
+          sys_languages: ['en-US', 'en', 'de'],
+        }).success
+      ).toBe(true);
 
       // Array too large
       const tooMany = Array(40).fill('en');
-      expect(FingerprintSchema.safeParse({
-        sys_languages: tooMany, // max 32
-      }).success).toBe(false);
+      expect(
+        FingerprintSchema.safeParse({
+          sys_languages: tooMany, // max 32
+        }).success
+      ).toBe(false);
     });
 
     it('should validate sys_user_agent max length', () => {
-      expect(FingerprintSchema.safeParse({
-        sys_user_agent: 'x'.repeat(600), // max 512
-      }).success).toBe(false);
+      expect(
+        FingerprintSchema.safeParse({
+          sys_user_agent: 'x'.repeat(600), // max 512
+        }).success
+      ).toBe(false);
     });
   });
 
@@ -179,13 +190,17 @@ describe('FingerprintSchema', () => {
     });
 
     it('should validate cap_permissions as record', () => {
-      expect(FingerprintSchema.safeParse({
-        cap_permissions: { camera: 'granted', mic: 'denied' },
-      }).success).toBe(true);
+      expect(
+        FingerprintSchema.safeParse({
+          cap_permissions: { camera: 'granted', mic: 'denied' },
+        }).success
+      ).toBe(true);
 
-      expect(FingerprintSchema.safeParse({
-        cap_permissions: 'not an object',
-      }).success).toBe(false);
+      expect(
+        FingerprintSchema.safeParse({
+          cap_permissions: 'not an object',
+        }).success
+      ).toBe(false);
     });
   });
 
@@ -199,14 +214,18 @@ describe('FingerprintSchema', () => {
     });
 
     it('should validate aux_window dimensions', () => {
-      expect(FingerprintSchema.safeParse({
-        aux_window_width: 1920,
-        aux_window_height: 1080,
-      }).success).toBe(true);
+      expect(
+        FingerprintSchema.safeParse({
+          aux_window_width: 1920,
+          aux_window_height: 1080,
+        }).success
+      ).toBe(true);
 
-      expect(FingerprintSchema.safeParse({
-        aux_window_width: -100,
-      }).success).toBe(false);
+      expect(
+        FingerprintSchema.safeParse({
+          aux_window_width: -100,
+        }).success
+      ).toBe(false);
     });
   });
 });
@@ -237,14 +256,14 @@ describe('DeletionRequestSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept optional email and reason', () => {
+    it('should reject extra personal information fields', () => {
       const result = DeletionRequestSchema.safeParse({
         hash_type: 'hardware',
         hash_value: 'a'.repeat(64),
         email: 'user@example.com',
         reason: 'I want my data deleted',
       });
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
   });
 
@@ -258,50 +277,39 @@ describe('DeletionRequestSchema', () => {
     });
 
     it('should reject hash_value not 64 characters', () => {
-      expect(DeletionRequestSchema.safeParse({
-        hash_type: 'hardware',
-        hash_value: 'too-short',
-      }).success).toBe(false);
+      expect(
+        DeletionRequestSchema.safeParse({
+          hash_type: 'hardware',
+          hash_value: 'too-short',
+        }).success
+      ).toBe(false);
 
-      expect(DeletionRequestSchema.safeParse({
-        hash_type: 'hardware',
-        hash_value: 'a'.repeat(65), // too long
-      }).success).toBe(false);
+      expect(
+        DeletionRequestSchema.safeParse({
+          hash_type: 'hardware',
+          hash_value: 'a'.repeat(65), // too long
+        }).success
+      ).toBe(false);
     });
 
     it('should reject missing required fields', () => {
-      expect(DeletionRequestSchema.safeParse({
-        hash_type: 'hardware',
-      }).success).toBe(false);
+      expect(
+        DeletionRequestSchema.safeParse({
+          hash_type: 'hardware',
+        }).success
+      ).toBe(false);
 
-      expect(DeletionRequestSchema.safeParse({
-        hash_value: 'a'.repeat(64),
-      }).success).toBe(false);
+      expect(
+        DeletionRequestSchema.safeParse({
+          hash_value: 'a'.repeat(64),
+        }).success
+      ).toBe(false);
     });
 
-    it('should reject invalid email format', () => {
+    it('should reject non-hex hashes even when they have 64 characters', () => {
       const result = DeletionRequestSchema.safeParse({
         hash_type: 'hardware',
-        hash_value: 'a'.repeat(64),
-        email: 'not-an-email',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject reason exceeding max length', () => {
-      const result = DeletionRequestSchema.safeParse({
-        hash_type: 'hardware',
-        hash_value: 'a'.repeat(64),
-        reason: 'x'.repeat(1100), // max 1000
-      });
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject email exceeding max length', () => {
-      const result = DeletionRequestSchema.safeParse({
-        hash_type: 'hardware',
-        hash_value: 'a'.repeat(64),
-        email: 'a'.repeat(250) + '@example.com', // exceeds 256
+        hash_value: 'z'.repeat(64),
       });
       expect(result.success).toBe(false);
     });

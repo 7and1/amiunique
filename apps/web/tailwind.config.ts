@@ -133,7 +133,7 @@ const config: Config = {
         'gradient-shift': 'gradient-shift 3s ease-in-out infinite',
         'fingerprint-draw': 'fingerprint-draw 2s ease-out forwards',
         'expand-width': 'expand-width 0.3s ease-out forwards',
-        'shimmer': 'shimmer 2s linear infinite',
+        shimmer: 'shimmer 2s linear infinite',
       },
       keyframes: {
         'scan-pulse': {
@@ -181,7 +181,7 @@ const config: Config = {
           '0%': { width: '280px' },
           '100%': { width: '360px' },
         },
-        'shimmer': {
+        shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
@@ -193,10 +193,13 @@ const config: Config = {
         'scan-gradient': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
         'primary-gradient': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
         // Bell curve fill - consistent indigo
-        'bell-curve-fill': 'linear-gradient(180deg, rgba(99,102,241,0.45) 0%, rgba(99,102,241,0.05) 100%)',
+        'bell-curve-fill':
+          'linear-gradient(180deg, rgba(99,102,241,0.45) 0%, rgba(99,102,241,0.05) 100%)',
         // Glass effects
-        'glass-border': 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%)',
-        'shimmer': 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+        'glass-border':
+          'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%)',
+        shimmer:
+          'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
         // Gold accent (for Gold Lock only)
         'gold-gradient': 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
       },

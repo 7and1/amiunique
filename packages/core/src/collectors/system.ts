@@ -136,12 +136,16 @@ export function getConnectionInfo(): {
   rtt?: number;
   saveData?: boolean;
 } | null {
-  const conn = (navigator as unknown as { connection?: {
-    effectiveType?: string;
-    downlink?: number;
-    rtt?: number;
-    saveData?: boolean;
-  } }).connection;
+  const conn = (
+    navigator as unknown as {
+      connection?: {
+        effectiveType?: string;
+        downlink?: number;
+        rtt?: number;
+        saveData?: boolean;
+      };
+    }
+  ).connection;
 
   if (!conn) return null;
 
@@ -319,7 +323,7 @@ export async function getSpeechSynthesisFingerprint(): Promise<{
     return { available: false, voiceCount: 0, voiceListHash: '' };
   }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const timeout = setTimeout(() => {
       resolve({ available: true, voiceCount: 0, voiceListHash: '' });
     }, 1000);
@@ -333,10 +337,13 @@ export async function getSpeechSynthesisFingerprint(): Promise<{
           .sort()
           .join(',');
         // Use a simple hash since we can't import sha256 here
-        const simpleHash = voiceList.split('').reduce((a, b) => {
-          const hash = ((a << 5) - a) + b.charCodeAt(0);
-          return hash & hash;
-        }, 0).toString(16);
+        const simpleHash = voiceList
+          .split('')
+          .reduce((a, b) => {
+            const hash = (a << 5) - a + b.charCodeAt(0);
+            return hash & hash;
+          }, 0)
+          .toString(16);
         resolve({
           available: true,
           voiceCount: voices.length,

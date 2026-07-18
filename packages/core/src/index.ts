@@ -8,6 +8,18 @@ export type {
   FingerprintData,
   NetworkFingerprint,
   FullFingerprintReport,
+  AnalysisDetails,
+  IPIntelSummary,
+  PublicIPIntel,
+  SelfIPNetwork,
+  SelfIPIntelReport,
+  ConsistencyCheckCode,
+  ConsistencyCheckStatus,
+  ConsistencyCheckSeverity,
+  ConsistencyCheckCategory,
+  WebRTCCheckState,
+  ConsistencyCheck,
+  ConsistencyReport,
   ThreeLockHashes,
   AnalysisResult,
   GlobalStats,
@@ -81,8 +93,24 @@ export {
 } from './collectors/lies.js';
 
 // Types from collectors
-export type { WebGLInfo, ScreenInfo, HardwareInfo, MathFingerprint, MediaFeatures } from './collectors/hardware.js';
+export type {
+  WebGLInfo,
+  ScreenInfo,
+  HardwareInfo,
+  MathFingerprint,
+  MediaFeatures,
+} from './collectors/hardware.js';
 export type { NavigatorInfo, TimezoneInfo, IntlInfo } from './collectors/system.js';
-export type { StorageCapabilities, APICapabilities, BatteryStatus } from './collectors/capabilities.js';
-export type { AudioCodecs, VideoCodecs, CodecSupport, MediaCapabilityInfo, DRMSupport } from './collectors/media.js';
+export type {
+  StorageCapabilities,
+  APICapabilities,
+  BatteryStatus,
+} from './collectors/capabilities.js';
+export type {
+  AudioCodecs,
+  VideoCodecs,
+  CodecSupport,
+  MediaCapabilityInfo,
+  DRMSupport,
+} from './collectors/media.js';
 export type { LieDetectionResult, AllLies } from './collectors/lies.js';

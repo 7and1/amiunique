@@ -26,7 +26,9 @@ const liteSteps = [
  * Lightweight collector that skips heavy probes (audio, fonts, plugins, mime types, codec sweeps)
  * to speed up on slow networks or low-power devices.
  */
-export async function collectFingerprintLite(onProgress?: CollectionProgressCallback): Promise<FingerprintData> {
+export async function collectFingerprintLite(
+  onProgress?: CollectionProgressCallback
+): Promise<FingerprintData> {
   const total = liteSteps.length;
   let index = 0;
   const step = (label: string) => {

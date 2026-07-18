@@ -13,7 +13,7 @@ export default function StatsLoading() {
 
         {/* Stats cards skeleton */}
         <div className="grid gap-6 md:grid-cols-3 mb-12">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div
               key={i}
               className="p-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
@@ -27,14 +27,14 @@ export default function StatsLoading() {
 
         {/* Distribution charts skeleton */}
         <div className="grid gap-6 md:grid-cols-2 mb-8">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4].map(i => (
             <div
               key={i}
               className="p-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
             >
               <div className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-6" />
               <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((j) => (
+                {[1, 2, 3, 4, 5].map(j => (
                   <div key={j} className="flex items-center gap-4">
                     <div className="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                     <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse" />

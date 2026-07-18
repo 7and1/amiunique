@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Send, X, Loader2, Shield } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Sparkles, Send, X, Loader2, Shield } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type ChatMessage = {
   id: string;
-  role: "assistant" | "user";
+  role: 'assistant' | 'user';
   content: string;
 };
 
@@ -15,26 +15,27 @@ const BUBBLE_DELAY_MS = 15000; // 15 seconds
 const MAX_MESSAGES_PER_MINUTE = 5;
 
 const QUICK_QUESTIONS = [
-  "How unique is my fingerprint?",
-  "What is canvas fingerprinting?",
-  "How can I protect my privacy?",
-  "Explain the Three-Lock system",
+  'How unique is my fingerprint?',
+  'What is canvas fingerprinting?',
+  'How can I protect my privacy?',
+  'Explain the Three-Lock system',
 ];
 
 export function FingerprintAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: crypto.randomUUID(),
-      role: "assistant",
-      content: "Hi! I'm your fingerprint analysis assistant. Ask me anything about browser fingerprinting, privacy, or your scan results!",
+      role: 'assistant',
+      content:
+        "Hi! I'm your fingerprint analysis assistant. Ask me anything about browser fingerprinting, privacy, or your scan results!",
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [timestamps, setTimestamps] = useState<number[]>([]);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const bubbleTimer = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -48,19 +49,17 @@ export function FingerprintAssistant() {
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   // Rate limiting check
   const canSend = useMemo(() => {
     const now = Date.now();
-    return (
-      timestamps.filter((ts) => now - ts < 60_000).length < MAX_MESSAGES_PER_MINUTE
-    );
+    return timestamps.filter(ts => now - ts < 60_000).length < MAX_MESSAGES_PER_MINUTE;
   }, [timestamps]);
 
-  const pushMessage = useCallback((role: "assistant" | "user", content: string) => {
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role, content }]);
+  const pushMessage = useCallback((role: 'assistant' | 'user', content: string) => {
+    setMessages(prev => [...prev, { id: crypto.randomUUID(), role, content }]);
   }, []);
 
   const sendMessage = useCallback(
@@ -69,39 +68,36 @@ export function FingerprintAssistant() {
       if (!trimmed) return;
 
       if (!canSend) {
-        setError("Rate limit: Maximum 5 messages per minute");
+        setError('Rate limit: Maximum 5 messages per minute');
         return;
       }
 
-      setError("");
-      pushMessage("user", trimmed);
-      setInput("");
+      setError('');
+      pushMessage('user', trimmed);
+      setInput('');
       setIsThinking(true);
-      setTimestamps((prev) => {
+      setTimestamps(prev => {
         const now = Date.now();
-        const recent = prev.filter((ts) => now - ts < 60_000);
+        const recent = prev.filter(ts => now - ts < 60_000);
         return [...recent, now];
       });
 
       try {
-        const response = await fetch("/api/ai/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             prompt: trimmed,
           }),
         });
 
-        if (!response.ok) throw new Error("Request failed");
+        if (!response.ok) throw new Error('Request failed');
 
         const data = await response.json();
-        pushMessage("assistant", data.message.content);
+        pushMessage('assistant', data.message.content);
       } catch (error) {
         console.error(error);
-        pushMessage(
-          "assistant",
-          "Sorry, I encountered an error. Please try again later."
-        );
+        pushMessage('assistant', 'Sorry, I encountered an error. Please try again later.');
       } finally {
         setIsThinking(false);
       }
@@ -110,7 +106,7 @@ export function FingerprintAssistant() {
   );
 
   const handleToggle = () => {
-    setIsOpen((current) => !current);
+    setIsOpen(current => !current);
     setShowBubble(false);
   };
 
@@ -187,23 +183,23 @@ export function FingerprintAssistant() {
 
               {/* Messages */}
               <div className="flex-1 space-y-4 overflow-y-auto p-6">
-                {messages.map((message) => (
+                {messages.map(message => (
                   <div
                     key={message.id}
                     className={
-                      message.role === "assistant"
-                        ? "animate-in slide-in-from-left-4 fade-in duration-300"
-                        : "animate-in slide-in-from-right-4 fade-in duration-300 ml-auto max-w-[85%]"
+                      message.role === 'assistant'
+                        ? 'animate-in slide-in-from-left-4 fade-in duration-300'
+                        : 'animate-in slide-in-from-right-4 fade-in duration-300 ml-auto max-w-[85%]'
                     }
                   >
                     <div
                       className={
-                        message.role === "assistant"
-                          ? "rounded-2xl rounded-tl-sm border border-indigo-200/50 bg-gradient-to-br from-white/90 to-indigo-50/80 p-4 shadow-sm backdrop-blur-sm dark:border-indigo-500/30 dark:from-slate-800/90 dark:to-indigo-900/40"
-                          : "rounded-2xl rounded-tr-sm border border-purple-200/50 bg-gradient-to-br from-indigo-500 to-purple-600 p-4 text-white shadow-lg"
+                        message.role === 'assistant'
+                          ? 'rounded-2xl rounded-tl-sm border border-indigo-200/50 bg-gradient-to-br from-white/90 to-indigo-50/80 p-4 shadow-sm backdrop-blur-sm dark:border-indigo-500/30 dark:from-slate-800/90 dark:to-indigo-900/40'
+                          : 'rounded-2xl rounded-tr-sm border border-purple-200/50 bg-gradient-to-br from-indigo-500 to-purple-600 p-4 text-white shadow-lg'
                       }
                     >
-                      {message.role === "assistant" && (
+                      {message.role === 'assistant' && (
                         <div className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                           <Shield className="h-3 w-3" />
                           Assistant
@@ -229,7 +225,7 @@ export function FingerprintAssistant() {
                 <div className="space-y-3">
                   {/* Quick questions */}
                   <div className="flex flex-wrap gap-2">
-                    {QUICK_QUESTIONS.map((question) => (
+                    {QUICK_QUESTIONS.map(question => (
                       <button
                         key={question}
                         onClick={() => sendMessage(question)}
@@ -245,9 +241,9 @@ export function FingerprintAssistant() {
                   <div className="flex gap-2">
                     <Input
                       value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
+                      onChange={e => setInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
                           sendMessage(input);
                         }
@@ -266,9 +262,7 @@ export function FingerprintAssistant() {
                     </Button>
                   </div>
 
-                  {error && (
-                    <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
-                  )}
+                  {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
                 </div>
               </div>
             </div>
@@ -279,9 +273,9 @@ export function FingerprintAssistant() {
         <button
           onClick={handleToggle}
           className={`pointer-events-auto group relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-indigo-500/50 ${
-            !isOpen && "animate-pulse"
+            !isOpen && 'animate-pulse'
           }`}
-          aria-label={isOpen ? "Close chat" : "Open chat"}
+          aria-label={isOpen ? 'Close chat' : 'Open chat'}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/0 via-white/20 to-purple-400/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           <Sparkles className="relative h-6 w-6 transition-transform duration-300 group-hover:rotate-12" />
@@ -292,7 +286,7 @@ export function FingerprintAssistant() {
 }
 
 function formatMessage(content: string): React.ReactNode {
-  const lines = content.split("\n");
+  const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -303,11 +297,11 @@ function formatMessage(content: string): React.ReactNode {
     }
 
     // Check for bullet points
-    if (line.trim().startsWith("•") || line.trim().startsWith("-")) {
+    if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
       elements.push(
         <div key={`bullet-${i}`} className="my-1 flex gap-2">
           <span className="shrink-0 font-bold">•</span>
-          <span>{line.replace(/^[•-]\s*/, "")}</span>
+          <span>{line.replace(/^[•-]\s*/, '')}</span>
         </div>
       );
       continue;
@@ -327,7 +321,7 @@ function formatMessage(content: string): React.ReactNode {
     }
 
     // Check for bold sections (text between **)
-    if (line.includes("**")) {
+    if (line.includes('**')) {
       const parts = line.split(/\*\*(.+?)\*\*/g);
       elements.push(
         <p key={`p-${i}`} className="my-1">

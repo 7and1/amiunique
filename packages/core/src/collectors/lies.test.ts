@@ -32,12 +32,20 @@ describe('detectTimezoneMismatch', () => {
 
 describe('detectWebGLMismatch', () => {
   it('flags mobile UA with desktop GPU strings', () => {
-    const res = detectWebGLMismatch('GeForce GTX 1080', 'NVIDIA', 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)');
+    const res = detectWebGLMismatch(
+      'GeForce GTX 1080',
+      'NVIDIA',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)'
+    );
     expect(res.detected).toBe(true);
   });
 
   it('accepts common renderer for desktop', () => {
-    const res = detectWebGLMismatch('Apple M2', 'Apple', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_0)');
+    const res = detectWebGLMismatch(
+      'Apple M2',
+      'Apple',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_0)'
+    );
     expect(res.detected).toBe(false);
   });
 });

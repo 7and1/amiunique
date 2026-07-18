@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { useScanFlow } from '@/lib/scan-flow';
@@ -39,13 +39,15 @@ const stateMeta: Record<IconState, { icon: ReactNode; bg: string }> = {
 
 export default function ScanPage() {
   const router = useRouter();
-  const { phase, progress, error, startScan, durationMs, mode } = useScanFlow();
+  const { phase, progress, error, startScan, durationMs } = useScanFlow();
   const [lowBandwidth, setLowBandwidth] = useState(false);
+  const [storageChecked, setStorageChecked] = useState(false);
+  const [hasStoredResult, setHasStoredResult] = useState(false);
   const prefetchedRef = useRef(false);
 
-  const hasStoredResult = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return Boolean(sessionStorage.getItem('scanResult'));
+  useEffect(() => {
+    setHasStoredResult(Boolean(sessionStorage.getItem('scanResult')));
+    setStorageChecked(true);
   }, []);
 
   // Smart prefetch: Start loading result page when analyzing begins
@@ -58,10 +60,10 @@ export default function ScanPage() {
   }, [phase, router]);
 
   useEffect(() => {
-    if (phase === 'idle') {
+    if (storageChecked && phase === 'idle' && !hasStoredResult) {
       startScan(lowBandwidth ? 'lite' : 'full').catch(() => {});
     }
-  }, [phase, startScan, lowBandwidth]);
+  }, [phase, startScan, lowBandwidth, storageChecked, hasStoredResult]);
 
   useEffect(() => {
     if (phase === 'complete') {
@@ -70,52 +72,62 @@ export default function ScanPage() {
     }
   }, [phase, router]);
 
-  const percent = progress.total > 0
-    ? Math.min(100, Math.round(((phase === 'analyzing' ? progress.total : progress.index) / progress.total) * 100))
-    : phase === 'analyzing'
-      ? 100
-      : 0;
+  const percent =
+    progress.total > 0
+      ? Math.min(
+          100,
+          Math.round(
+            ((phase === 'analyzing' ? progress.total : progress.index) / progress.total) * 100
+          )
+        )
+      : phase === 'analyzing'
+        ? 100
+        : 0;
 
-  const scanStateLabel = {
-    idle: 'Preparing Scan…',
-    collecting: 'Scanning Your Browser',
-    analyzing: 'Analyzing Fingerprint',
-    complete: 'Scan Complete! Redirecting…',
-    error: 'Scan Failed',
-  }[phase];
+  const waitingForChoice = storageChecked && phase === 'idle' && hasStoredResult;
+  const scanStateLabel = waitingForChoice
+    ? 'Previous Scan Available'
+    : {
+        idle: 'Preparing Scan…',
+        collecting: 'Scanning Your Browser',
+        analyzing: 'Analyzing Fingerprint',
+        complete: 'Scan Complete! Redirecting…',
+        error: 'Scan Failed',
+      }[phase];
 
-  const subtitle = {
-    idle: 'Initializing fingerprint collectors',
-    collecting: `${progress.dimension}`,
-    analyzing: 'Comparing with our database',
-    complete: 'Redirecting to results…',
-    error: error || 'Unknown error occurred',
-  }[phase];
+  const subtitle = waitingForChoice
+    ? 'View the stored result or explicitly start a new scan.'
+    : {
+        idle: 'Initializing fingerprint collectors',
+        collecting: `${progress.dimension}`,
+        analyzing: 'Comparing with our database',
+        complete: 'Redirecting to results…',
+        error: error || 'Unknown error occurred',
+      }[phase];
 
-  const iconState: IconState = phase === 'error' ? 'error' : phase === 'complete' ? 'complete' : 'active';
+  const iconState: IconState =
+    phase === 'error' ? 'error' : phase === 'complete' || waitingForChoice ? 'complete' : 'active';
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-20">
       <div className="max-w-md w-full mx-auto px-4">
         <div className="text-center">
           <div className="mb-8">
-            <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full ${stateMeta[iconState].bg} ${
-              iconState === 'active' ? 'animate-pulse' : ''
-            }`}
+            <div
+              className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full ${stateMeta[iconState].bg} ${
+                iconState === 'active' ? 'animate-pulse' : ''
+              }`}
             >
               {stateMeta[iconState].icon}
             </div>
           </div>
 
           {/* Accessible live region for screen readers */}
-          <div
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            className="sr-only"
-          >
+          <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
             {scanStateLabel}. {subtitle}.
-            {progress.total > 0 && ` Step ${Math.min(progress.index + 1, progress.total)} of ${progress.total}.`}
+            {!waitingForChoice &&
+              progress.total > 0 &&
+              ` Step ${Math.min(progress.index + 1, progress.total)} of ${progress.total}.`}
           </div>
 
           <h1 className="text-2xl font-bold mb-2">{scanStateLabel}</h1>
@@ -137,7 +149,9 @@ export default function ScanPage() {
             )}
           </div>
 
-          {(phase === 'collecting' || phase === 'analyzing' || phase === 'idle') && (
+          {(phase === 'collecting' ||
+            phase === 'analyzing' ||
+            (phase === 'idle' && storageChecked && !hasStoredResult)) && (
             <div className="mb-6 flex flex-col items-center">
               {/* Circular Progress */}
               <CircularProgress
@@ -177,13 +191,21 @@ export default function ScanPage() {
             </div>
           )}
 
-          {hasStoredResult && (
-            <button
-              onClick={() => router.push('/scan/result')}
-              className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200"
-            >
-              Skip to previous results
-            </button>
+          {waitingForChoice && (
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button
+                onClick={() => router.push('/scan/result')}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200"
+              >
+                View previous results
+              </button>
+              <button
+                onClick={() => startScan(lowBandwidth ? 'lite' : 'full').catch(() => {})}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+              >
+                Run a new scan
+              </button>
+            </div>
           )}
 
           <div className="mt-8 inline-flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
@@ -196,7 +218,9 @@ export default function ScanPage() {
             />
             <label htmlFor="low-bandwidth" className="flex flex-col items-start text-left">
               <span className="font-semibold">Lite Mode</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Skip audio, fonts, plugins for faster core fingerprinting</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Skip audio, fonts, plugins for faster core fingerprinting
+              </span>
             </label>
           </div>
 
@@ -208,7 +232,10 @@ export default function ScanPage() {
                   const doneThreshold = Math.floor(progress.index / 2.5);
                   const isDone = i <= doneThreshold;
                   return (
-                    <div key={dim} className={`flex items-center gap-2 transition-opacity ${isDone ? 'opacity-100' : 'opacity-40'}`}>
+                    <div
+                      key={dim}
+                      className={`flex items-center gap-2 transition-opacity ${isDone ? 'opacity-100' : 'opacity-40'}`}
+                    >
                       {isDone ? (
                         <CheckCircle className="w-4 h-4 text-green-500" />
                       ) : (

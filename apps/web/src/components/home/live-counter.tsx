@@ -9,7 +9,12 @@ interface LiveCounterProps {
   refreshIntervalMs?: number;
 }
 
-export function LiveCounter({ baseline, updatedAt, refresh, refreshIntervalMs = 60_000 }: LiveCounterProps) {
+export function LiveCounter({
+  baseline,
+  updatedAt,
+  refresh,
+  refreshIntervalMs = 60_000,
+}: LiveCounterProps) {
   const [count, setCount] = useState(baseline);
 
   useEffect(() => {
@@ -37,7 +42,10 @@ export function LiveCounter({ baseline, updatedAt, refresh, refreshIntervalMs = 
       aria-atomic="true"
     >
       <div className="flex items-center gap-3">
-        <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" aria-hidden="true" />
+        <span
+          className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-400"
+          aria-hidden="true"
+        />
         <p>
           <span className="sr-only">Total fingerprints: </span>
           <span className="font-semibold text-foreground">{count.toLocaleString()}</span>

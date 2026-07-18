@@ -73,24 +73,28 @@ export function ScanButton() {
       aria-label={statusLabel}
     >
       {/* Outer glow ring */}
-      <div className={clsx(
-        'absolute -inset-[2px] rounded-full opacity-60 blur-sm',
-        hasError
-          ? 'bg-gradient-to-r from-rose-400 via-red-500 to-orange-400'
-          : scanning
-            ? 'bg-gradient-to-r from-indigo-400 via-violet-500 to-purple-500'
-            : 'bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400'
-      )} />
+      <div
+        className={clsx(
+          'absolute -inset-[2px] rounded-full opacity-60 blur-sm',
+          hasError
+            ? 'bg-gradient-to-r from-rose-400 via-red-500 to-orange-400'
+            : scanning
+              ? 'bg-gradient-to-r from-indigo-400 via-violet-500 to-purple-500'
+              : 'bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400'
+        )}
+      />
 
       {/* Inner gradient border */}
-      <div className={clsx(
-        'absolute inset-[1px] rounded-full',
-        hasError
-          ? 'bg-gradient-to-b from-rose-600 to-red-700'
-          : scanning
-            ? 'bg-slate-900 dark:bg-slate-950'
-            : 'bg-gradient-to-b from-indigo-400/90 via-violet-500/90 to-purple-500/90'
-      )} />
+      <div
+        className={clsx(
+          'absolute inset-[1px] rounded-full',
+          hasError
+            ? 'bg-gradient-to-b from-rose-600 to-red-700'
+            : scanning
+              ? 'bg-slate-900 dark:bg-slate-950'
+              : 'bg-gradient-to-b from-indigo-400/90 via-violet-500/90 to-purple-500/90'
+        )}
+      />
 
       {/* Glass highlight */}
       <div className="absolute inset-x-8 top-2 h-[40%] rounded-full bg-white/20 blur-xl" />

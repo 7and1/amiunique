@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { AnalysisResult } from '@amiunique/core';
 import { collectFingerprintWithProgress } from '@amiunique/core';
 import { analyzeFingerprint } from '@/lib/api';
@@ -32,6 +40,9 @@ const defaultProgress: ScanProgress = {
   total: 32,
 };
 
+const SCAN_RESULT_KEY = 'scanResult';
+const SCAN_SUBMISSION_KEY = 'scanSubmissionId';
+
 const ScanFlowContext = createContext<ScanFlowContextValue | null>(null);
 
 export function ScanFlowProvider({ children }: { children: ReactNode }) {
@@ -57,11 +68,23 @@ export function ScanFlowProvider({ children }: { children: ReactNode }) {
         setPhase('collecting');
         setProgress(defaultProgress);
 
-        const fingerprint = mode === 'lite'
-          ? await import('./collect-lite').then(m => m.collectFingerprintLite((dimension, index, total) => setProgress({ dimension, index, total })))
-          : await collectFingerprintWithProgress((dimension, index, total) => {
-              setProgress({ dimension, index, total });
-            });
+        let submissionId: string | undefined;
+        if (typeof window !== 'undefined') {
+          submissionId = sessionStorage.getItem(SCAN_SUBMISSION_KEY) || window.crypto.randomUUID();
+          sessionStorage.setItem(SCAN_SUBMISSION_KEY, submissionId);
+          sessionStorage.removeItem(SCAN_RESULT_KEY);
+        }
+
+        const fingerprint =
+          mode === 'lite'
+            ? await import('./collect-lite').then(m =>
+                m.collectFingerprintLite((dimension, index, total) =>
+                  setProgress({ dimension, index, total })
+                )
+              )
+            : await collectFingerprintWithProgress((dimension, index, total) => {
+                setProgress({ dimension, index, total });
+              });
 
         setPhase('analyzing');
         setProgress(prev => ({
@@ -70,10 +93,11 @@ export function ScanFlowProvider({ children }: { children: ReactNode }) {
           total: prev.total,
         }));
 
-        const analysis = await analyzeFingerprint(fingerprint);
+        const analysis = await analyzeFingerprint(fingerprint, submissionId);
         setResult(analysis);
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem('scanResult', JSON.stringify(analysis));
+          sessionStorage.setItem(SCAN_RESULT_KEY, JSON.stringify(analysis));
+          sessionStorage.removeItem(SCAN_SUBMISSION_KEY);
         }
         saveToHistory(analysis);
         setPhase('complete');
@@ -102,16 +126,10 @@ export function ScanFlowProvider({ children }: { children: ReactNode }) {
     setDurationMs(null);
   }, []);
 
-  const value = useMemo(() => ({ phase, progress, error, result, startScan, reset, mode, durationMs }), [
-    phase,
-    progress,
-    error,
-    result,
-    startScan,
-    reset,
-    mode,
-    durationMs,
-  ]);
+  const value = useMemo(
+    () => ({ phase, progress, error, result, startScan, reset, mode, durationMs }),
+    [phase, progress, error, result, startScan, reset, mode, durationMs]
+  );
 
   return <ScanFlowContext.Provider value={value}>{children}</ScanFlowContext.Provider>;
 }

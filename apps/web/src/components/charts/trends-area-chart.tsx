@@ -18,7 +18,15 @@ interface TrendsAreaChartProps {
   showGrid?: boolean;
 }
 
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: string;
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-lg dark:border-slate-700 dark:bg-slate-800">
@@ -26,10 +34,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
         <div className="space-y-1">
           {payload.map((entry, index) => (
             <div key={index} className="flex items-center gap-2 text-sm">
-              <div
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
+              <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
               <span className="text-slate-600 dark:text-slate-400">{entry.name}:</span>
               <span className="font-medium text-slate-900 dark:text-white">
                 {entry.value.toLocaleString()}
@@ -43,13 +48,9 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
   return null;
 };
 
-export function TrendsAreaChart({
-  data,
-  height = 350,
-  showGrid = true,
-}: TrendsAreaChartProps) {
+export function TrendsAreaChart({ data, height = 350, showGrid = true }: TrendsAreaChartProps) {
   // Format dates for display
-  const chartData = data.map((item) => ({
+  const chartData = data.map(item => ({
     ...item,
     displayDate: new Date(item.date).toLocaleDateString('en-US', {
       month: 'short',
@@ -60,10 +61,7 @@ export function TrendsAreaChart({
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={chartData}
-          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-        >
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           {showGrid && (
             <CartesianGrid
               strokeDasharray="3 3"
@@ -82,7 +80,7 @@ export function TrendsAreaChart({
             tick={{ fontSize: 12 }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value}
+            tickFormatter={value => (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value)}
             className="text-slate-500 dark:text-slate-400"
           />
           <Tooltip content={<CustomTooltip />} />

@@ -14,9 +14,12 @@ export function ApiStatusPill({ health, loading, error, onRetry }: ApiStatusPill
   const status = health?.status ?? (error ? 'unhealthy' : 'degraded');
 
   const color = {
-    healthy: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/20',
-    degraded: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/20',
-    unhealthy: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:border-rose-500/20',
+    healthy:
+      'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/20',
+    degraded:
+      'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/20',
+    unhealthy:
+      'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:border-rose-500/20',
   }[status];
 
   const label = loading
@@ -37,11 +40,12 @@ export function ApiStatusPill({ health, loading, error, onRetry }: ApiStatusPill
       )}
       aria-label="API health status"
     >
-      <span className={cn('h-2.5 w-2.5 rounded-full', {
-        'bg-emerald-500': status === 'healthy',
-        'bg-amber-500': status === 'degraded',
-        'bg-rose-500': status === 'unhealthy',
-      })}
+      <span
+        className={cn('h-2.5 w-2.5 rounded-full', {
+          'bg-emerald-500': status === 'healthy',
+          'bg-amber-500': status === 'degraded',
+          'bg-rose-500': status === 'unhealthy',
+        })}
       />
       {label}
       {!loading && health?.latency_ms != null && (

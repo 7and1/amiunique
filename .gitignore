@@ -12,9 +12,12 @@ out/
 .turbo/
 
 # Environment files
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
+!.env.sample
+!.env.template
+local.env.txt
+*.env.txt
 .dev.vars
 
 # Cloudflare
@@ -42,6 +45,7 @@ pnpm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+.codex-results/
 
 # Misc
 *.local

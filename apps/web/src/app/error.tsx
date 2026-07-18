@@ -32,8 +32,8 @@ export default function Error({ error, reset }: ErrorPageProps) {
           Something went wrong
         </h1>
         <p className="mt-3 text-slate-600 dark:text-slate-400">
-          An unexpected error occurred while processing your request.
-          Our fingerprint analysis hit a snag.
+          An unexpected error occurred while processing your request. Our fingerprint analysis hit a
+          snag.
         </p>
 
         {/* Error details (development only) */}
@@ -80,14 +80,14 @@ export default function Error({ error, reset }: ErrorPageProps) {
             If this error persists, try clearing your browser cache or using a different browser.
             You can also{' '}
             <a
-              href="https://github.com/anthropics/amiunique/issues"
+              href="https://github.com/7and1/amiunique/issues"
               target="_blank"
               rel="noopener noreferrer"
               className="text-indigo-600 hover:underline dark:text-indigo-400"
             >
               report this issue
-            </a>
-            {' '}with the error ID above.
+            </a>{' '}
+            with the error ID above.
           </p>
         </div>
       </div>

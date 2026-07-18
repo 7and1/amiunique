@@ -46,7 +46,9 @@ export function useGlobalStats(): UseDataResult<GlobalStats> & { refresh: () => 
 /**
  * Hook for fetching browser distribution
  */
-export function useBrowserDistribution(limit = 10): UseDataResult<DistributionResponse> & { refresh: () => void } {
+export function useBrowserDistribution(
+  limit = 10
+): UseDataResult<DistributionResponse> & { refresh: () => void } {
   const [data, setData] = useState<DistributionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -69,7 +71,9 @@ export function useBrowserDistribution(limit = 10): UseDataResult<DistributionRe
 /**
  * Hook for fetching OS distribution
  */
-export function useOSDistribution(limit = 10): UseDataResult<DistributionResponse> & { refresh: () => void } {
+export function useOSDistribution(
+  limit = 10
+): UseDataResult<DistributionResponse> & { refresh: () => void } {
   const [data, setData] = useState<DistributionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -92,7 +96,9 @@ export function useOSDistribution(limit = 10): UseDataResult<DistributionRespons
 /**
  * Hook for fetching device distribution
  */
-export function useDeviceDistribution(): UseDataResult<DistributionResponse> & { refresh: () => void } {
+export function useDeviceDistribution(): UseDataResult<DistributionResponse> & {
+  refresh: () => void;
+} {
   const [data, setData] = useState<DistributionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -115,7 +121,9 @@ export function useDeviceDistribution(): UseDataResult<DistributionResponse> & {
 /**
  * Hook for fetching country distribution
  */
-export function useCountryDistribution(limit = 20): UseDataResult<DistributionResponse> & { refresh: () => void } {
+export function useCountryDistribution(
+  limit = 20
+): UseDataResult<DistributionResponse> & { refresh: () => void } {
   const [data, setData] = useState<DistributionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -138,7 +146,9 @@ export function useCountryDistribution(limit = 20): UseDataResult<DistributionRe
 /**
  * Hook for fetching screen distribution
  */
-export function useScreenDistribution(limit = 15): UseDataResult<DistributionResponse> & { refresh: () => void } {
+export function useScreenDistribution(
+  limit = 15
+): UseDataResult<DistributionResponse> & { refresh: () => void } {
   const [data, setData] = useState<DistributionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -161,7 +171,9 @@ export function useScreenDistribution(limit = 15): UseDataResult<DistributionRes
 /**
  * Hook for fetching daily trends
  */
-export function useDailyTrends(days = 30): UseDataResult<{ trends: DailyTrendItem[]; period_days: number }> & { refresh: () => void } {
+export function useDailyTrends(
+  days = 30
+): UseDataResult<{ trends: DailyTrendItem[]; period_days: number }> & { refresh: () => void } {
   const [data, setData] = useState<{ trends: DailyTrendItem[]; period_days: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -191,7 +203,8 @@ export function useStatsPageData() {
   const devices = useDeviceDistribution();
   const trends = useDailyTrends(7);
 
-  const loading = stats.loading || browsers.loading || os.loading || devices.loading || trends.loading;
+  const loading =
+    stats.loading || browsers.loading || os.loading || devices.loading || trends.loading;
 
   return {
     stats: stats.data,

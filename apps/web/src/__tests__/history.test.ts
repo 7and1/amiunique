@@ -66,7 +66,15 @@ const createMockResult = (overrides: Partial<any> = {}) => ({
     sys_platform: 'Win32',
     ...overrides.details,
   },
-  lies: {},
+  lies: {
+    os_mismatch: false,
+    browser_mismatch: false,
+    resolution_mismatch: false,
+    timezone_mismatch: false,
+    webgl_mismatch: false,
+    headless: false,
+    automation: false,
+  },
   ...overrides,
 });
 
@@ -118,10 +126,7 @@ describe('history', () => {
       const result = createMockResult();
       saveToHistory(result);
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'scanHistory',
-        expect.any(String)
-      );
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('scanHistory', expect.any(String));
 
       const saved = JSON.parse(localStorageMock.store['scanHistory']);
       expect(saved).toHaveLength(1);
@@ -152,9 +157,11 @@ describe('history', () => {
     it('should limit history to MAX_HISTORY (20) entries', () => {
       // Save 25 entries
       for (let i = 0; i < 25; i++) {
-        saveToHistory(createMockResult({
-          hashes: { bronze: `hash${i}`, gold: 'g', silver: 's' },
-        }));
+        saveToHistory(
+          createMockResult({
+            hashes: { bronze: `hash${i}`, gold: 'g', silver: 's' },
+          })
+        );
       }
 
       const saved = JSON.parse(localStorageMock.store['scanHistory']);
@@ -164,12 +171,14 @@ describe('history', () => {
     });
 
     it('should extract browser and OS from details', () => {
-      saveToHistory(createMockResult({
-        details: {
-          sys_user_agent: 'Mozilla/5.0 Firefox/120',
-          sys_platform: 'MacIntel',
-        },
-      }));
+      saveToHistory(
+        createMockResult({
+          details: {
+            sys_user_agent: 'Mozilla/5.0 Firefox/120',
+            sys_platform: 'MacIntel',
+          },
+        })
+      );
 
       const saved = JSON.parse(localStorageMock.store['scanHistory']);
       expect(saved[0].browser).toBe('Mozilla/5.0 Firefox/120');

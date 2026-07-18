@@ -50,9 +50,7 @@ describe('uuidv4', () => {
   it('should generate valid UUID v4 format', () => {
     const uuid = uuidv4();
     // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-    expect(uuid).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    );
+    expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
   });
 
   it('should generate unique UUIDs', () => {
@@ -121,16 +119,7 @@ describe('hashComponents', () => {
   });
 
   it('should handle mixed types', async () => {
-    const hash = await hashComponents([
-      'string',
-      42,
-      true,
-      false,
-      null,
-      undefined,
-      0,
-      '',
-    ]);
+    const hash = await hashComponents(['string', 42, true, false, null, undefined, 0, '']);
     expect(hash).toHaveLength(64);
   });
 

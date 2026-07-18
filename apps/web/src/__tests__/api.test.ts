@@ -33,6 +33,7 @@ Object.defineProperty(window, 'localStorage', {
 
 // Import after mocking
 import {
+  analyzeFingerprint,
   getGlobalStats,
   getBrowserDistribution,
   getOSDistribution,
@@ -41,6 +42,8 @@ import {
   getScreenDistribution,
   getDailyTrends,
   checkHealth,
+  getSelfIPIntel,
+  IPIntelRequestError,
   submitDeletionRequest,
   getDeletionStatus,
 } from '../lib/api';
@@ -54,6 +57,30 @@ describe('API Client', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  describe('analyzeFingerprint', () => {
+    it('reuses one idempotency key across network retries', async () => {
+      const submissionId = 'f80e00d3-666b-4d02-b2f4-0b9348ad9c8b';
+      const responseBody = { success: true };
+      mockFetch.mockRejectedValueOnce(new Error('Network error')).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(responseBody),
+      });
+
+      const responsePromise = analyzeFingerprint(
+        { hw_canvas_hash: 'canvas' } as Parameters<typeof analyzeFingerprint>[0],
+        submissionId
+      );
+      await vi.advanceTimersByTimeAsync(300);
+      const result = await responsePromise;
+      const firstHeaders = mockFetch.mock.calls[0][1].headers;
+      const secondHeaders = mockFetch.mock.calls[1][1].headers;
+
+      expect(result).toEqual(responseBody);
+      expect(firstHeaders['Idempotency-Key']).toBe(submissionId);
+      expect(secondHeaders['Idempotency-Key']).toBe(submissionId);
+    });
   });
 
   describe('getGlobalStats', () => {
@@ -100,10 +127,7 @@ describe('API Client', () => {
 
       await getGlobalStats();
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'au_stats_global',
-        expect.any(String)
-      );
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('au_stats_global', expect.any(String));
     });
 
     it('should fall back to cache on error', async () => {
@@ -353,7 +377,6 @@ describe('API Client', () => {
         const result = await submitDeletionRequest({
           hash_type: 'hardware',
           hash_value: 'a'.repeat(64),
-          email: 'user@example.com',
         });
 
         expect(result.id).toBe('del-123');
@@ -405,13 +428,89 @@ describe('API Client', () => {
         mockFetch.mockResolvedValueOnce({
           ok: false,
           status: 404,
-          json: () =>
-            Promise.resolve({ success: false, message: 'Request not found' }),
+          json: () => Promise.resolve({ success: false, message: 'Request not found' }),
         });
 
-        await expect(getDeletionStatus('invalid-id')).rejects.toThrow(
-          'Request not found'
-        );
+        await expect(getDeletionStatus('invalid-id')).rejects.toThrow('Request not found');
+      });
+    });
+  });
+
+  describe('getSelfIPIntel', () => {
+    const report = {
+      address: '203.0.113.42',
+      masked_address: '203.0.113.x',
+      ip_version: 'ipv4',
+      network: {
+        asn: 15169,
+        asn_org: 'Google LLC',
+        colo: 'SJC',
+        country: 'US',
+        city: 'Mountain View',
+        region: 'California',
+        timezone: 'America/Los_Angeles',
+      },
+      intelligence: null,
+      intelligence_status: 'unavailable',
+      checked_at: 1_720_000_000_000,
+    } as const;
+
+    it('requests only the self-IP endpoint without caching personalized data', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ success: true, data: report }),
+      });
+
+      await expect(getSelfIPIntel()).resolves.toEqual(report);
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/api\/ip-intel$/),
+        expect.objectContaining({
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+          signal: expect.any(AbortSignal),
+        })
+      );
+      expect(localStorageMock.setItem).not.toHaveBeenCalled();
+      expect(localStorageMock.getItem).not.toHaveBeenCalled();
+    });
+
+    it('accepts a partial report when optional reputation is unavailable', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ success: true, data: report }),
+      });
+
+      const result = await getSelfIPIntel();
+
+      expect(result.address).toBe('203.0.113.42');
+      expect(result.intelligence).toBeNull();
+      expect(result.intelligence_status).toBe('unavailable');
+    });
+
+    it('surfaces rate limits as a typed retryable error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            code: 'RATE_LIMITED',
+            message: 'Rate limit exceeded',
+            retry_after: 37,
+          }),
+      });
+
+      const error = await getSelfIPIntel().catch(value => value);
+
+      expect(error).toBeInstanceOf(IPIntelRequestError);
+      expect(error).toMatchObject({
+        status: 429,
+        code: 'RATE_LIMITED',
+        retryAfter: 37,
       });
     });
   });

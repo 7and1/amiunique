@@ -89,7 +89,7 @@ export async function getWebGLFingerprint(): Promise<WebGLInfo> {
     const canvas = document.createElement('canvas');
     const gl =
       canvas.getContext('webgl') ||
-      canvas.getContext('experimental-webgl') as WebGLRenderingContext | null;
+      (canvas.getContext('experimental-webgl') as WebGLRenderingContext | null);
     if (!gl) return { hash: 'unsupported', vendor: '', renderer: '', extensions: '' };
 
     // Get debug info extension for unmasked GPU info
@@ -150,7 +150,8 @@ export async function getWebGLFingerprint(): Promise<WebGLInfo> {
 export async function getAudioFingerprint(): Promise<string> {
   try {
     const AudioContext =
-      window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
     if (!AudioContext) return 'unsupported';
 
     const context = new OfflineAudioContext(1, 44100, 44100);

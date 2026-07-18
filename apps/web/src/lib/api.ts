@@ -2,7 +2,12 @@
  * API client for AmiUnique.io Worker API
  */
 
-import type { FingerprintData, AnalysisResult, GlobalStats } from '@amiunique/core';
+import type {
+  FingerprintData,
+  AnalysisResult,
+  GlobalStats,
+  SelfIPIntelReport,
+} from '@amiunique/core';
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -96,13 +101,17 @@ const ANALYZE_RETRY_ATTEMPTS = 3;
  * Submit fingerprint for analysis
  * Uses retry logic with exponential backoff for reliability
  */
-export async function analyzeFingerprint(data: FingerprintData): Promise<AnalysisResult> {
+export async function analyzeFingerprint(
+  data: FingerprintData,
+  submissionId = crypto.randomUUID()
+): Promise<AnalysisResult> {
   const response = await fetchWithTimeout(
     `${API_URL}/api/analyze`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Idempotency-Key': submissionId,
       },
       body: JSON.stringify(data),
     },
@@ -140,7 +149,9 @@ export async function getGlobalStats(): Promise<GlobalStats> {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
     const result = await response.json();
-    const data = Object.assign({}, result.data, { _source: deriveSource(response) }) as GlobalStats & { _source?: string };
+    const data = Object.assign({}, result.data, {
+      _source: deriveSource(response),
+    }) as GlobalStats & { _source?: string };
     setCache(cacheKey, data);
     return data;
   } catch (error) {
@@ -314,14 +325,59 @@ export async function checkHealth(): Promise<{
   }
 }
 
+export class IPIntelRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+    readonly retryAfter?: number
+  ) {
+    super(message);
+    this.name = 'IPIntelRequestError';
+  }
+}
+
+/**
+ * Inspect the current browser's own connection.
+ * The personalized response is never written to Web Storage or browser cache.
+ */
+export async function getSelfIPIntel(): Promise<SelfIPIntelReport> {
+  const response = await fetchWithTimeout(
+    `${API_URL}/api/ip-intel`,
+    {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    },
+    9000,
+    1
+  );
+  const json = (await response.json().catch(() => ({}))) as {
+    success?: boolean;
+    data?: SelfIPIntelReport;
+    message?: string;
+    error?: string;
+    code?: string;
+    retry_after?: number;
+  };
+
+  if (!response.ok || json.success !== true || !json.data) {
+    throw new IPIntelRequestError(
+      json.message || json.error || 'Unable to inspect this connection.',
+      response.status,
+      json.code,
+      json.retry_after
+    );
+  }
+
+  return json.data;
+}
+
 /**
  * Deletion (opt-out) request payload
  */
 export interface DeletionRequestPayload {
   hash_type: 'hardware' | 'software' | 'full';
   hash_value: string;
-  email?: string;
-  reason?: string;
 }
 
 export interface DeletionStatusResponse {
@@ -337,7 +393,9 @@ export interface DeletionStatusResponse {
 /**
  * Submit a deletion/opt-out request
  */
-export async function submitDeletionRequest(payload: DeletionRequestPayload): Promise<DeletionStatusResponse> {
+export async function submitDeletionRequest(
+  payload: DeletionRequestPayload
+): Promise<DeletionStatusResponse> {
   const response = await fetch(`${API_URL}/api/deletion`, {
     method: 'POST',
     headers: {

@@ -19,14 +19,17 @@
 1. 登录 Cloudflare Dashboard: https://dash.cloudflare.com
 2. 添加域名到 Cloudflare（如果还没有）
 3. 编辑 `apps/api/wrangler.toml`，取消注释：
+
 ```toml
 [env.production.routes]
 pattern = "api.amiunique.io/*"
 zone_name = "amiunique.io"
 ```
+
 4. 重新部署:
+
 ```bash
-cd /Volumes/SSD/dev/new/ip-dataset/amiunique/apps/api
+cd apps/api
 wrangler deploy --env production
 ```
 
@@ -46,8 +49,9 @@ wrangler deploy --env production
    - 名称: `NEXT_PUBLIC_API_URL`
    - 值: `https://api.amiunique.io`（或您的 API URL）
 3. 重新部署前端:
+
 ```bash
-cd /Volumes/SSD/dev/new/ip-dataset/amiunique/apps/web
+cd apps/web
 pnpm build
 wrangler pages deploy out --project-name=amiunique --commit-dirty=true
 ```
@@ -93,6 +97,7 @@ wrangler d1 execute amiunique-db --remote \
 ## 🔧 故障排查
 
 ### API Worker 无法访问
+
 ```bash
 # 检查部署状态
 cd apps/api
@@ -106,6 +111,7 @@ wrangler dev --remote
 ```
 
 ### 前端无法连接 API
+
 ```bash
 # 检查环境变量
 # Dashboard → Pages → amiunique → Settings → Environment variables
@@ -117,6 +123,7 @@ wrangler dev --remote
 ```
 
 ### 数据库查询失败
+
 ```bash
 # 验证数据库连接
 wrangler d1 execute amiunique-db --remote --command="SELECT 1"
@@ -130,6 +137,7 @@ wrangler d1 execute amiunique-db --remote --command="SELECT name FROM sqlite_mas
 ## 📊 监控和维护
 
 ### 查看实时日志
+
 ```bash
 # Worker 日志
 wrangler tail amiunique-api
@@ -139,6 +147,7 @@ wrangler pages deployment tail
 ```
 
 ### 查看统计数据
+
 ```bash
 # 总访问量
 wrangler d1 execute amiunique-db --remote \
@@ -150,6 +159,7 @@ wrangler d1 execute amiunique-db --remote \
 ```
 
 ### Cloudflare Dashboard 监控
+
 - **Analytics**: Workers & Pages → amiunique-api → Metrics
 - **错误率**: Real-time logs → Filter by "error"
 - **请求量**: Pages → amiunique → Analytics
@@ -169,6 +179,7 @@ wrangler d1 execute amiunique-db --remote \
    - Pages 文档: https://developers.cloudflare.com/pages/
 
 3. **本地测试**:
+
 ```bash
 # API 本地开发
 cd apps/api && wrangler dev
@@ -180,4 +191,4 @@ cd apps/web && pnpm dev
 ---
 
 **最后更新**: 2025-12-09
-**项目路径**: `/Volumes/SSD/dev/new/ip-dataset/amiunique/`
+**项目路径**: repository root

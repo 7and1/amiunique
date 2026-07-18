@@ -9,8 +9,23 @@ export interface Env {
   /** KV Namespace for distributed rate limiting */
   RATE_LIMIT_KV: KVNamespace;
 
+  /** Native per-location limiter for the public self-IP report */
+  IP_INTEL_RATE_LIMITER?: RateLimit;
+
+  /** Native per-location limiters for public API routes */
+  ANALYZE_RATE_LIMITER?: RateLimit;
+  DELETION_RATE_LIMITER?: RateLimit;
+  STATS_RATE_LIMITER?: RateLimit;
+  HEALTH_RATE_LIMITER?: RateLimit;
+
   /** Environment name */
   ENVIRONMENT: string;
+
+  /** IPBot IP intelligence API origin (optional - lookups are skipped when unset) */
+  IPBOT_API_ORIGIN?: string;
+
+  /** IPBot API key, sent as X-API-Key (wrangler secret - never commit) */
+  IPBOT_API_KEY?: string;
 }
 
 /**

@@ -20,8 +20,8 @@ export default function NotFound() {
           Page not found
         </h1>
         <p className="mt-3 text-slate-600 dark:text-slate-400">
-          The fingerprint you&apos;re looking for has vanished from our database.
-          Maybe it was too unique to exist?
+          The fingerprint you&apos;re looking for has vanished from our database. Maybe it was too
+          unique to exist?
         </p>
 
         {/* Actions */}
@@ -52,7 +52,7 @@ export default function NotFound() {
               { label: 'Statistics Dashboard', href: '/stats' },
               { label: 'Developer Documentation', href: '/developers' },
               { label: 'Privacy Policy', href: '/legal/privacy' },
-            ].map((link) => (
+            ].map(link => (
               <Link
                 key={link.href}
                 href={link.href}

@@ -11,9 +11,14 @@ import { sha256 } from './hash.js';
 
 /**
  * Hash version prefix - increment when changing hash components
- * v1: Initial version (2024)
+ * v1: Initial delimiter-joined format (2024)
+ * v2: Unambiguous JSON-array serialization (2026)
  */
-const HASH_VERSION = 'v1';
+const HASH_VERSION = 'v2';
+
+function serializeComponents(components: string[]): string {
+  return JSON.stringify(components);
+}
 
 /**
  * Client fingerprint data structure
@@ -75,11 +80,11 @@ export interface ClientFingerprint {
  * Network fingerprint data from Cloudflare
  */
 export interface NetworkFingerprint {
-  net_ip_hash: string;
   net_asn?: number;
   net_asn_org?: string;
   net_colo?: string;
   net_country?: string;
+  net_timezone?: string;
   net_city?: string;
   net_region?: string;
   net_postal?: string;
@@ -132,7 +137,7 @@ export async function calculateGoldLock(data: ClientFingerprint): Promise<string
     data.hw_webgl_extensions || '',
   ];
 
-  return sha256(components.join('|'));
+  return sha256(serializeComponents(components));
 }
 
 /**
@@ -162,7 +167,7 @@ export async function calculateSilverLock(data: ClientFingerprint): Promise<stri
     data.med_video_av1 || '',
   ];
 
-  return sha256(components.join('|'));
+  return sha256(serializeComponents(components));
 }
 
 /**
@@ -187,7 +192,7 @@ export async function calculateBronzeLock(
     network.net_tls_cipher || '',
   ];
 
-  return sha256(components.join('|'));
+  return sha256(serializeComponents(components));
 }
 
 /**

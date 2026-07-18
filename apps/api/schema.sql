@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS visits (
     meta_screen TEXT,                       -- "1920x1080" format
     meta_gpu_vendor TEXT,                   -- GPU vendor name
 
-    -- Full Payload (Cold Storage)
-    raw_json TEXT NOT NULL                  -- Complete 80+ dimension JSON
+    -- Minimized client payload (no raw IP, IP hash, WebRTC candidates, or network metadata)
+    raw_json TEXT NOT NULL
 );
 
 -- Performance Indexes for common queries
@@ -99,8 +99,8 @@ CREATE TABLE IF NOT EXISTS deletion_requests (
     id TEXT PRIMARY KEY,
     hash_type TEXT NOT NULL,                -- 'hardware', 'software', 'full'
     hash_value TEXT NOT NULL,
-    email TEXT,
-    reason TEXT,
+    email TEXT,                             -- Legacy nullable column; new API never writes it
+    reason TEXT,                            -- Legacy nullable column; new API never writes it
     status TEXT DEFAULT 'pending',          -- pending, completed, rejected, failed
     created_at INTEGER NOT NULL,
     completed_at INTEGER,

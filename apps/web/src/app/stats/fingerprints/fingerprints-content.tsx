@@ -13,12 +13,23 @@ export function FingerprintsContent() {
   }
 
   const safeStats =
-    stats ?? ({ total_fingerprints: 0, unique_sessions: 0, unique_devices: 0, updated_at: Date.now() } as const);
+    stats ??
+    ({
+      total_fingerprints: 0,
+      unique_sessions: 0,
+      unique_devices: 0,
+      updated_at: Date.now(),
+    } as const);
   const trends = trendsPayload?.trends ?? [];
   const latest = trends[trends.length - 1];
   const oldest = trends[0];
-  const growth = latest && oldest ? ((latest.total_visits - oldest.total_visits) / Math.max(1, oldest.total_visits)) * 100 : 0;
-  const avgPerDay = trends.length ? Math.round(trends.reduce((sum, item) => sum + item.total_visits, 0) / trends.length) : 0;
+  const growth =
+    latest && oldest
+      ? ((latest.total_visits - oldest.total_visits) / Math.max(1, oldest.total_visits)) * 100
+      : 0;
+  const avgPerDay = trends.length
+    ? Math.round(trends.reduce((sum, item) => sum + item.total_visits, 0) / trends.length)
+    : 0;
 
   return (
     <div className="py-16">
@@ -32,7 +43,8 @@ export function FingerprintsContent() {
             Daily fingerprint velocity
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Track how many fingerprints hit our API each day, how unique those sessions are, and where volatility is coming from.
+            Track how many fingerprints hit our API each day, how unique those sessions are, and
+            where volatility is coming from.
           </p>
         </header>
 
@@ -69,9 +81,10 @@ export function FingerprintsContent() {
               icon: TrendingUp,
               hint: 'Compared to first day',
               color: growth > 0 ? 'text-emerald-500' : 'text-rose-500',
-              bg: growth > 0 ? 'from-emerald-500/10 to-teal-500/5' : 'from-rose-500/10 to-red-500/5',
+              bg:
+                growth > 0 ? 'from-emerald-500/10 to-teal-500/5' : 'from-rose-500/10 to-red-500/5',
             },
-          ].map((card) => (
+          ].map(card => (
             <div
               key={card.label}
               className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/80 p-6 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80"
@@ -82,7 +95,9 @@ export function FingerprintsContent() {
                   <card.icon className={`h-5 w-5 ${card.color}`} />
                   {card.label}
                 </div>
-                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{card.value}</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                  {card.value}
+                </p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">{card.hint}</p>
               </div>
             </div>
@@ -100,7 +115,11 @@ export function FingerprintsContent() {
                 {trends.length} days of activity
               </h2>
               <p className="mt-1 text-slate-600 dark:text-slate-400">
-                Latest day: <span className="font-semibold">{latest?.total_visits.toLocaleString() ?? '—'}</span> visits
+                Latest day:{' '}
+                <span className="font-semibold">
+                  {latest?.total_visits.toLocaleString() ?? '—'}
+                </span>{' '}
+                visits
               </p>
             </div>
             <div className="flex gap-4">
@@ -117,7 +136,9 @@ export function FingerprintsContent() {
                   Peak day
                 </p>
                 <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-                  {trends.length ? Math.max(...trends.map(t => t.total_visits)).toLocaleString() : '—'}
+                  {trends.length
+                    ? Math.max(...trends.map(t => t.total_visits)).toLocaleString()
+                    : '—'}
                 </p>
               </div>
             </div>
@@ -136,29 +157,45 @@ export function FingerprintsContent() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">Date</th>
-                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">Total visits</th>
-                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">Unique devices</th>
-                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">Ratio</th>
+                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">
+                    Date
+                  </th>
+                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">
+                    Total visits
+                  </th>
+                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">
+                    Unique devices
+                  </th>
+                  <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">
+                    Ratio
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {trends.slice().reverse().map((item) => (
-                  <tr key={item.date} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="py-3 px-4 font-mono text-slate-900 dark:text-white">{item.date}</td>
-                    <td className="py-3 px-4 font-semibold text-indigo-600 dark:text-indigo-400">
-                      {item.total_visits.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                      {item.unique_devices.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-slate-500">
-                      {item.total_visits > 0
-                        ? `${((item.unique_devices / item.total_visits) * 100).toFixed(1)}%`
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
+                {trends
+                  .slice()
+                  .reverse()
+                  .map(item => (
+                    <tr
+                      key={item.date}
+                      className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-mono text-slate-900 dark:text-white">
+                        {item.date}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-indigo-600 dark:text-indigo-400">
+                        {item.total_visits.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                        {item.unique_devices.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 dark:text-slate-500">
+                        {item.total_visits > 0
+                          ? `${((item.unique_devices / item.total_visits) * 100).toFixed(1)}%`
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

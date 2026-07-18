@@ -57,7 +57,10 @@ const summaryConfig: Record<
   },
 };
 
-export function FingerprintComparisonPanel({ currentResult, className }: FingerprintComparisonPanelProps) {
+export function FingerprintComparisonPanel({
+  currentResult,
+  className,
+}: FingerprintComparisonPanelProps) {
   const comparison = useMemo(() => {
     const previousScan = getPreviousScan(currentResult.hashes.bronze);
     if (!previousScan) return null;
@@ -66,7 +69,12 @@ export function FingerprintComparisonPanel({ currentResult, className }: Fingerp
 
   if (!comparison) {
     return (
-      <div className={cn('rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50', className)}>
+      <div
+        className={cn(
+          'rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50',
+          className
+        )}
+      >
         <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
           <Clock className="h-4 w-4" />
           <span>First scan — no previous fingerprint to compare</span>
@@ -79,9 +87,16 @@ export function FingerprintComparisonPanel({ currentResult, className }: Fingerp
   const Icon = config.icon;
 
   return (
-    <div className={cn('rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900', className)}>
+    <div
+      className={cn(
+        'rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900',
+        className
+      )}
+    >
       <div className="flex items-start gap-4">
-        <div className={cn('flex h-10 w-10 items-center justify-center rounded-full', config.bgColor)}>
+        <div
+          className={cn('flex h-10 w-10 items-center justify-center rounded-full', config.bgColor)}
+        >
           <Icon className={cn('h-5 w-5', config.color)} />
         </div>
         <div className="flex-1 space-y-3">
@@ -133,7 +148,13 @@ interface HashComparisonRowProps {
   currentHash: string;
 }
 
-function HashComparisonRow({ label, sublabel, changed, previousHash, currentHash }: HashComparisonRowProps) {
+function HashComparisonRow({
+  label,
+  sublabel,
+  changed,
+  previousHash,
+  currentHash,
+}: HashComparisonRowProps) {
   return (
     <div
       className={cn(
@@ -164,7 +185,10 @@ function HashComparisonRow({ label, sublabel, changed, previousHash, currentHash
             {previousHash.slice(0, 8)}…
           </span>
           <ArrowRight className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate max-w-[60px] text-orange-600 dark:text-orange-400" title={currentHash}>
+          <span
+            className="truncate max-w-[60px] text-orange-600 dark:text-orange-400"
+            title={currentHash}
+          >
             {currentHash.slice(0, 8)}…
           </span>
         </div>

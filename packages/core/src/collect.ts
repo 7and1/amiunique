@@ -15,7 +15,13 @@ import {
   getGamepadCount,
   hasVRDisplays,
 } from './collectors/hardware.js';
-import { getNavigatorInfo, getTimezoneInfo, getIntlInfo, getClientHints, getSpeechSynthesisFingerprint } from './collectors/system.js';
+import {
+  getNavigatorInfo,
+  getTimezoneInfo,
+  getIntlInfo,
+  getClientHints,
+  getSpeechSynthesisFingerprint,
+} from './collectors/system.js';
 import {
   getStorageCapabilities,
   getAPICapabilities,
@@ -174,6 +180,7 @@ export async function collectFingerprint(): Promise<FingerprintData> {
     rtc_available: webrtcData.available,
     rtc_local_ip: webrtcData.localIP,
     rtc_public_ip: webrtcData.publicIP,
+    rtc_mdns_obfuscated: webrtcData.mdnsObfuscated,
     rtc_stun_available: webrtcData.stunAvailable,
     rtc_ip_type: webrtcData.ipType,
     rtc_media_device_count: webrtcData.mediaDeviceCount,
@@ -196,11 +203,7 @@ export async function collectFingerprint(): Promise<FingerprintData> {
 /**
  * Progress callback type for tracking collection
  */
-export type CollectionProgressCallback = (
-  dimension: string,
-  index: number,
-  total: number
-) => void;
+export type CollectionProgressCallback = (dimension: string, index: number, total: number) => void;
 
 /**
  * Collect fingerprint with progress updates
@@ -397,6 +400,7 @@ export async function collectFingerprintWithProgress(
     rtc_available: webrtcData.available,
     rtc_local_ip: webrtcData.localIP,
     rtc_public_ip: webrtcData.publicIP,
+    rtc_mdns_obfuscated: webrtcData.mdnsObfuscated,
     rtc_stun_available: webrtcData.stunAvailable,
     rtc_ip_type: webrtcData.ipType,
     rtc_media_device_count: webrtcData.mediaDeviceCount,

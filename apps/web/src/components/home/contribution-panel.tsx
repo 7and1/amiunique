@@ -45,7 +45,9 @@ export function ContributionPanel() {
           key={contribution.label}
           className="rounded-3xl border border-white/30 bg-white/70 p-6 shadow-card dark:border-white/5 dark:bg-white/5"
         >
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{contribution.label}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            {contribution.label}
+          </p>
           <div className="mt-6 flex items-end gap-3">
             <div className="w-full">
               <div className="relative h-36 w-full overflow-hidden rounded-2xl bg-slate-200/40 dark:bg-slate-800/40">

@@ -15,7 +15,7 @@ health.use('*', healthLimiter);
 /**
  * GET /api/health - Basic health check
  */
-health.get('/', async (c) => {
+health.get('/', async c => {
   const startTime = Date.now();
 
   try {
@@ -35,7 +35,7 @@ health.get('/', async (c) => {
         db_latency_ms: dbLatency,
       },
     });
-  } catch (error) {
+  } catch {
     return c.json(
       {
         status: 'unhealthy',
@@ -45,7 +45,6 @@ health.get('/', async (c) => {
         checks: {
           database: 'error',
         },
-        error: error instanceof Error ? error.message : 'Unknown error',
       },
       503
     );
@@ -55,7 +54,7 @@ health.get('/', async (c) => {
 /**
  * GET /api/health/ready - Readiness probe
  */
-health.get('/ready', async (c) => {
+health.get('/ready', async c => {
   try {
     await c.env.DB.prepare('SELECT 1').first();
     return c.json({ ready: true });
@@ -67,7 +66,7 @@ health.get('/ready', async (c) => {
 /**
  * GET /api/health/live - Liveness probe
  */
-health.get('/live', (c) => {
+health.get('/live', c => {
   return c.json({ alive: true });
 });
 

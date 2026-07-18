@@ -156,6 +156,8 @@ export interface FingerprintData {
   rtc_local_ip: string | null;
   /** Public IP leaked via WebRTC/STUN */
   rtc_public_ip: string | null;
+  /** Host candidates were replaced with mDNS names */
+  rtc_mdns_obfuscated: boolean;
   /** STUN server reachability */
   rtc_stun_available: boolean;
   /** IP type detected */
@@ -199,8 +201,6 @@ export interface FingerprintData {
  * Cannot be spoofed by client
  */
 export interface NetworkFingerprint {
-  /** SHA-256 hash of IP address */
-  net_ip_hash: string;
   /** Autonomous System Number */
   net_asn?: number;
   /** ISP/Organization name */
@@ -209,6 +209,8 @@ export interface NetworkFingerprint {
   net_colo?: string;
   /** ISO country code */
   net_country?: string;
+  /** IANA timezone inferred by Cloudflare */
+  net_timezone?: string;
   /** City name */
   net_city?: string;
   /** Region/State */
@@ -235,6 +237,89 @@ export interface NetworkFingerprint {
  * Complete fingerprint report including client and network data
  */
 export interface FullFingerprintReport extends FingerprintData, NetworkFingerprint {}
+
+/**
+ * Fingerprint details safe to return to the browser and persist.
+ * Raw WebRTC addresses are used only for request-scoped leak checks.
+ */
+export type AnalysisDetails = Omit<
+  FullFingerprintReport,
+  'rtc_local_ip' | 'rtc_public_ip' | 'aux_webrtc_ip'
+>;
+
+/**
+ * Compact IP reputation summary returned by the API.
+ * Raw IP addresses are intentionally excluded.
+ */
+export interface IPIntelSummary {
+  risk_score: number | null;
+  ip_score: number | null;
+  band: string | null;
+  usage_type: string | null;
+  is_datacenter: boolean | null;
+  is_proxy: boolean | null;
+  threat_level: string | null;
+  asn: number | null;
+  asn_org: string | null;
+  operator: string | null;
+  cached: boolean;
+}
+
+export type PublicIPIntel = Omit<IPIntelSummary, 'cached'>;
+
+export interface SelfIPNetwork {
+  asn: number | null;
+  asn_org: string | null;
+  colo: string | null;
+  country: string | null;
+  city: string | null;
+  region: string | null;
+  timezone: string | null;
+}
+
+export interface SelfIPIntelReport {
+  address: string;
+  masked_address: string;
+  ip_version: 'ipv4' | 'ipv6';
+  network: SelfIPNetwork;
+  intelligence: PublicIPIntel | null;
+  intelligence_status: 'available' | 'unavailable';
+  checked_at: number;
+}
+
+export type ConsistencyCheckCode =
+  | 'timezone_geo_mismatch'
+  | 'language_geo_mismatch'
+  | 'datacenter_traffic'
+  | 'proxy_detected'
+  | 'webrtc_ip_leak';
+
+export type ConsistencyCheckStatus = 'pass' | 'flagged' | 'unavailable' | 'indeterminate';
+export type ConsistencyCheckSeverity = 'none' | 'advisory' | 'warning' | 'critical';
+export type ConsistencyCheckCategory = 'contradiction' | 'risk_signal';
+export type WebRTCCheckState =
+  | 'unsupported'
+  | 'no_public_candidate'
+  | 'same_connection'
+  | 'different_address_family'
+  | 'unverifiable'
+  | 'leak_detected';
+
+export interface ConsistencyCheck {
+  code: ConsistencyCheckCode;
+  status: ConsistencyCheckStatus;
+  severity: ConsistencyCheckSeverity;
+  category: ConsistencyCheckCategory;
+  title: string;
+  message: string;
+  state?: WebRTCCheckState;
+}
+
+export interface ConsistencyReport {
+  checks: ConsistencyCheck[];
+  contradiction_count: number;
+  risk_signal_count: number;
+}
 
 /**
  * Three-Lock hash results
@@ -265,12 +350,15 @@ export interface AnalysisResult {
     uniqueness_display: string;
     exact_match_count: number;
     hardware_match_count: number;
+    browser_variant_count: number;
     total_fingerprints: number;
     tracking_risk: 'low' | 'medium' | 'high' | 'critical';
     message: string;
     cross_browser_detected: boolean;
   };
-  details: FullFingerprintReport;
+  details: AnalysisDetails;
+  ip_intel?: IPIntelSummary | null;
+  consistency?: ConsistencyReport;
   lies: {
     os_mismatch: boolean;
     browser_mismatch: boolean;

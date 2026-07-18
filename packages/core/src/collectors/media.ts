@@ -24,7 +24,8 @@ export function getAudioCodecs(): AudioCodecs {
 
   return {
     mp3: audio.canPlayType('audio/mpeg') || 'no',
-    aac: audio.canPlayType('audio/aac') || audio.canPlayType('audio/mp4; codecs="mp4a.40.2"') || 'no',
+    aac:
+      audio.canPlayType('audio/aac') || audio.canPlayType('audio/mp4; codecs="mp4a.40.2"') || 'no',
     ogg: audio.canPlayType('audio/ogg; codecs="vorbis"') || 'no',
     wav: audio.canPlayType('audio/wav; codecs="1"') || audio.canPlayType('audio/wav') || 'no',
     opus: audio.canPlayType('audio/ogg; codecs="opus"') || audio.canPlayType('audio/opus') || 'no',
@@ -63,8 +64,14 @@ export function getVideoCodecs(): VideoCodecs {
       video.canPlayType('video/mp4; codecs="hvc1"') ||
       video.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"') ||
       'no',
-    vp8: video.canPlayType('video/webm; codecs="vp8"') || video.canPlayType('video/webm; codecs="vp8, vorbis"') || 'no',
-    vp9: video.canPlayType('video/webm; codecs="vp9"') || video.canPlayType('video/webm; codecs="vp09.00.10.08"') || 'no',
+    vp8:
+      video.canPlayType('video/webm; codecs="vp8"') ||
+      video.canPlayType('video/webm; codecs="vp8, vorbis"') ||
+      'no',
+    vp9:
+      video.canPlayType('video/webm; codecs="vp9"') ||
+      video.canPlayType('video/webm; codecs="vp09.00.10.08"') ||
+      'no',
     av1:
       video.canPlayType('video/mp4; codecs="av01.0.00M.08"') ||
       video.canPlayType('video/webm; codecs="av01.0.00M.08"') ||
@@ -129,7 +136,9 @@ export async function checkMediaCapabilities(config: {
       return null;
     }
 
-    const result = await navigator.mediaCapabilities.decodingInfo(config as MediaDecodingConfiguration);
+    const result = await navigator.mediaCapabilities.decodingInfo(
+      config as MediaDecodingConfiguration
+    );
     return {
       supported: result.supported,
       smooth: result.smooth,

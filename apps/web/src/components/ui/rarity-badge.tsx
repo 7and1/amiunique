@@ -11,7 +11,10 @@ interface RarityBadgeProps {
   className?: string;
 }
 
-const rarityConfig: Record<RarityLevel, { label: string; color: string; bgColor: string; description: string }> = {
+const rarityConfig: Record<
+  RarityLevel,
+  { label: string; color: string; bgColor: string; description: string }
+> = {
   common: {
     label: 'Common',
     color: 'text-slate-600 dark:text-slate-400',
@@ -47,7 +50,12 @@ const rarityConfig: Record<RarityLevel, { label: string; color: string; bgColor:
 /**
  * Badge showing how rare a fingerprint dimension value is
  */
-export function RarityBadge({ level, showLabel = false, size = 'sm', className }: RarityBadgeProps) {
+export function RarityBadge({
+  level,
+  showLabel = false,
+  size = 'sm',
+  className,
+}: RarityBadgeProps) {
   const config = rarityConfig[level];
 
   return (
@@ -91,7 +99,14 @@ export function estimateRarity(key: string, value: unknown): RarityLevel {
 
   // Screen resolutions
   if (key.includes('screen')) {
-    const commonResolutions = ['1920x1080', '1366x768', '1536x864', '2560x1440', '1440x900', '1280x720'];
+    const commonResolutions = [
+      '1920x1080',
+      '1366x768',
+      '1536x864',
+      '2560x1440',
+      '1440x900',
+      '1280x720',
+    ];
     if (commonResolutions.some(r => strValue.includes(r))) {
       return 'common';
     }

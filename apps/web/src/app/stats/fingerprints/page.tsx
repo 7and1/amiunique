@@ -3,7 +3,8 @@ import { FingerprintsContent } from './fingerprints-content';
 
 export const metadata = {
   title: 'Daily Fingerprint Trends | Browser Tracking Statistics 2024',
-  description: 'Track daily browser fingerprint collection rates, unique device growth, and volatility patterns. Real-time 30-day statistics from our global edge network.',
+  description:
+    'Track daily browser fingerprint collection rates, unique device growth, and volatility patterns. Real-time 30-day statistics from our global edge network.',
 };
 
 const breadcrumbs = [

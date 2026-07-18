@@ -48,11 +48,7 @@ export function CircularProgress({
   return (
     <div className={cn('flex flex-col items-center gap-3', className)}>
       <div className="relative" style={{ width: svgSize, height: svgSize }}>
-        <svg
-          className="transform -rotate-90"
-          width={svgSize}
-          height={svgSize}
-        >
+        <svg className="transform -rotate-90" width={svgSize} height={svgSize}>
           {/* Background circle */}
           <circle
             className="stroke-slate-200 dark:stroke-slate-700"
@@ -82,11 +78,7 @@ export function CircularProgress({
             <span className={cn('font-bold text-slate-900 dark:text-white', fontSize)}>
               {Math.round(value)}%
             </span>
-            {eta && (
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                ~{eta}
-              </span>
-            )}
+            {eta && <span className="text-xs text-slate-500 dark:text-slate-400">~{eta}</span>}
           </div>
         )}
       </div>
@@ -130,11 +122,7 @@ export function ScanningIndicator({
         {/* Center icon */}
         <div className="relative flex h-28 w-28 items-center justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500 text-white">
-            <svg
-              className="h-6 w-6 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle
                 className="opacity-25"
                 cx="12"
@@ -154,9 +142,7 @@ export function ScanningIndicator({
       </div>
 
       {dimension && (
-        <p className="text-sm text-slate-600 dark:text-slate-400 animate-pulse">
-          {dimension}
-        </p>
+        <p className="text-sm text-slate-600 dark:text-slate-400 animate-pulse">{dimension}</p>
       )}
     </div>
   );

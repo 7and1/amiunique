@@ -34,6 +34,13 @@ wrangler kv namespace create "RATE_LIMIT_KV_PROD"
 
 Copy the `id` values from the outputs.
 
+### Native API Rate Limiters
+
+The Worker config declares native Cloudflare Rate Limiting bindings for the self-IP, analyze,
+deletion, statistics, and health routes. They require no secret and no KV namespace. The checked-in
+template uses distinct app-defined namespace IDs for development and production; if an ID is already
+used by another Worker in the same account, replace it with another positive integer.
+
 ### Initialize Database Schema
 
 ```bash
@@ -46,14 +53,14 @@ Go to your GitHub repository settings: **Settings → Secrets and variables → 
 
 Add the following secrets:
 
-| Secret Name | Description | How to Get |
-|-------------|-------------|------------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token | [Create token](https://dash.cloudflare.com/profile/api-tokens) with `Workers Scripts:Edit` permission |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID | Found in dashboard URL: `dash.cloudflare.com/<account_id>` |
-| `D1_DATABASE_ID` | D1 database ID | From `wrangler d1 create` output |
-| `KV_NAMESPACE_ID` | Development KV namespace ID | From `wrangler kv namespace create` output |
-| `KV_PREVIEW_ID` | Preview KV namespace ID | From preview creation output |
-| `KV_NAMESPACE_ID_PROD` | Production KV namespace ID | Same as `KV_NAMESPACE_ID` or separate production namespace |
+| Secret Name             | Description                 | How to Get                                                                                            |
+| ----------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare API token        | [Create token](https://dash.cloudflare.com/profile/api-tokens) with `Workers Scripts:Edit` permission |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID  | Found in dashboard URL: `dash.cloudflare.com/<account_id>`                                            |
+| `D1_DATABASE_ID`        | D1 database ID              | From `wrangler d1 create` output                                                                      |
+| `KV_NAMESPACE_ID`       | Development KV namespace ID | From `wrangler kv namespace create` output                                                            |
+| `KV_PREVIEW_ID`         | Preview KV namespace ID     | From preview creation output                                                                          |
+| `KV_NAMESPACE_ID_PROD`  | Production KV namespace ID  | Same as `KV_NAMESPACE_ID` or separate production namespace                                            |
 
 ### Using GitHub CLI (Automated)
 
@@ -116,12 +123,13 @@ pnpm dev:web      # Frontend only
 Push to `main` branch to trigger automatic deployment via GitHub Actions:
 
 ```bash
-git add .
-git commit -m "Deploy updates"
+git add <reviewed-files>
+git commit -m "feat: deploy reviewed updates"
 git push origin main
 ```
 
 GitHub Actions will:
+
 1. ✅ Build API Worker
 2. ✅ Deploy to Cloudflare Workers
 3. ✅ Build Next.js web app
@@ -148,6 +156,7 @@ pnpm deploy
    - Verify "Deploy to Cloudflare" workflow succeeded
 
 2. **Test API endpoint:**
+
    ```bash
    curl https://amiunique-api.<your-subdomain>.workers.dev/api/health
    ```
@@ -159,12 +168,14 @@ pnpm deploy
 ## Security Best Practices
 
 ✅ **DO:**
+
 - Use GitHub Secrets for sensitive data
 - Rotate API tokens regularly
 - Enable branch protection rules
 - Review deployment logs for errors
 
 ❌ **DON'T:**
+
 - Commit `wrangler.toml` with real IDs
 - Share API tokens in public channels
 - Disable security checks
@@ -207,9 +218,12 @@ wrangler rollback <deployment-id>
 ## CI/CD Pipeline
 
 The deployment workflow (`.github/workflows/deploy.yml`) runs on:
+
 - ✅ Push to `main` branch
-- ✅ Pull requests (build only, no deploy)
 - ✅ Manual trigger via workflow_dispatch
+
+Pull requests run the secret scan, dependency audit, lint, tests, and build in
+`.github/workflows/security-check.yml`; they never receive production deployment credentials.
 
 ### Workflow Jobs
 

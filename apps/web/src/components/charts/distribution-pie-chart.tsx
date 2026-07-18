@@ -24,7 +24,13 @@ const DEFAULT_COLORS = [
   '#14b8a6', // teal-500
 ];
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: DistributionItem & { fill: string; label: string } }> }) => {
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: DistributionItem & { fill: string; label: string } }>;
+}) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (

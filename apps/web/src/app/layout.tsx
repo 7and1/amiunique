@@ -76,7 +76,8 @@ export const metadata: Metadata = {
     site: '@amiunique_io',
     creator: '@amiunique_io',
     title: 'AmiUnique.io - Are You Unique?',
-    description: 'Discover how unique your browser fingerprint is with 80+ detection dimensions. Free privacy test.',
+    description:
+      'Discover how unique your browser fingerprint is with 80+ detection dimensions. Free privacy test.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -104,23 +105,20 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${fontSans.variable} ${fontMono.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${fontSans.variable} ${fontMono.variable}`}
+    >
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="preconnect" href="https://amiunique-api.7and1.workers.dev" />
-        <script
-          dangerouslySetInnerHTML={{ __html: themeInitScript }}
-          suppressHydrationWarning
-        />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} suppressHydrationWarning />
         <OrganizationJsonLd />
         <WebApplicationJsonLd />
         <FAQJsonLd questions={defaultFAQs} />
@@ -132,8 +130,10 @@ export default function RootLayout({
             <div className="pointer-events-none absolute inset-0 -z-10 opacity-80">
               <div className="absolute inset-x-0 top-0 h-[300px] bg-gradient-to-b from-indigo-200/50 via-transparent to-transparent dark:from-indigo-900/20" />
             </div>
-          <HeaderNav />
-          <main id="main-content" className="flex-1" tabIndex={-1}>{children}</main>
+            <HeaderNav />
+            <main id="main-content" className="flex-1" tabIndex={-1}>
+              {children}
+            </main>
             <footer className="border-t border-white/20 bg-white/80 py-10 backdrop-blur-xl dark:border-white/5 dark:bg-slate-950/70">
               <div className="container mx-auto px-4">
                 <div className="flex flex-col items-start justify-between gap-6 text-sm text-muted-foreground md:flex-row md:items-center">
@@ -184,8 +184,8 @@ export default function RootLayout({
             </footer>
           </div>
         </ClientShell>
-          <FingerprintAssistant />
-          <Toaster />
+        <FingerprintAssistant />
+        <Toaster />
       </body>
     </html>
   );

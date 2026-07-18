@@ -8,6 +8,7 @@
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./",
+    "strict": true,
     "noEmit": true
   },
   "include": ["src/**/*", "tests/**/*"],

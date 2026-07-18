@@ -43,22 +43,37 @@ export function detectOSMismatch(ua: string, platform: string): LieDetectionResu
   }
 
   // macOS checks
-  if ((uaLower.includes('macintosh') || uaLower.includes('mac os x')) && !platformLower.includes('mac')) {
+  if (
+    (uaLower.includes('macintosh') || uaLower.includes('mac os x')) &&
+    !platformLower.includes('mac')
+  ) {
     return { detected: true, reason: 'UA claims macOS but platform does not' };
   }
 
   // Linux checks
-  if (uaLower.includes('linux') && !uaLower.includes('android') && !platformLower.includes('linux')) {
+  if (
+    uaLower.includes('linux') &&
+    !uaLower.includes('android') &&
+    !platformLower.includes('linux')
+  ) {
     return { detected: true, reason: 'UA claims Linux but platform does not' };
   }
 
   // Android checks
-  if (uaLower.includes('android') && !platformLower.includes('linux') && !platformLower.includes('android')) {
+  if (
+    uaLower.includes('android') &&
+    !platformLower.includes('linux') &&
+    !platformLower.includes('android')
+  ) {
     return { detected: true, reason: 'UA claims Android but platform does not match' };
   }
 
   // iOS checks
-  if ((uaLower.includes('iphone') || uaLower.includes('ipad')) && !platformLower.includes('iphone') && !platformLower.includes('ipad')) {
+  if (
+    (uaLower.includes('iphone') || uaLower.includes('ipad')) &&
+    !platformLower.includes('iphone') &&
+    !platformLower.includes('ipad')
+  ) {
     return { detected: true, reason: 'UA claims iOS but platform does not match' };
   }
 
@@ -90,7 +105,10 @@ export function detectBrowserMismatch(ua: string): LieDetectionResult {
       // Note: InstallTrigger was removed in Firefox 102+
       // Check for other Firefox-specific features
       if (!('mozInnerScreenX' in window)) {
-        return { detected: true, reason: 'UA claims Firefox but Firefox-specific features missing' };
+        return {
+          detected: true,
+          reason: 'UA claims Firefox but Firefox-specific features missing',
+        };
       }
     }
   }
@@ -166,7 +184,7 @@ export function detectTimezoneMismatch(timezone: string, offset: number): LieDet
 
     // Get the formatted time with offset
     const parts = formatter.formatToParts(now);
-    const offsetPart = parts.find((p) => p.type === 'timeZoneName');
+    const offsetPart = parts.find(p => p.type === 'timeZoneName');
 
     if (!offsetPart) {
       // Fallback: If we can't get the offset from Intl, don't flag as spoofed
@@ -214,12 +232,20 @@ export function detectTimezoneMismatch(timezone: string, offset: number): LieDet
  * @param ua - User-Agent string
  * @returns Detection result
  */
-export function detectWebGLMismatch(renderer: string, vendor: string, ua: string): LieDetectionResult {
+export function detectWebGLMismatch(
+  renderer: string,
+  vendor: string,
+  ua: string
+): LieDetectionResult {
   const uaLower = ua.toLowerCase();
   const rendererLower = renderer.toLowerCase();
 
   // Mac with NVIDIA desktop GPU (rare in modern Macs)
-  if (uaLower.includes('mac') && rendererLower.includes('nvidia') && !rendererLower.includes('apple')) {
+  if (
+    uaLower.includes('mac') &&
+    rendererLower.includes('nvidia') &&
+    !rendererLower.includes('apple')
+  ) {
     // Could be legitimate with external GPU, but suspicious
     return { detected: true, reason: 'Mac with NVIDIA GPU is unusual' };
   }
@@ -233,12 +259,21 @@ export function detectWebGLMismatch(renderer: string, vendor: string, ua: string
   }
 
   // iOS device without Apple GPU
-  if ((uaLower.includes('iphone') || uaLower.includes('ipad')) && !rendererLower.includes('apple')) {
+  if (
+    (uaLower.includes('iphone') || uaLower.includes('ipad')) &&
+    !rendererLower.includes('apple')
+  ) {
     return { detected: true, reason: 'iOS device without Apple GPU' };
   }
 
   // Chrome on Linux claiming to be Mesa but with wrong vendor
-  if (uaLower.includes('linux') && rendererLower.includes('mesa') && !vendor.toLowerCase().includes('intel') && !vendor.toLowerCase().includes('amd') && !vendor.toLowerCase().includes('nvidia')) {
+  if (
+    uaLower.includes('linux') &&
+    rendererLower.includes('mesa') &&
+    !vendor.toLowerCase().includes('intel') &&
+    !vendor.toLowerCase().includes('amd') &&
+    !vendor.toLowerCase().includes('nvidia')
+  ) {
     return { detected: true, reason: 'Linux Mesa GPU with unexpected vendor' };
   }
 
@@ -429,7 +464,10 @@ export function detectAutomation(): LieDetectionResult {
   // Object.getOwnPropertyDescriptor check for overridden getter
   try {
     const webdriverDescriptor = Object.getOwnPropertyDescriptor(Navigator.prototype, 'webdriver');
-    if (webdriverDescriptor && webdriverDescriptor.get?.toString().includes('native code') === false) {
+    if (
+      webdriverDescriptor &&
+      webdriverDescriptor.get?.toString().includes('native code') === false
+    ) {
       return { detected: true, reason: 'navigator.webdriver getter has been modified' };
     }
   } catch {
@@ -509,7 +547,7 @@ export function detectVMEnvironment(renderer: string, vendor: string): LieDetect
   if (
     rendererLower.includes('virtualbox') ||
     rendererLower.includes('vbox') ||
-    rendererLower.includes('chromium') && vendorLower.includes('chromium')
+    (rendererLower.includes('chromium') && vendorLower.includes('chromium'))
   ) {
     return { detected: true, reason: 'VirtualBox GPU detected' };
   }
@@ -561,7 +599,10 @@ export function detectVMEnvironment(renderer: string, vendor: string): LieDetect
   if (
     rendererLower.includes('basic') ||
     rendererLower.includes('generic') ||
-    vendorLower.includes('microsoft') && !rendererLower.includes('intel') && !rendererLower.includes('nvidia') && !rendererLower.includes('amd')
+    (vendorLower.includes('microsoft') &&
+      !rendererLower.includes('intel') &&
+      !rendererLower.includes('nvidia') &&
+      !rendererLower.includes('amd'))
   ) {
     return { detected: true, reason: 'Basic/generic renderer suggests VM' };
   }
@@ -598,7 +639,11 @@ export function detectAllLies(data: Partial<FingerprintData>): AllLies {
     browser: detectBrowserMismatch(data.sys_user_agent || ''),
     resolution: detectResolutionMismatch(),
     timezone: detectTimezoneMismatch(data.sys_timezone || '', data.sys_tz_offset || 0),
-    webgl: detectWebGLMismatch(data.hw_webgl_renderer || '', data.hw_webgl_vendor || '', data.sys_user_agent || ''),
+    webgl: detectWebGLMismatch(
+      data.hw_webgl_renderer || '',
+      data.hw_webgl_vendor || '',
+      data.sys_user_agent || ''
+    ),
     language: detectLanguageMismatch(data.sys_language || '', data.sys_languages || []),
     platform: detectPlatformMismatch(data.sys_platform || '', data.sys_user_agent || ''),
     headless: detectHeadlessBrowser(),

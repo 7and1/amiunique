@@ -50,20 +50,17 @@ function parseDays(value: string | undefined, defaultVal = 30): number {
  * GET /api/stats - Global statistics
  * Uses pre-aggregated cache with fallback to live query
  */
-stats.get('/', async (c) => {
+stats.get('/', async c => {
   const db = c.env.DB;
 
   try {
     // First try to get from cache (fast path)
-    const cached = await db
-      .prepare('SELECT * FROM stats_cache WHERE id = ?')
-      .bind('global')
-      .first<{
-        total_fingerprints: number;
-        unique_full_hash: number;
-        unique_hardware_hash: number;
-        updated_at: number;
-      }>();
+    const cached = await db.prepare('SELECT * FROM stats_cache WHERE id = ?').bind('global').first<{
+      total_fingerprints: number;
+      unique_full_hash: number;
+      unique_hardware_hash: number;
+      updated_at: number;
+    }>();
 
     // If cache exists and is fresh (< 5 minutes old), use it
     const cacheAge = cached ? Date.now() - cached.updated_at : Infinity;
@@ -88,8 +85,12 @@ stats.get('/', async (c) => {
     // Cache miss or stale - compute live (slow path)
     const [total, uniqueFull, uniqueHardware] = await Promise.all([
       db.prepare('SELECT COUNT(*) as count FROM visits').first<{ count: number }>(),
-      db.prepare('SELECT COUNT(DISTINCT full_hash) as count FROM visits').first<{ count: number }>(),
-      db.prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits').first<{ count: number }>(),
+      db
+        .prepare('SELECT COUNT(DISTINCT full_hash) as count FROM visits')
+        .first<{ count: number }>(),
+      db
+        .prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits')
+        .first<{ count: number }>(),
     ]);
 
     const now = Date.now();
@@ -106,7 +107,13 @@ stats.get('/', async (c) => {
         `INSERT OR REPLACE INTO stats_cache (id, total_fingerprints, unique_full_hash, unique_hardware_hash, updated_at)
          VALUES (?, ?, ?, ?, ?)`
       )
-      .bind('global', statsData.total_fingerprints, statsData.unique_sessions, statsData.unique_devices, now)
+      .bind(
+        'global',
+        statsData.total_fingerprints,
+        statsData.unique_sessions,
+        statsData.unique_devices,
+        now
+      )
       .run();
 
     // In tests or non-Worker environments executionCtx is absent; fall back to a best-effort write
@@ -138,7 +145,7 @@ stats.get('/', async (c) => {
 /**
  * GET /api/stats/browsers - Browser distribution
  */
-stats.get('/browsers', async (c) => {
+stats.get('/browsers', async c => {
   const db = c.env.DB;
   const limit = parseLimit(c.req.query('limit'), 10);
 
@@ -180,7 +187,7 @@ stats.get('/browsers', async (c) => {
 /**
  * GET /api/stats/os - Operating system distribution
  */
-stats.get('/os', async (c) => {
+stats.get('/os', async c => {
   const db = c.env.DB;
   const limit = parseLimit(c.req.query('limit'), 10);
 
@@ -222,7 +229,7 @@ stats.get('/os', async (c) => {
 /**
  * GET /api/stats/devices - Device type distribution
  */
-stats.get('/devices', async (c) => {
+stats.get('/devices', async c => {
   const db = c.env.DB;
 
   try {
@@ -261,7 +268,7 @@ stats.get('/devices', async (c) => {
 /**
  * GET /api/stats/countries - Geographic distribution
  */
-stats.get('/countries', async (c) => {
+stats.get('/countries', async c => {
   const db = c.env.DB;
   const limit = parseLimit(c.req.query('limit'), 20);
 
@@ -303,7 +310,7 @@ stats.get('/countries', async (c) => {
 /**
  * GET /api/stats/screens - Screen resolution distribution
  */
-stats.get('/screens', async (c) => {
+stats.get('/screens', async c => {
   const db = c.env.DB;
   const limit = parseLimit(c.req.query('limit'), 15);
 
@@ -345,7 +352,7 @@ stats.get('/screens', async (c) => {
 /**
  * GET /api/stats/gpus - GPU vendor distribution
  */
-stats.get('/gpus', async (c) => {
+stats.get('/gpus', async c => {
   const db = c.env.DB;
   const limit = parseLimit(c.req.query('limit'), 10);
 
@@ -387,7 +394,7 @@ stats.get('/gpus', async (c) => {
 /**
  * GET /api/stats/daily - Daily trends
  */
-stats.get('/daily', async (c) => {
+stats.get('/daily', async c => {
   const db = c.env.DB;
   const days = parseDays(c.req.query('days'), 30);
 

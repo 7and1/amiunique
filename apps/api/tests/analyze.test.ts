@@ -3,8 +3,10 @@
  * Tests fingerprint submission, validation, and response structure
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import app from '../src/index.js';
+import type { ConsistencyReport } from '../src/lib/cross-check.js';
+import { sha256 } from '../src/lib/hash.js';
 
 // Mock KV namespace for rate limiting
 const createMockKV = () => ({
@@ -14,24 +16,64 @@ const createMockKV = () => ({
 });
 
 // Mock D1 database with configurable responses
-const createMockD1 = (options: {
-  uniqueCount?: number;
-  hardwareCount?: number;
-  totalCount?: number;
-  insertSuccess?: boolean;
-} = {}) => {
+const createMockD1 = (
+  options: {
+    uniqueCount?: number;
+    hardwareCount?: number;
+    softwareVariantCount?: number;
+    totalCount?: number;
+    insertSuccess?: boolean;
+    insertChanges?: number;
+    existingVisit?: 'matching' | 'different' | 'missing';
+  } = {}
+) => {
   const {
-    uniqueCount = 0,
-    hardwareCount = 0,
-    totalCount = 0,
+    uniqueCount = 1,
+    hardwareCount = 1,
+    softwareVariantCount = 1,
+    totalCount = 1,
     insertSuccess = true,
+    insertChanges = 1,
+    existingVisit = 'matching',
   } = options;
+  const bindings: Array<{ sql: string; values: unknown[] }> = [];
+  const events: string[] = [];
 
   const mockPrepare = vi.fn().mockImplementation((sql: string) => {
     // Create mock first function that handles SQL-based routing
     const mockFirst = vi.fn().mockImplementation(() => {
+      events.push(`first:${sql}`);
+
+      if (sql.includes('WHERE id = ?')) {
+        if (existingVisit === 'missing') return Promise.resolve(null);
+        if (existingVisit === 'different') {
+          return Promise.resolve({
+            hardware_hash: 'different-hardware',
+            software_hash: 'different-software',
+            full_hash: 'different-full',
+          });
+        }
+        const insert = bindings.find(binding => binding.sql.includes('INTO visits'));
+        return Promise.resolve({
+          hardware_hash: insert?.values[2],
+          software_hash: insert?.values[3],
+          full_hash: insert?.values[4],
+        });
+      }
+
+      if (sql.includes('AS exact_count')) {
+        return Promise.resolve({
+          exact_count: uniqueCount,
+          hardware_count: hardwareCount,
+          browser_variant_count: softwareVariantCount,
+          total_count: totalCount,
+        });
+      }
+
       // Determine which COUNT query this is based on SQL
-      if (sql.includes('full_hash')) {
+      if (sql.includes('COUNT(DISTINCT software_hash)')) {
+        return Promise.resolve({ count: softwareVariantCount });
+      } else if (sql.includes('full_hash')) {
         return Promise.resolve({ count: uniqueCount });
       } else if (sql.includes('hardware_hash')) {
         return Promise.resolve({ count: hardwareCount });
@@ -40,22 +82,32 @@ const createMockD1 = (options: {
       }
       return Promise.resolve({ count: 0 });
     });
+    const mockRun = vi.fn().mockImplementation(() => {
+      events.push(`run:${sql}`);
+      return Promise.resolve({
+        success: insertSuccess,
+        meta: { changes: insertChanges },
+      });
+    });
 
     return {
       // For queries without bind (like SELECT COUNT(*) FROM visits)
       first: mockFirst,
-      run: vi.fn().mockResolvedValue({ success: insertSuccess }),
+      run: mockRun,
       all: vi.fn().mockResolvedValue({ results: [] }),
       // For queries with bind
-      bind: vi.fn().mockReturnValue({
-        run: vi.fn().mockResolvedValue({ success: insertSuccess }),
-        first: mockFirst,
-        all: vi.fn().mockResolvedValue({ results: [] }),
+      bind: vi.fn().mockImplementation((...values: unknown[]) => {
+        bindings.push({ sql, values });
+        return {
+          run: mockRun,
+          first: mockFirst,
+          all: vi.fn().mockResolvedValue({ results: [] }),
+        };
       }),
     };
   });
 
-  return { prepare: mockPrepare };
+  return { prepare: mockPrepare, bindings, events };
 };
 
 // Valid fingerprint payload
@@ -95,6 +147,49 @@ const createRequest = (body: unknown, headers: Record<string, string> = {}) => {
   });
 };
 
+interface AnalyzeTestResponse {
+  success: boolean;
+  code?: string;
+  details?: Record<string, unknown>;
+  ip_intel?: unknown;
+  consistency?: ConsistencyReport;
+  hashes: {
+    gold: string;
+    silver: string;
+    bronze: string;
+  };
+  result: {
+    is_unique: boolean;
+    uniqueness_ratio: number;
+    tracking_risk: string;
+    message: string;
+    exact_match_count: number;
+    hardware_match_count: number;
+    browser_variant_count: number;
+    total_fingerprints: number;
+    uniqueness_display: string;
+    cross_browser_detected: boolean;
+  };
+  meta: {
+    id: string;
+    timestamp: number;
+    processing_time_ms: number;
+  };
+  lies: {
+    os_mismatch: boolean;
+    browser_mismatch: boolean;
+    resolution_mismatch: boolean;
+    timezone_mismatch: boolean;
+    webgl_mismatch: boolean;
+    headless: boolean;
+    automation: boolean;
+  };
+}
+
+async function readAnalyzeResponse(response: Response): Promise<AnalyzeTestResponse> {
+  return response.json<AnalyzeTestResponse>();
+}
+
 describe('POST /api/analyze', () => {
   let mockKV: ReturnType<typeof createMockKV>;
 
@@ -110,6 +205,11 @@ describe('POST /api/analyze', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   describe('Success cases', () => {
     it('should accept valid fingerprint and return success', async () => {
       const db = createMockD1();
@@ -117,7 +217,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(200);
       expect(json.success).toBe(true);
@@ -132,7 +232,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.hashes).toHaveProperty('gold');
       expect(json.hashes).toHaveProperty('silver');
@@ -150,7 +250,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.result).toHaveProperty('is_unique');
       expect(json.result).toHaveProperty('uniqueness_ratio');
@@ -166,12 +266,71 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.meta).toHaveProperty('id');
       expect(json.meta).toHaveProperty('timestamp');
       expect(json.meta).toHaveProperty('processing_time_ms');
       expect(typeof json.meta.processing_time_ms).toBe('number');
+    });
+
+    it('should use the idempotency key as the visit ID and count after inserting', async () => {
+      const db = createMockD1();
+      const env = createEnv(db);
+      const submissionId = '4d9c3c28-18f3-4e3e-92ba-7984e554f45e';
+      const req = createRequest(validFingerprint, { 'Idempotency-Key': submissionId });
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+      const insert = db.bindings.find(binding => binding.sql.includes('INTO visits'));
+      const insertEvent = db.events.findIndex(event => event.startsWith('run:INSERT'));
+      const firstCountEvent = db.events.findIndex(event => event.startsWith('first:'));
+
+      expect(res.status).toBe(200);
+      expect(json.meta.id).toBe(submissionId);
+      expect(insert?.sql).toContain('INSERT OR IGNORE INTO visits');
+      expect(insert?.values[0]).toBe(submissionId);
+      expect(insertEvent).toBeGreaterThanOrEqual(0);
+      expect(firstCountEvent).toBeGreaterThan(insertEvent);
+    });
+
+    it('should return the existing observation when the idempotency key is replayed', async () => {
+      const db = createMockD1({
+        insertChanges: 0,
+        existingVisit: 'matching',
+        uniqueCount: 1,
+        hardwareCount: 1,
+        softwareVariantCount: 1,
+        totalCount: 1,
+      });
+      const env = createEnv(db);
+      const submissionId = '46c54715-dfad-43d9-8e35-c2a47bc89428';
+      const req = createRequest(validFingerprint, { 'Idempotency-Key': submissionId });
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(200);
+      expect(json.meta.id).toBe(submissionId);
+      expect(json.result.exact_match_count).toBe(1);
+      expect(json.result.total_fingerprints).toBe(1);
+    });
+
+    it('should reject an idempotency key reused for a different fingerprint', async () => {
+      const db = createMockD1({
+        insertChanges: 0,
+        existingVisit: 'different',
+      });
+      const env = createEnv(db);
+      const submissionId = '0ce05326-d075-4959-9c04-176f073b85d2';
+      const req = createRequest(validFingerprint, { 'Idempotency-Key': submissionId });
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(409);
+      expect(json.success).toBe(false);
+      expect(json.code).toBe('IDEMPOTENCY_CONFLICT');
     });
 
     it('should accept minimal fingerprint', async () => {
@@ -181,10 +340,55 @@ describe('POST /api/analyze', () => {
       const req = createRequest(minimal);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(200);
       expect(json.success).toBe(true);
+    });
+
+    it('should return and persist only redacted WebRTC details', async () => {
+      const db = createMockD1();
+      const leakedCandidate = '198.51.100.10';
+      const connectionIP = '198.51.100.11';
+      const req = createRequest(
+        {
+          ...validFingerprint,
+          rtc_available: true,
+          rtc_local_ip: '192.168.1.20',
+          rtc_public_ip: leakedCandidate,
+          rtc_mdns_obfuscated: false,
+          rtc_stun_available: true,
+          rtc_ip_type: 'ipv4',
+          rtc_media_device_count: 2,
+          aux_webrtc_ip: leakedCandidate,
+          unreviewed_network_value: connectionIP,
+        },
+        { 'CF-Connecting-IP': connectionIP }
+      );
+
+      const res = await app.fetch(req, createEnv(db));
+      const json = await readAnalyzeResponse(res);
+      const insert = db.bindings.find(binding => binding.sql.includes('INTO visits'));
+      const persistedJson = insert?.values.at(-1);
+
+      expect(res.status).toBe(200);
+      expect(typeof persistedJson).toBe('string');
+      const persisted = JSON.parse(persistedJson as string) as Record<string, unknown>;
+      expect(json.details).not.toHaveProperty('rtc_local_ip');
+      expect(json.details).not.toHaveProperty('rtc_public_ip');
+      expect(json.details).not.toHaveProperty('aux_webrtc_ip');
+      expect(json.details).not.toHaveProperty('unreviewed_network_value');
+      expect(persisted).not.toHaveProperty('rtc_local_ip');
+      expect(persisted).not.toHaveProperty('rtc_public_ip');
+      expect(persisted).not.toHaveProperty('aux_webrtc_ip');
+      expect(persisted).not.toHaveProperty('unreviewed_network_value');
+      expect(JSON.stringify(json)).not.toContain(leakedCandidate);
+      expect(json.consistency?.checks.find(check => check.code === 'webrtc_ip_leak')).toMatchObject(
+        {
+          status: 'flagged',
+          state: 'leak_detected',
+        }
+      );
     });
   });
 
@@ -199,7 +403,7 @@ describe('POST /api/analyze', () => {
       });
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(400);
       expect(json.success).toBe(false);
@@ -216,7 +420,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(largePayload);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(413);
       expect(json.success).toBe(false);
@@ -233,7 +437,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(invalid);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(400);
       expect(json.success).toBe(false);
@@ -251,7 +455,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(invalid);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(400);
       expect(json.success).toBe(false);
@@ -267,68 +471,135 @@ describe('POST /api/analyze', () => {
       const req = createRequest(invalid);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(400);
       expect(json.success).toBe(false);
+    });
+
+    it('should reject an invalid idempotency key', async () => {
+      const db = createMockD1();
+      const env = createEnv(db);
+      const req = createRequest(validFingerprint, { 'Idempotency-Key': 'not-a-uuid' });
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(400);
+      expect(json.success).toBe(false);
+      expect(json.code).toBe('INVALID_IDEMPOTENCY_KEY');
     });
   });
 
   describe('Tracking risk calculation', () => {
     it('should mark unique fingerprint as high risk', async () => {
-      // Mock: no existing matches (first fingerprint submission)
-      const db = createMockD1({ uniqueCount: 0, hardwareCount: 0, totalCount: 0 });
+      const db = createMockD1({
+        uniqueCount: 1,
+        hardwareCount: 1,
+        softwareVariantCount: 1,
+        totalCount: 1,
+      });
       const env = createEnv(db);
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.result.is_unique).toBe(true);
+      expect(json.result.uniqueness_ratio).toBe(1);
+      expect(json.result.uniqueness_display).toBe('1 of 1');
       expect(json.result.tracking_risk).toBe('high');
     });
 
     it('should mark common fingerprint as low risk', async () => {
-      // Mock: 100 existing matches (common fingerprint)
-      // Note: uniqueCount is BEFORE insert, so 100 previous matches = is_unique: false
-      const db = createMockD1({ uniqueCount: 100, hardwareCount: 100, totalCount: 1000 });
+      const db = createMockD1({
+        uniqueCount: 101,
+        hardwareCount: 101,
+        softwareVariantCount: 1,
+        totalCount: 1001,
+      });
       const env = createEnv(db);
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.result.is_unique).toBe(false);
-      // With 100 previous matches + 1 current = 101 total, should be 'low' risk
+      expect(json.result.exact_match_count).toBe(101);
+      expect(json.result.uniqueness_display).toBe('101 of 1,001');
       expect(json.result.tracking_risk).toBe('low');
     });
 
     it('should mark fingerprint with few matches as medium risk', async () => {
-      // Mock: 10 existing matches
-      const db = createMockD1({ uniqueCount: 10, hardwareCount: 10, totalCount: 100 });
+      const db = createMockD1({
+        uniqueCount: 11,
+        hardwareCount: 11,
+        softwareVariantCount: 1,
+        totalCount: 101,
+      });
       const env = createEnv(db);
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.result.is_unique).toBe(false);
-      // With 10 previous matches + 1 current = 11 total, should be 'medium' risk (5-49)
+      expect(json.result.exact_match_count).toBe(11);
       expect(json.result.tracking_risk).toBe('medium');
     });
 
-    it('should detect cross-browser tracking', async () => {
-      // Mock: same hardware seen with different full fingerprints
-      // hardwareCount > uniqueCount means different browsers on same device
-      const db = createMockD1({ uniqueCount: 0, hardwareCount: 5, totalCount: 100 });
+    it('should keep a rare fingerprint in a large corpus at high risk', async () => {
+      const db = createMockD1({
+        uniqueCount: 5,
+        hardwareCount: 5,
+        softwareVariantCount: 1,
+        totalCount: 6745,
+      });
       const env = createEnv(db);
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
+
+      expect(json.result.uniqueness_display).toBe('5 of 6,745');
+      expect(json.result.tracking_risk).toBe('high');
+    });
+
+    it('should detect cross-browser tracking', async () => {
+      const db = createMockD1({
+        uniqueCount: 1,
+        hardwareCount: 5,
+        softwareVariantCount: 2,
+        totalCount: 100,
+      });
+      const env = createEnv(db);
+      const req = createRequest(validFingerprint);
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
 
       expect(json.result.cross_browser_detected).toBe(true);
+      expect(json.result.browser_variant_count).toBe(2);
       expect(json.result.tracking_risk).toBe('critical');
+    });
+
+    it('should not treat network-only full hash changes as cross-browser tracking', async () => {
+      const db = createMockD1({
+        uniqueCount: 1,
+        hardwareCount: 5,
+        softwareVariantCount: 1,
+        totalCount: 100,
+      });
+      const env = createEnv(db);
+      const req = createRequest(validFingerprint);
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+
+      expect(json.result.hardware_match_count).toBe(5);
+      expect(json.result.browser_variant_count).toBe(1);
+      expect(json.result.cross_browser_detected).toBe(false);
+      expect(json.result.tracking_risk).toBe('high');
     });
   });
 
@@ -345,7 +616,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(withLies);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.lies.os_mismatch).toBe(true);
       expect(json.lies.browser_mismatch).toBe(false);
@@ -358,7 +629,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(json.lies.os_mismatch).toBe(false);
       expect(json.lies.browser_mismatch).toBe(false);
@@ -369,6 +640,43 @@ describe('POST /api/analyze', () => {
   });
 
   describe('Rate limiting headers', () => {
+    it('fails closed when the production native limiter binding is missing', async () => {
+      const db = createMockD1();
+      const req = createRequest(validFingerprint, {
+        'CF-Connecting-IP': '1.2.3.4',
+      });
+
+      const res = await app.fetch(req, {
+        DB: db,
+        RATE_LIMIT_KV: mockKV,
+        ENVIRONMENT: 'production',
+      });
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(503);
+      expect(json.code).toBe('RATE_LIMIT_UNAVAILABLE');
+      expect(db.prepare).not.toHaveBeenCalled();
+    });
+
+    it('honors the production native limiter decision', async () => {
+      const db = createMockD1();
+      const limit = vi.fn().mockResolvedValue({ success: false });
+      const req = createRequest(validFingerprint, {
+        'CF-Connecting-IP': '1.2.3.4',
+      });
+
+      const res = await app.fetch(req, {
+        DB: db,
+        RATE_LIMIT_KV: mockKV,
+        ANALYZE_RATE_LIMITER: { limit },
+        ENVIRONMENT: 'production',
+      });
+
+      expect(res.status).toBe(429);
+      expect(limit).toHaveBeenCalledTimes(1);
+      expect(db.prepare).not.toHaveBeenCalled();
+    });
+
     it('should include rate limit headers when KV is available', async () => {
       const db = createMockD1();
       const env = createEnv(db);
@@ -381,6 +689,9 @@ describe('POST /api/analyze', () => {
       expect(res.headers.get('X-RateLimit-Limit')).toBeDefined();
       expect(res.headers.get('X-RateLimit-Remaining')).toBeDefined();
       expect(res.headers.get('X-RateLimit-Reset')).toBeDefined();
+      const expectedKey = `rl:${await sha256('1.2.3.4')}:/api/analyze`;
+      expect(mockKV.get).toHaveBeenCalledWith(expectedKey, 'json');
+      expect(mockKV.get.mock.calls.flat().join(' ')).not.toContain('1.2.3.4');
     });
 
     it('should skip rate limiting when KV is not available', async () => {
@@ -390,7 +701,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       // Should still succeed without rate limit headers
       expect(res.status).toBe(200);
@@ -400,7 +711,51 @@ describe('POST /api/analyze', () => {
     });
   });
 
+  describe('CORS', () => {
+    it('should allow the idempotency key on analyze preflight requests', async () => {
+      const db = createMockD1();
+      const env = createEnv(db);
+      const req = new Request('http://localhost/api/analyze', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: 'https://amiunique.io',
+          'Access-Control-Request-Method': 'POST',
+          'Access-Control-Request-Headers': 'content-type,idempotency-key',
+        },
+      });
+
+      const res = await app.fetch(req, env);
+
+      expect(res.status).toBe(204);
+      expect(res.headers.get('Access-Control-Allow-Headers')).toContain('Idempotency-Key');
+    });
+  });
+
   describe('Error handling', () => {
+    it('should fail open after one 5000ms IP intelligence attempt', async () => {
+      const fetchMock = vi.fn().mockRejectedValue(new Error('upstream timeout'));
+      vi.stubGlobal('fetch', fetchMock);
+      const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const db = createMockD1();
+      const env = {
+        ...createEnv(db),
+        IPBOT_API_ORIGIN: 'https://ipbot.test',
+        IPBOT_API_KEY: 'test-key',
+      };
+      const req = createRequest(validFingerprint, {
+        'CF-Connecting-IP': '8.8.8.8',
+      });
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(200);
+      expect(json.ip_intel).toBeNull();
+      expect(timeoutSpy).toHaveBeenCalledWith(5000);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it('should handle database errors gracefully', async () => {
       // Create a mock that throws errors
       const errorDb = {
@@ -416,7 +771,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(500);
       expect(json.success).toBe(false);
@@ -429,7 +784,7 @@ describe('POST /api/analyze', () => {
       const req = createRequest(validFingerprint);
 
       const res = await app.fetch(req, env);
-      const json = await res.json();
+      const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(500);
       expect(json.success).toBe(false);

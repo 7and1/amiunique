@@ -2,7 +2,8 @@ import { Shield, Lock, Eye, Trash2, Mail } from 'lucide-react';
 
 export const metadata = {
   title: 'Privacy Policy | Browser Fingerprint Data Protection',
-  description: 'AmiUnique.io privacy policy explains how we collect, hash, and protect your browser fingerprint data. GDPR/CCPA compliant with 90-day retention and deletion rights.',
+  description:
+    'AmiUnique.io privacy policy explains how we collect, minimize, and protect browser fingerprint data with 90-day retention and deletion rights.',
 };
 
 export default function PrivacyPage() {
@@ -12,9 +13,7 @@ export default function PrivacyPage() {
         <div className="text-center mb-12">
           <Shield className="w-12 h-12 mx-auto text-primary-500 mb-4" />
           <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-          <p className="text-muted-foreground">
-            Last updated: November 2024
-          </p>
+          <p className="text-muted-foreground">Last updated: July 17, 2026</p>
         </div>
 
         <div className="prose prose-slate dark:prose-invert max-w-none">
@@ -34,7 +33,10 @@ export default function PrivacyPage() {
               <li>Installed fonts and plugins</li>
               <li>Hardware information (CPU cores, memory)</li>
               <li>Timezone and language settings</li>
-              <li>Network information (IP hash, ASN, country)</li>
+              <li>Coarse network information (ASN and country)</li>
+              <li>
+                WebRTC capability and a derived exposure verdict, without storing candidate IPs
+              </li>
             </ul>
           </section>
 
@@ -45,22 +47,58 @@ export default function PrivacyPage() {
             </h2>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
               <li>
-                <strong>IP Address Hashing:</strong> We never store your raw IP address. All IP
-                addresses are immediately hashed using SHA-256.
+                <strong>IP Address Minimization:</strong> We use your connection IP only to process
+                the current request, enforce short-lived rate limits, and request network
+                reputation. D1 stores neither the raw connection address nor a hash of it. WebRTC
+                candidate addresses are removed before the report is stored or returned.
               </li>
               <li>
-                <strong>No Personal Information:</strong> We do not collect your name, email, or
-                any other personally identifiable information unless you voluntarily provide it.
+                <strong>No Personal Information:</strong> We do not collect your name, email, or any
+                other personally identifiable information unless you voluntarily provide it.
               </li>
               <li>
-                <strong>Secure Processing:</strong> Data is processed securely on our servers
-                for maximum security and privacy.
+                <strong>Secure Processing:</strong> Data is processed securely on our servers for
+                maximum security and privacy.
               </li>
               <li>
-                <strong>No Third-Party Tracking:</strong> We do not use any third-party analytics
-                or advertising services.
+                <strong>No Advertising Tracking:</strong> We do not use third-party analytics or
+                advertising services. The limited infrastructure providers described below are used
+                only to deliver the requested security checks.
               </li>
             </ul>
+          </section>
+
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold mb-4">Network Reputation Provider</h2>
+            <p className="text-muted-foreground">
+              We send the connection IP to IPBot to classify network reputation, proxy signals,
+              datacenter usage, and the network operator. IPBot acts as a service provider for this
+              request, not as an advertising or analytics tracker. We cache the derived
+              classification for up to 24 hours, or one hour for high-risk results; cache keys are
+              hashed and cached values exclude the raw IP address.
+            </p>
+          </section>
+
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold mb-4">WebRTC Leak Test</h2>
+            <p className="text-muted-foreground">
+              When you start a full fingerprint scan, your browser contacts Google&apos;s public
+              STUN endpoints solely to test whether WebRTC exposes a different public or local
+              address. Google can observe the source address and request time for that network
+              exchange. AmiUnique keeps only the derived capability and exposure verdict; candidate
+              addresses are removed before the analysis response and D1 persistence.
+            </p>
+          </section>
+
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold mb-4">Current IP Report</h2>
+            <p className="text-muted-foreground">
+              The My IP page returns your current connection address only to your browser so you can
+              view or copy it. The page masks the address by default, sends no user-supplied IP
+              parameter, disables browser and CDN caching, and does not write the address to
+              fingerprint history or Web Storage. Network reputation processing follows the provider
+              and short-lived hashed-cache rules described above.
+            </p>
           </section>
 
           <section className="mb-12">
@@ -70,12 +108,12 @@ export default function PrivacyPage() {
             </p>
             <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
               <li>
-                <strong>Education:</strong> To show users how browser fingerprinting works and
-                how they can be tracked online.
+                <strong>Education:</strong> To show users how browser fingerprinting works and how
+                they can be tracked online.
               </li>
               <li>
-                <strong>Research:</strong> To understand the uniqueness of browser fingerprints
-                and improve privacy tools.
+                <strong>Research:</strong> To understand the uniqueness of browser fingerprints and
+                improve privacy tools.
               </li>
               <li>
                 <strong>Statistics:</strong> To provide aggregate statistics about browser and
@@ -87,9 +125,10 @@ export default function PrivacyPage() {
           <section className="mb-12">
             <h2 className="text-xl font-semibold mb-4">Data Retention</h2>
             <p className="text-muted-foreground">
-              Fingerprint data is retained for 90 days for statistical analysis. After this
-              period, individual records are deleted, but aggregate statistics are preserved.
-              You can request immediate deletion of your data at any time.
+              Fingerprint data is retained for 90 days for statistical analysis. After this period,
+              individual records are deleted, but aggregate statistics are preserved. Completed
+              deletion receipts contain no submitted hash or email and are removed after 30 days.
+              You can request earlier deletion of your data at any time.
             </p>
           </section>
 
@@ -109,8 +148,8 @@ export default function PrivacyPage() {
                 <strong>Right to Deletion:</strong> Request complete deletion of your data.
               </li>
               <li>
-                <strong>Right to Opt-Out:</strong> Decline to have your fingerprint stored
-                (you can still view your fingerprint without storing it).
+                <strong>Right to Object:</strong> Contact us if you object to processing or want
+                help exercising a privacy right.
               </li>
             </ul>
             <p className="text-muted-foreground mt-4">
@@ -121,9 +160,9 @@ export default function PrivacyPage() {
           <section className="mb-12">
             <h2 className="text-xl font-semibold mb-4">Cookies</h2>
             <p className="text-muted-foreground">
-              We use minimal cookies solely for essential functionality. We do not use
-              tracking cookies, advertising cookies, or any third-party cookies. Any cookies
-              we set are strictly necessary for the service to function.
+              We use minimal cookies solely for essential functionality. We do not use tracking
+              cookies, advertising cookies, or any third-party cookies. Any cookies we set are
+              strictly necessary for the service to function.
             </p>
           </section>
 
@@ -143,9 +182,9 @@ export default function PrivacyPage() {
           <section className="mb-12">
             <h2 className="text-xl font-semibold mb-4">Changes to This Policy</h2>
             <p className="text-muted-foreground">
-              We may update this Privacy Policy from time to time. We will notify you of any
-              changes by posting the new Privacy Policy on this page and updating the
-              &quot;Last updated&quot; date.
+              We may update this Privacy Policy from time to time. We will notify you of any changes
+              by posting the new Privacy Policy on this page and updating the &quot;Last
+              updated&quot; date.
             </p>
           </section>
         </div>

@@ -58,7 +58,6 @@ const sampleClientFingerprint: ClientFingerprint = {
 
 // Sample network fingerprint
 const sampleNetworkFingerprint: NetworkFingerprint = {
-  net_ip_hash: 'iphash123',
   net_asn: 7922,
   net_asn_org: 'Comcast',
   net_colo: 'EWR',
@@ -245,9 +244,7 @@ describe('calculateThreeLocks', () => {
 
   it('should handle minimal input', async () => {
     const minimalClient: ClientFingerprint = {};
-    const minimalNetwork: NetworkFingerprint = {
-      net_ip_hash: 'hash',
-    };
+    const minimalNetwork: NetworkFingerprint = {};
 
     const locks = await calculateThreeLocks(minimalClient, minimalNetwork);
 
@@ -298,5 +295,18 @@ describe('Lock stability guarantees', () => {
     expect(locks1.silver).toBe(locks2.silver);
     // Bronze should change
     expect(locks1.bronze).not.toBe(locks2.bronze);
+  });
+
+  it('does not collide when values contain the old delimiter', async () => {
+    const first = await calculateGoldLock({
+      hw_canvas_hash: 'a|b',
+      hw_webgl_hash: 'c',
+    });
+    const second = await calculateGoldLock({
+      hw_canvas_hash: 'a',
+      hw_webgl_hash: 'b|c',
+    });
+
+    expect(first).not.toBe(second);
   });
 });

@@ -162,7 +162,7 @@ export function IdentityBellCurve({ percentile, rarityLabel, verdict }: Identity
             className="pointer-events-none absolute flex -translate-x-1/2 flex-col items-center gap-2"
             style={{
               left: `${clamped}%`,
-              top: `${(dotYPercent / 100) * 224}px` // Adjust based on SVG height (224px = h-56)
+              top: `${(dotYPercent / 100) * 224}px`, // Adjust based on SVG height (224px = h-56)
             }}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -180,10 +180,14 @@ export function IdentityBellCurve({ percentile, rarityLabel, verdict }: Identity
               {/* Outer glow rings */}
               <motion.div
                 className="absolute -inset-3 rounded-full bg-amber-400/30"
-                animate={shouldReduceMotion ? {} : {
-                  scale: [1, 1.5, 1],
-                  opacity: [0.5, 0, 0.5],
-                }}
+                animate={
+                  shouldReduceMotion
+                    ? {}
+                    : {
+                        scale: [1, 1.5, 1],
+                        opacity: [0.5, 0, 0.5],
+                      }
+                }
                 transition={{
                   duration: 2.4,
                   repeat: Infinity,
@@ -192,10 +196,14 @@ export function IdentityBellCurve({ percentile, rarityLabel, verdict }: Identity
               />
               <motion.div
                 className="absolute -inset-2 rounded-full bg-amber-400/40"
-                animate={shouldReduceMotion ? {} : {
-                  scale: [1, 1.3, 1],
-                  opacity: [0.6, 0.2, 0.6],
-                }}
+                animate={
+                  shouldReduceMotion
+                    ? {}
+                    : {
+                        scale: [1, 1.3, 1],
+                        opacity: [0.6, 0.2, 0.6],
+                      }
+                }
                 transition={{
                   duration: 2.4,
                   repeat: Infinity,
@@ -207,9 +215,13 @@ export function IdentityBellCurve({ percentile, rarityLabel, verdict }: Identity
               {/* Core dot */}
               <motion.div
                 className="relative h-4 w-4 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 shadow-lg shadow-amber-500/50"
-                animate={shouldReduceMotion ? {} : {
-                  scale: [0.9, 1.05, 0.9],
-                }}
+                animate={
+                  shouldReduceMotion
+                    ? {}
+                    : {
+                        scale: [0.9, 1.05, 0.9],
+                      }
+                }
                 transition={{
                   duration: 2.4,
                   repeat: Infinity,

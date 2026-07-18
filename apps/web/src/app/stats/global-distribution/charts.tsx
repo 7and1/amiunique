@@ -16,9 +16,27 @@ import {
 
 // Premium color palette matching Neo-SaaS design
 const COLORS = {
-  browsers: ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308'],
+  browsers: [
+    '#6366f1',
+    '#8b5cf6',
+    '#a855f7',
+    '#d946ef',
+    '#ec4899',
+    '#f43f5e',
+    '#f97316',
+    '#eab308',
+  ],
   os: ['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e', '#84cc16', '#eab308', '#f97316'],
-  countries: ['#f59e0b', '#f97316', '#ef4444', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1'],
+  countries: [
+    '#f59e0b',
+    '#f97316',
+    '#ef4444',
+    '#ec4899',
+    '#d946ef',
+    '#a855f7',
+    '#8b5cf6',
+    '#6366f1',
+  ],
   screens: ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308'],
   devices: ['#6366f1', '#0ea5e9', '#10b981'],
 };
@@ -105,7 +123,7 @@ export function DistributionPieChart({ data, colorScheme }: DistributionPieChart
           verticalAlign="middle"
           iconType="circle"
           iconSize={10}
-          formatter={(value) => (
+          formatter={value => (
             <span className="text-sm text-slate-700 dark:text-slate-300">{value}</span>
           )}
         />
@@ -199,9 +217,7 @@ export function DistributionBarChart({ data, colorScheme, layout = 'horizontal' 
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94a3b8', fontSize: 12 }}
-              tickFormatter={(value) =>
-                value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
-              }
+              tickFormatter={value => (value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value)}
             />
             <YAxis
               type="category"
@@ -227,9 +243,7 @@ export function DistributionBarChart({ data, colorScheme, layout = 'horizontal' 
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94a3b8', fontSize: 12 }}
-              tickFormatter={(value) =>
-                value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
-              }
+              tickFormatter={value => (value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value)}
             />
           </>
         )}
@@ -240,10 +254,7 @@ export function DistributionBarChart({ data, colorScheme, layout = 'horizontal' 
           animationDuration={1000}
         >
           {data.map((_, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={`url(#barGradient-${colorScheme}-${index})`}
-            />
+            <Cell key={`cell-${index}`} fill={`url(#barGradient-${colorScheme}-${index})`} />
           ))}
         </Bar>
       </BarChart>

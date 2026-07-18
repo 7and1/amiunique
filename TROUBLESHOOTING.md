@@ -3,26 +3,30 @@
 ## Current Issue: Worker Connection Timeout
 
 ### Status
+
 - ✅ Worker deployed successfully (Version: `6bae46d2-9992-4a22-a8d3-62f59f3f025e`)
 - ✅ Worker URL: `https://amiunique-api.7and1.workers.dev`
 - ✅ Frontend deployed: `https://4c65d433.amiunique.pages.dev`
 - ❌ Worker not accessible (connection timeout)
 
 ### Root Cause
+
 **Cloudflare Edge API Degraded** - As mentioned, Cloudflare's Edge API is experiencing degraded performance, preventing Workers from responding to requests.
 
 ### Evidence
+
 ```bash
 # Worker deployment logs show successful deployment
 Current Version ID: 6bae46d2-9992-4a22-a8d3-62f59f3f025e
   https://amiunique-api.7and1.workers.dev
-  
+
 # But connections timeout
 $ curl https://amiunique-api.7and1.workers.dev/api/health
 curl: (28) Failed to connect after 75s: Couldn't connect to server
 ```
 
 ### What We've Done
+
 1. ✅ Fixed validation schema (added 17 missing fields)
 2. ✅ Configured GitHub Actions for automated deployment
 3. ✅ Updated all API URLs to Worker endpoint
@@ -51,6 +55,7 @@ open https://4c65d433.amiunique.pages.dev/scan/
 ```
 
 ### Alternative: Check Cloudflare Status
+
 - Dashboard: https://dash.cloudflare.com/
 - Status Page: https://www.cloudflarestatus.com/
 - Look for "Edge API" service status
@@ -77,6 +82,7 @@ wrangler kv key list --namespace-id=YOUR_KV_NAMESPACE_ID
 To use `api.amiunique.io` instead of workers.dev:
 
 1. **Add DNS Record in Cloudflare**:
+
    ```
    Type: AAAA
    Name: api
@@ -97,13 +103,17 @@ To use `api.amiunique.io` instead of workers.dev:
 ## Related Issues
 
 ### Security Check Failures (RESOLVED ✅)
+
 ~~The Security Check workflow fails due to:~~
+
 - ~~**Next.js vulnerability**: Upgrade to 16.0.9+ (non-critical DoS issue)~~
 
 **Status**: Fixed - Next.js upgraded to 16.0.9 (2025-12-18)
 
 ### Permission Denied on Git Push
+
 If you encounter `Permission denied` errors:
+
 ```bash
 # Use SSH URL instead
 git remote set-url origin git@github.com:7and1/amiunique.git

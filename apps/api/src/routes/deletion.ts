@@ -4,6 +4,7 @@
  */
 
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import type { Env } from '../types/env.js';
 import { DeletionRequestSchema } from '../lib/validation.js';
 import { uuidv4 } from '../lib/hash.js';
@@ -11,6 +12,23 @@ import { deletionLimiter } from '../middleware/rate-limit.js';
 
 const deletion = new Hono<{ Bindings: Env }>();
 
+const MAX_DELETION_PAYLOAD_SIZE = 2 * 1024;
+
+deletion.use(
+  '*',
+  bodyLimit({
+    maxSize: MAX_DELETION_PAYLOAD_SIZE,
+    onError: c =>
+      c.json(
+        {
+          success: false,
+          error: 'Payload too large',
+          code: 'PAYLOAD_TOO_LARGE',
+        },
+        413
+      ),
+  })
+);
 deletion.use('*', deletionLimiter);
 
 /**
@@ -50,13 +68,17 @@ deletion.post('/', async c => {
     );
   }
 
-  const { hash_type, hash_value, email, reason } = parsed.data;
+  const { hash_type, hash_value } = parsed.data;
   const normalizedHash = hash_value.toLowerCase();
 
   // Prevent duplicate requests for the same hash
   const existing = await db
     .prepare(
-      'SELECT id, status, created_at, completed_at FROM deletion_requests WHERE hash_type = ? AND hash_value = ? ORDER BY created_at DESC LIMIT 1'
+      `SELECT id, status, created_at, completed_at
+       FROM deletion_requests
+       WHERE hash_type = ? AND hash_value = ? AND status = 'pending'
+       ORDER BY created_at DESC
+       LIMIT 1`
     )
     .bind(hash_type, normalizedHash)
     .first<{ id: string; status: string; created_at: number; completed_at?: number }>();
@@ -80,10 +102,10 @@ deletion.post('/', async c => {
 
   const insert = await db
     .prepare(
-      `INSERT INTO deletion_requests (id, hash_type, hash_value, email, reason, status, created_at)
-       VALUES (?, ?, ?, ?, ?, 'pending', ?)`
+      `INSERT INTO deletion_requests (id, hash_type, hash_value, status, created_at)
+       VALUES (?, ?, ?, 'pending', ?)`
     )
-    .bind(id, hash_type, normalizedHash, email || null, reason || null, now)
+    .bind(id, hash_type, normalizedHash, now)
     .run();
 
   if (!insert.success) {
@@ -130,9 +152,17 @@ deletion.get('/:id', async c => {
   }
 
   const record = await db
-    .prepare('SELECT id, status, created_at, completed_at, hash_type FROM deletion_requests WHERE id = ? LIMIT 1')
+    .prepare(
+      'SELECT id, status, created_at, completed_at, hash_type FROM deletion_requests WHERE id = ? LIMIT 1'
+    )
     .bind(id)
-    .first<{ id: string; status: string; created_at: number; completed_at?: number; hash_type: string }>();
+    .first<{
+      id: string;
+      status: string;
+      created_at: number;
+      completed_at?: number;
+      hash_type: string;
+    }>();
 
   if (!record) {
     return c.json(

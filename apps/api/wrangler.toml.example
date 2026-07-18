@@ -14,6 +14,11 @@ port = 8787
 # Environment variables
 [vars]
 ENVIRONMENT = "development"
+# IPBot IP intelligence API origin (optional - IP intel is skipped when unset)
+# The API key is a secret, NOT a var:
+#   local dev:  put IPBOT_API_KEY in apps/api/.dev.vars (gitignored)
+#   production: wrangler secret put IPBOT_API_KEY --env production
+IPBOT_API_ORIGIN = "https://api.ipbot.example"
 
 # D1 Database binding
 # Create your database: wrangler d1 create amiunique-db
@@ -31,6 +36,47 @@ database_id = "YOUR_D1_DATABASE_ID"  # Replace with actual ID
 binding = "RATE_LIMIT_KV"
 id = "YOUR_KV_NAMESPACE_ID"          # Replace with actual ID
 preview_id = "YOUR_KV_PREVIEW_ID"    # Replace with actual preview ID
+
+# Native self-IP route limiter (namespace IDs are app-defined account-local integers)
+[[ratelimits]]
+name = "IP_INTEL_RATE_LIMITER"
+namespace_id = "2026071801"
+
+[ratelimits.simple]
+limit = 10
+period = 60
+
+[[ratelimits]]
+name = "ANALYZE_RATE_LIMITER"
+namespace_id = "2026071803"
+
+[ratelimits.simple]
+limit = 10
+period = 60
+
+[[ratelimits]]
+name = "DELETION_RATE_LIMITER"
+namespace_id = "2026071804"
+
+[ratelimits.simple]
+limit = 5
+period = 60
+
+[[ratelimits]]
+name = "STATS_RATE_LIMITER"
+namespace_id = "2026071805"
+
+[ratelimits.simple]
+limit = 60
+period = 60
+
+[[ratelimits]]
+name = "HEALTH_RATE_LIMITER"
+namespace_id = "2026071806"
+
+[ratelimits.simple]
+limit = 120
+period = 60
 
 # Scheduled triggers for background jobs
 [triggers]
@@ -55,6 +101,46 @@ database_id = "YOUR_D1_DATABASE_ID"  # Replace with actual production ID
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
 id = "YOUR_PRODUCTION_KV_ID"         # Replace with actual production KV ID
+
+[[env.production.ratelimits]]
+name = "IP_INTEL_RATE_LIMITER"
+namespace_id = "2026071802"
+
+[env.production.ratelimits.simple]
+limit = 10
+period = 60
+
+[[env.production.ratelimits]]
+name = "ANALYZE_RATE_LIMITER"
+namespace_id = "2026071807"
+
+[env.production.ratelimits.simple]
+limit = 10
+period = 60
+
+[[env.production.ratelimits]]
+name = "DELETION_RATE_LIMITER"
+namespace_id = "2026071808"
+
+[env.production.ratelimits.simple]
+limit = 5
+period = 60
+
+[[env.production.ratelimits]]
+name = "STATS_RATE_LIMITER"
+namespace_id = "2026071809"
+
+[env.production.ratelimits.simple]
+limit = 60
+period = 60
+
+[[env.production.ratelimits]]
+name = "HEALTH_RATE_LIMITER"
+namespace_id = "2026071810"
+
+[env.production.ratelimits.simple]
+limit = 120
+period = 60
 
 [env.production.triggers]
 crons = [

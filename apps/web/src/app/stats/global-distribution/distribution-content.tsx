@@ -6,14 +6,21 @@ import { useGlobalDistributionData } from '@/hooks/use-stats';
 import { GlobalDistributionSkeleton } from '@/components/ui/skeleton';
 
 export function DistributionContent() {
-  const { stats, browsers, os, devices, countries, screens, loading, error } = useGlobalDistributionData();
+  const { stats, browsers, os, devices, countries, screens, loading, error } =
+    useGlobalDistributionData();
 
   if (loading) {
     return <GlobalDistributionSkeleton />;
   }
 
   const safeStats =
-    stats ?? ({ total_fingerprints: 0, unique_sessions: 0, unique_devices: 0, updated_at: Date.now() } as const);
+    stats ??
+    ({
+      total_fingerprints: 0,
+      unique_sessions: 0,
+      unique_devices: 0,
+      updated_at: Date.now(),
+    } as const);
 
   // Transform API data to chart format
   const toChartData = (list: any[], labelKey: string) =>
@@ -80,7 +87,7 @@ export function DistributionContent() {
               color: 'text-emerald-500',
               bg: 'from-emerald-500/10 to-teal-500/5',
             },
-          ].map((stat) => (
+          ].map(stat => (
             <div
               key={stat.label}
               className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/80 p-5 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80"
@@ -91,7 +98,9 @@ export function DistributionContent() {
                   <stat.icon className={`h-4 w-4 ${stat.color}`} />
                   {stat.label}
                 </div>
-                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+                  {stat.value}
+                </p>
               </div>
             </div>
           ))}
@@ -106,8 +115,12 @@ export function DistributionContent() {
                 <Monitor className="h-5 w-5 text-indigo-500" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Browser Distribution</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Top 8 browsers by fingerprint count</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Browser Distribution
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Top 8 browsers by fingerprint count
+                </p>
               </div>
             </div>
             <div className="h-72">
@@ -122,7 +135,9 @@ export function DistributionContent() {
                 <Cpu className="h-5 w-5 text-teal-500" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Operating Systems</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Operating Systems
+                </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">Top 8 OS platforms</p>
               </div>
             </div>
@@ -140,7 +155,9 @@ export function DistributionContent() {
                 <MapPin className="h-5 w-5 text-orange-500" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Geographic Distribution</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Geographic Distribution
+                </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Top 10 countries by fingerprint submissions
                 </p>
@@ -148,7 +165,9 @@ export function DistributionContent() {
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-400">Data from</p>
-              <p className="font-mono text-sm font-semibold text-slate-900 dark:text-white">Real-time</p>
+              <p className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
+                Real-time
+              </p>
             </div>
           </div>
           <div className="h-80">
@@ -165,7 +184,9 @@ export function DistributionContent() {
                 <BarChart2 className="h-5 w-5 text-indigo-500" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Screen Resolutions</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Screen Resolutions
+                </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Most common viewport sizes
                 </p>

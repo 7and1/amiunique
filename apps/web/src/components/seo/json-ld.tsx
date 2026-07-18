@@ -10,6 +10,10 @@ interface OrganizationJsonLdProps {
   description?: string;
 }
 
+function serializeJsonLd(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
 export function OrganizationJsonLd({
   name = 'AmiUnique.io',
   url = 'https://amiunique.io',
@@ -23,13 +27,13 @@ export function OrganizationJsonLd({
     url,
     logo,
     description,
-    sameAs: ['https://github.com/amiunique', 'https://twitter.com/amiunique_io'],
+    sameAs: ['https://github.com/7and1/amiunique'],
   };
 
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -44,6 +48,7 @@ interface WebApplicationJsonLdProps {
     price: string;
     priceCurrency: string;
   };
+  featureList?: string[];
 }
 
 export function WebApplicationJsonLd({
@@ -53,6 +58,16 @@ export function WebApplicationJsonLd({
   applicationCategory = 'SecurityApplication',
   operatingSystem = 'Web Browser',
   offers = { price: '0', priceCurrency: 'USD' },
+  featureList = [
+    'Canvas fingerprint detection',
+    'WebGL fingerprint analysis',
+    'Audio context fingerprinting',
+    'Font enumeration detection',
+    'Screen resolution tracking',
+    'Timezone analysis',
+    'Browser plugin detection',
+    'Hardware fingerprinting',
+  ],
 }: WebApplicationJsonLdProps) {
   const schema = {
     '@context': 'https://schema.org',
@@ -67,16 +82,7 @@ export function WebApplicationJsonLd({
       price: offers.price,
       priceCurrency: offers.priceCurrency,
     },
-    featureList: [
-      'Canvas fingerprint detection',
-      'WebGL fingerprint analysis',
-      'Audio context fingerprinting',
-      'Font enumeration detection',
-      'Screen resolution tracking',
-      'Timezone analysis',
-      'Browser plugin detection',
-      'Hardware fingerprinting',
-    ],
+    featureList,
     browserRequirements: 'Modern web browser with JavaScript enabled',
     softwareVersion: '2.0',
   };
@@ -84,7 +90,7 @@ export function WebApplicationJsonLd({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -100,7 +106,7 @@ export function FAQJsonLd({ questions }: FAQJsonLdProps) {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: questions.map((q) => ({
+    mainEntity: questions.map(q => ({
       '@type': 'Question',
       name: q.question,
       acceptedAnswer: {
@@ -113,7 +119,7 @@ export function FAQJsonLd({ questions }: FAQJsonLdProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -140,7 +146,7 @@ export function BreadcrumbJsonLd({ items }: BreadcrumbJsonLdProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -171,7 +177,7 @@ export function HowToJsonLd({ name, description, steps }: HowToJsonLdProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -182,7 +188,7 @@ interface TestResultJsonLdProps {
   dateCreated?: string;
   url?: string;
   result?: {
-    uniqueness: string;
+    exactMatches: string;
     risk: string;
     dimensionsAnalyzed: number;
   };
@@ -223,17 +229,18 @@ export function TestResultJsonLd({
     about: {
       '@type': 'Thing',
       name: 'Browser Fingerprinting',
-      description: 'A technique for identifying browsers based on device and software characteristics',
+      description:
+        'A technique for identifying browsers based on device and software characteristics',
     },
     ...(result && {
-      text: `Analysis Results: Uniqueness ${result.uniqueness}, Risk Level ${result.risk}, ${result.dimensionsAnalyzed}+ dimensions analyzed`,
+      text: `Analysis Results: Exact fingerprint observations ${result.exactMatches}, Risk Level ${result.risk}, ${result.dimensionsAnalyzed}+ dimensions analyzed`,
     }),
   };
 
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -246,7 +253,13 @@ interface StatsDatasetJsonLdProps {
   total: number;
 }
 
-export function StatsDatasetJsonLd({ name, description, url, lastUpdated, total }: StatsDatasetJsonLdProps) {
+export function StatsDatasetJsonLd({
+  name,
+  description,
+  url,
+  lastUpdated,
+  total,
+}: StatsDatasetJsonLdProps) {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
@@ -262,13 +275,7 @@ export function StatsDatasetJsonLd({ name, description, url, lastUpdated, total 
         contentUrl: `${url}#live-api`,
       },
     ],
-    variableMeasured: [
-      'browser',
-      'operatingSystem',
-      'deviceType',
-      'country',
-      'screenResolution',
-    ],
+    variableMeasured: ['browser', 'operatingSystem', 'deviceType', 'country', 'screenResolution'],
     datasetTimeInterval: 'P30D',
     includedInDataCatalog: {
       '@type': 'DataCatalog',
@@ -282,7 +289,7 @@ export function StatsDatasetJsonLd({ name, description, url, lastUpdated, total 
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }

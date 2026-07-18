@@ -8,7 +8,6 @@ import {
   Shield,
   AlertTriangle,
   CheckCircle,
-  XCircle,
   Copy,
   Check,
   ChevronDown,
@@ -18,7 +17,6 @@ import {
   Globe,
   Palette,
   Headphones,
-  Eye,
   Download,
 } from 'lucide-react';
 import { cn, formatHash, getRiskBadgeClass, valueToDisplay, getCategoryColor } from '@/lib/utils';
@@ -26,6 +24,8 @@ import { TestResultJsonLd, BreadcrumbJsonLd } from '@/components/seo/json-ld';
 import { SharePanel } from '@/components/ui/share-panel';
 import { RarityBadge, estimateRarity } from '@/components/ui/rarity-badge';
 import { FingerprintComparisonPanel } from '@/components/ui/fingerprint-comparison';
+import { NetworkIdentityCard } from '@/components/scan/network-identity-card';
+import { ConsistencyReport } from '@/components/scan/consistency-report';
 
 export default function ResultPage() {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function ResultPage() {
     const payload = {
       hashes,
       risk: analysisResult.tracking_risk,
-      uniqueness: analysisResult.uniqueness_display,
+      exact_matches: analysisResult.uniqueness_display,
     };
     let content = '';
     let mime = 'text/plain';
@@ -64,7 +64,7 @@ export default function ResultPage() {
       mime = 'application/json';
       filename = 'amiunique-hashes.json';
     } else {
-      content = `Gold: ${hashes.gold}\nSilver: ${hashes.silver}\nBronze: ${hashes.bronze}\nRisk: ${analysisResult.tracking_risk}\nUniqueness: ${analysisResult.uniqueness_display}`;
+      content = `Gold: ${hashes.gold}\nSilver: ${hashes.silver}\nBronze: ${hashes.bronze}\nRisk: ${analysisResult.tracking_risk}\nExact Matches: ${analysisResult.uniqueness_display}`;
     }
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -126,9 +126,9 @@ export default function ResultPage() {
     <div className="py-8 md:py-12">
       <TestResultJsonLd
         name="Your Browser Fingerprint Analysis Results"
-        description={`Browser fingerprint analysis showing ${analysisResult.tracking_risk} tracking risk with ${analysisResult.uniqueness_display} uniqueness across ${Object.keys(details).length}+ dimensions.`}
+        description={`Browser fingerprint analysis showing ${analysisResult.tracking_risk} tracking risk with ${analysisResult.uniqueness_display} exact fingerprint observations across ${Object.keys(details).length}+ dimensions.`}
         result={{
-          uniqueness: analysisResult.uniqueness_display,
+          exactMatches: analysisResult.uniqueness_display,
           risk: analysisResult.tracking_risk,
           dimensionsAnalyzed: Object.keys(details).length,
         }}
@@ -163,10 +163,14 @@ export default function ResultPage() {
           <div
             className={cn(
               'p-8 rounded-2xl border-2 text-center',
-              analysisResult.tracking_risk === 'critical' && 'border-red-500 bg-red-50 dark:bg-red-950/20',
-              analysisResult.tracking_risk === 'high' && 'border-orange-500 bg-orange-50 dark:bg-orange-950/20',
-              analysisResult.tracking_risk === 'medium' && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20',
-              analysisResult.tracking_risk === 'low' && 'border-green-500 bg-green-50 dark:bg-green-950/20'
+              analysisResult.tracking_risk === 'critical' &&
+                'border-red-500 bg-red-50 dark:bg-red-950/20',
+              analysisResult.tracking_risk === 'high' &&
+                'border-orange-500 bg-orange-50 dark:bg-orange-950/20',
+              analysisResult.tracking_risk === 'medium' &&
+                'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20',
+              analysisResult.tracking_risk === 'low' &&
+                'border-green-500 bg-green-50 dark:bg-green-950/20'
             )}
           >
             <div className="mb-4">
@@ -194,25 +198,32 @@ export default function ResultPage() {
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold">{analysisResult.uniqueness_display}</div>
-                <div className="text-xs text-muted-foreground">Uniqueness</div>
+                <div className="text-xs text-muted-foreground">Exact Matches</div>
               </div>
               <div>
-                <div className="text-2xl font-bold">{analysisResult.total_fingerprints.toLocaleString()}</div>
+                <div className="text-2xl font-bold">
+                  {analysisResult.total_fingerprints.toLocaleString()}
+                </div>
                 <div className="text-xs text-muted-foreground">Total Analyzed</div>
               </div>
               <div>
                 <div className="text-2xl font-bold">{analysisResult.hardware_match_count}</div>
-                <div className="text-xs text-muted-foreground">Device Matches</div>
+                <div className="text-xs text-muted-foreground">Hardware Hash Observations</div>
               </div>
             </div>
 
             {analysisResult.cross_browser_detected && (
               <div className="mt-4 p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm">
                 <AlertTriangle className="w-4 h-4 inline mr-2" />
-                Cross-browser tracking detected! This device has been seen with multiple browsers.
+                This hardware fingerprint has been observed with multiple software fingerprints.
               </div>
             )}
           </div>
+        </div>
+
+        {/* Network reputation is useful even before the fingerprint corpus is large */}
+        <div className="mx-auto mb-8 max-w-4xl">
+          <NetworkIdentityCard intel={result.ip_intel} details={details} />
         </div>
 
         {/* Fingerprint Comparison */}
@@ -223,7 +234,9 @@ export default function ResultPage() {
         {/* Three Lock Hashes */}
         <div className="max-w-4xl mx-auto mb-8">
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between mb-4">
-            <h3 className="text-xl font-semibold text-center sm:text-left">Three-Lock Identity Hashes</h3>
+            <h3 className="text-xl font-semibold text-center sm:text-left">
+              Three-Lock Identity Hashes
+            </h3>
             <div className="flex gap-2">
               <button
                 onClick={() => downloadHashes('txt')}
@@ -332,17 +345,24 @@ export default function ResultPage() {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            {[{
-              title: 'Rotate network & IP',
-              body: 'Use a trusted VPN and rotate exit IPs; avoid reusing rare ASNs for sensitive browsing.',
-            }, {
-              title: 'Normalize device signals',
-              body: 'Match common screen resolutions (1920x1080), standard fonts, and disable custom theming when possible.',
-            }, {
-              title: 'Limit high-entropy APIs',
-              body: 'Disable WebGL/Canvas in hardened profiles, or use Tor/Firefox RFP to standardize outputs.',
-            }].map(card => (
-              <div key={card.title} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            {[
+              {
+                title: 'Rotate network & IP',
+                body: 'Use a trusted VPN and rotate exit IPs; avoid reusing rare ASNs for sensitive browsing.',
+              },
+              {
+                title: 'Normalize device signals',
+                body: 'Match common screen resolutions (1920x1080), standard fonts, and disable custom theming when possible.',
+              },
+              {
+                title: 'Limit high-entropy APIs',
+                body: 'Disable WebGL/Canvas in hardened profiles, or use Tor/Firefox RFP to standardize outputs.',
+              },
+            ].map(card => (
+              <div
+                key={card.title}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              >
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{card.title}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{card.body}</p>
               </div>
@@ -350,40 +370,16 @@ export default function ResultPage() {
           </div>
         </div>
 
-        {/* Lie Detection */}
+        {/* Browser and network consistency */}
         <div className="max-w-4xl mx-auto mb-8">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Eye className="w-5 h-5" />
-            Spoofing Detection
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {Object.entries(lies).map(([key, detected]) => (
-              <div
-                key={key}
-                className={cn(
-                  'p-3 rounded-lg border text-center',
-                  detected ? 'border-red-300 bg-red-50 dark:bg-red-900/20' : 'border-green-300 bg-green-50 dark:bg-green-900/20'
-                )}
-              >
-                {detected ? (
-                  <XCircle className="w-5 h-5 mx-auto text-red-500 mb-1" />
-                ) : (
-                  <CheckCircle className="w-5 h-5 mx-auto text-green-500 mb-1" />
-                )}
-                <div className="text-xs capitalize">
-                  {key.replace('_mismatch', '').replace(/_/g, ' ')}
-                </div>
-                <div className={cn('text-xs font-medium', detected ? 'text-red-600' : 'text-green-600')}>
-                  {detected ? 'Detected' : 'Clean'}
-                </div>
-              </div>
-            ))}
-          </div>
+          <ConsistencyReport report={result.consistency} lies={lies} />
         </div>
 
         {/* Dimension Categories */}
         <div className="max-w-4xl mx-auto">
-          <h3 className="text-xl font-semibold mb-4">All Dimensions ({Object.keys(details).length}+)</h3>
+          <h3 className="text-xl font-semibold mb-4">
+            All Dimensions ({Object.keys(details).length}+)
+          </h3>
 
           <div className="space-y-4">
             {Object.entries(dimensions).map(([category, dims]) => {
@@ -416,7 +412,10 @@ export default function ResultPage() {
                       {dims.map(({ key, value, label }) => {
                         const rarity = estimateRarity(key, value);
                         return (
-                          <div key={key} className="flex items-center justify-between p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <div
+                            key={key}
+                            className="flex items-center justify-between p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                          >
                             <div className="flex items-center gap-2">
                               <span className="text-muted-foreground capitalize">{label}</span>
                               <RarityBadge level={rarity} />

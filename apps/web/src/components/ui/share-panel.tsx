@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Share2, Twitter, Linkedin, Link2, Check, Download, Image as ImageIcon } from 'lucide-react';
+import {
+  Share2,
+  Twitter,
+  Linkedin,
+  Link2,
+  Check,
+  Download,
+  Image as ImageIcon,
+} from 'lucide-react';
 import type { AnalysisResult } from '@amiunique/core';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +26,7 @@ export function SharePanel({ result, className }: SharePanelProps) {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const shareText = `I tested my browser fingerprint on AmiUnique.io and discovered I have a ${result.result.tracking_risk.toUpperCase()} tracking risk with ${result.result.uniqueness_display} uniqueness. Check your browser privacy!`;
+  const shareText = `I tested my browser fingerprint on AmiUnique.io and discovered I have a ${result.result.tracking_risk.toUpperCase()} tracking risk with ${result.result.uniqueness_display} exact fingerprint observations. Check your browser privacy!`;
   const shareUrl = 'https://amiunique.io';
 
   const handleCopyLink = async () => {
@@ -45,7 +53,7 @@ export function SharePanel({ result, className }: SharePanelProps) {
     const report = {
       timestamp: new Date().toISOString(),
       tracking_risk: result.result.tracking_risk,
-      uniqueness: result.result.uniqueness_display,
+      exact_matches: result.result.uniqueness_display,
       hashes: result.hashes,
       dimensions_analyzed: Object.keys(result.details).length,
       lies_detected: Object.values(result.lies).filter(Boolean).length,
@@ -66,7 +74,7 @@ export function SharePanel({ result, className }: SharePanelProps) {
     const report = `AmiUnique.io Fingerprint Report
 ================================
 Risk Level: ${result.result.tracking_risk.toUpperCase()}
-Uniqueness: ${result.result.uniqueness_display}
+Exact Matches: ${result.result.uniqueness_display}
 Dimensions: ${Object.keys(result.details).length}+
 
 Three-Lock Hashes:
@@ -98,10 +106,7 @@ Test your browser: https://amiunique.io`;
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           {/* Dropdown */}
           <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800">

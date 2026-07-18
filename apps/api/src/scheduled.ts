@@ -11,7 +11,9 @@ import type { Env } from './types/env.js';
  * Process pending deletion requests
  * Deletes visits matching the specified hash and marks request as completed
  */
-async function processDeletionRequests(db: D1Database): Promise<{ processed: number; errors: number }> {
+async function processDeletionRequests(
+  db: D1Database
+): Promise<{ processed: number; errors: number }> {
   let processed = 0;
   let errors = 0;
 
@@ -50,7 +52,12 @@ async function processDeletionRequests(db: D1Database): Promise<{ processed: num
           await db
             .prepare(
               `UPDATE deletion_requests
-               SET status = 'rejected', completed_at = ?
+               SET status = 'rejected',
+                   completed_at = ?,
+                   hash_value = '',
+                   email = NULL,
+                   reason = NULL,
+                   last_error = NULL
                WHERE id = ?`
             )
             .bind(Date.now(), request.id)
@@ -75,7 +82,12 @@ async function processDeletionRequests(db: D1Database): Promise<{ processed: num
         await db
           .prepare(
             `UPDATE deletion_requests
-             SET status = 'completed', completed_at = ?
+             SET status = 'completed',
+                 completed_at = ?,
+                 hash_value = '',
+                 email = NULL,
+                 reason = NULL,
+                 last_error = NULL
              WHERE id = ?`
           )
           .bind(Date.now(), request.id)
@@ -90,23 +102,18 @@ async function processDeletionRequests(db: D1Database): Promise<{ processed: num
         console.error(`Failed to process deletion request ${request.id}:`, errorMessage);
         errors++;
 
-        // Update retry count and error info
-        // Mark as 'failed' after 3 unsuccessful attempts
-        const MAX_RETRIES = 3;
+        // Keep the request pending so a transient D1 error never silently
+        // converts an unfulfilled deletion request into a terminal state.
         try {
           await db
             .prepare(
               `UPDATE deletion_requests
                SET retry_count = COALESCE(retry_count, 0) + 1,
                    last_error = ?,
-                   last_attempt_at = ?,
-                   status = CASE
-                     WHEN COALESCE(retry_count, 0) >= ? THEN 'failed'
-                     ELSE status
-                   END
+                   last_attempt_at = ?
                WHERE id = ?`
             )
-            .bind(errorMessage, Date.now(), MAX_RETRIES - 1, request.id)
+            .bind('Deletion processing failed; retry scheduled', Date.now(), request.id)
             .run();
         } catch (updateErr) {
           console.error(`Failed to update retry count for ${request.id}:`, updateErr);
@@ -130,8 +137,12 @@ async function refreshStatsCache(db: D1Database): Promise<boolean> {
     // Calculate aggregated stats
     const [total, uniqueFull, uniqueHardware] = await Promise.all([
       db.prepare('SELECT COUNT(*) as count FROM visits').first<{ count: number }>(),
-      db.prepare('SELECT COUNT(DISTINCT full_hash) as count FROM visits').first<{ count: number }>(),
-      db.prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits').first<{ count: number }>(),
+      db
+        .prepare('SELECT COUNT(DISTINCT full_hash) as count FROM visits')
+        .first<{ count: number }>(),
+      db
+        .prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits')
+        .first<{ count: number }>(),
     ]);
 
     const now = Date.now();
@@ -143,15 +154,12 @@ async function refreshStatsCache(db: D1Database): Promise<boolean> {
          (id, total_fingerprints, unique_full_hash, unique_hardware_hash, updated_at)
          VALUES ('global', ?, ?, ?, ?)`
       )
-      .bind(
-        total?.count || 0,
-        uniqueFull?.count || 0,
-        uniqueHardware?.count || 0,
-        now
-      )
+      .bind(total?.count || 0, uniqueFull?.count || 0, uniqueHardware?.count || 0, now)
       .run();
 
-    console.log(`Stats cache refreshed: ${total?.count} total, ${uniqueFull?.count} unique sessions`);
+    console.log(
+      `Stats cache refreshed: ${total?.count} total, ${uniqueFull?.count} unique sessions`
+    );
     return true;
   } catch (err) {
     console.error('Failed to refresh stats cache:', err);
@@ -160,27 +168,101 @@ async function refreshStatsCache(db: D1Database): Promise<boolean> {
 }
 
 /**
+ * Remove legacy request-scoped network metadata and completed deletion inputs.
+ * The update is idempotent and keeps aggregate country columns intact.
+ */
+async function enforcePrivacyMinimization(
+  db: D1Database
+): Promise<{ visits: number; receipts: number }> {
+  try {
+    const [visitResult, receiptResult] = await Promise.all([
+      db
+        .prepare(
+          `UPDATE visits
+           SET raw_json = json_remove(
+             raw_json,
+             '$.net_ip_hash',
+             '$.net_asn',
+             '$.net_asn_org',
+             '$.net_colo',
+             '$.net_country',
+             '$.net_timezone',
+             '$.net_city',
+             '$.net_region',
+             '$.net_postal',
+             '$.net_latitude',
+             '$.net_longitude',
+             '$.net_tls_version',
+             '$.net_tls_cipher',
+             '$.net_http_protocol',
+             '$.net_tcp_rtt',
+             '$.net_bot_score'
+           )
+           WHERE json_type(raw_json, '$.net_ip_hash') IS NOT NULL
+              OR json_type(raw_json, '$.net_asn') IS NOT NULL
+              OR json_type(raw_json, '$.net_country') IS NOT NULL`
+        )
+        .run(),
+      db
+        .prepare(
+          `UPDATE deletion_requests
+           SET hash_value = '',
+               email = NULL,
+               reason = NULL,
+               last_error = NULL
+           WHERE status IN ('completed', 'rejected')
+             AND (hash_value <> '' OR email IS NOT NULL OR reason IS NOT NULL OR last_error IS NOT NULL)`
+        )
+        .run(),
+    ]);
+
+    return {
+      visits: visitResult.meta?.changes ?? 0,
+      receipts: receiptResult.meta?.changes ?? 0,
+    };
+  } catch (err) {
+    console.error('Failed to enforce privacy minimization:', err);
+    return { visits: 0, receipts: 0 };
+  }
+}
+
+/**
  * Cleanup old data (optional, run weekly)
  * Removes data older than retention period
  */
-async function cleanupOldData(db: D1Database, retentionDays = 365): Promise<number> {
+async function cleanupOldData(
+  db: D1Database,
+  retentionDays = 90,
+  deletionReceiptDays = 30
+): Promise<{ visits: number; receipts: number }> {
   try {
     const cutoffTime = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+    const receiptCutoff = Date.now() - deletionReceiptDays * 24 * 60 * 60 * 1000;
 
-    const result = await db
-      .prepare('DELETE FROM visits WHERE created_at < ?')
-      .bind(cutoffTime)
-      .run();
+    const [visitResult, receiptResult] = await Promise.all([
+      db.prepare('DELETE FROM visits WHERE created_at < ?').bind(cutoffTime).run(),
+      db
+        .prepare(
+          `DELETE FROM deletion_requests
+           WHERE status IN ('completed', 'rejected', 'failed')
+             AND COALESCE(completed_at, created_at) < ?`
+        )
+        .bind(receiptCutoff)
+        .run(),
+    ]);
 
-    const deleted = result.meta?.changes ?? 0;
-    if (deleted > 0) {
-      console.log(`Cleaned up ${deleted} visits older than ${retentionDays} days`);
+    const visits = visitResult.meta?.changes ?? 0;
+    const receipts = receiptResult.meta?.changes ?? 0;
+    if (visits > 0 || receipts > 0) {
+      console.log(
+        `Cleanup removed ${visits} visits older than ${retentionDays} days and ${receipts} deletion receipts older than ${deletionReceiptDays} days`
+      );
     }
 
-    return deleted;
+    return { visits, receipts };
   } catch (err) {
     console.error('Failed to cleanup old data:', err);
-    return 0;
+    return { visits: 0, receipts: 0 };
   }
 }
 
@@ -190,7 +272,7 @@ async function cleanupOldData(db: D1Database, retentionDays = 365): Promise<numb
 export async function handleScheduled(
   event: ScheduledEvent,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<void> {
   const db = env.DB;
   const triggerTime = new Date(event.scheduledTime);
@@ -202,12 +284,17 @@ export async function handleScheduled(
   if (cronPattern === '0 * * * *') {
     // Hourly: Process deletion requests
     const result = await processDeletionRequests(db);
-    console.log(`Deletion processing complete: ${result.processed} processed, ${result.errors} errors`);
+    console.log(
+      `Deletion processing complete: ${result.processed} processed, ${result.errors} errors`
+    );
 
     // Also run weekly cleanup on Sunday at midnight
     if (triggerTime.getUTCDay() === 0 && triggerTime.getUTCHours() === 0) {
-      const cleaned = await cleanupOldData(db, 365);
-      console.log(`Weekly cleanup: ${cleaned} old records removed`);
+      const minimized = await enforcePrivacyMinimization(db);
+      const cleaned = await cleanupOldData(db, 90, 30);
+      console.log(
+        `Weekly privacy maintenance: ${minimized.visits} visits and ${minimized.receipts} receipts minimized; ${cleaned.visits} visits and ${cleaned.receipts} receipts removed`
+      );
     }
   } else if (cronPattern === '*/5 * * * *') {
     // Every 5 minutes: Refresh stats cache

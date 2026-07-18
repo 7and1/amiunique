@@ -9,8 +9,6 @@ type MockRecord = {
   status: string;
   created_at: number;
   completed_at?: number | null;
-  email?: string | null;
-  reason?: string | null;
 };
 
 type MockStatement = {
@@ -53,20 +51,16 @@ function createMockDB(initial: MockRecord[] = []) {
         },
         async run() {
           if (query.startsWith('INSERT INTO deletion_requests')) {
-            const [id, hashType, hashValue, email, reason, created_at] = params as [
+            const [id, hashType, hashValue, created_at] = params as [
               string,
               string,
               string,
-              string | null,
-              string | null,
               number,
             ];
             store.push({
               id,
               hash_type: hashType,
               hash_value: hashValue,
-              email,
-              reason,
               status: 'pending',
               created_at,
             });
@@ -93,13 +87,13 @@ describe('deletion routes', () => {
       new Request('http://localhost/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hash_type: 'full', hash_value: HASH, email: 'a@example.com' }),
+        body: JSON.stringify({ hash_type: 'full', hash_value: HASH }),
       }),
       env as never
     );
 
     expect(res.status).toBe(200);
-    const json = await res.json() as any;
+    const json = (await res.json()) as any;
     expect(json.success).toBe(true);
     expect(json.data.status).toBe('pending');
     expect(json.data.id).toBeTruthy();
@@ -126,10 +120,42 @@ describe('deletion routes', () => {
     );
 
     expect(res.status).toBe(200);
-    const json = await res.json() as any;
+    const json = (await res.json()) as any;
     expect(json.data.duplicate).toBe(true);
     expect(json.data.id).toBe('req-1');
     expect(db._store.length).toBe(1);
+  });
+
+  it('rejects personal-information fields and oversized bodies', async () => {
+    const env = { DB: createMockDB(), ENVIRONMENT: 'test' } as unknown as Env;
+
+    const personalInfo = await deletion.fetch(
+      new Request('http://localhost/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hash_type: 'full',
+          hash_value: HASH,
+          email: 'user@example.com',
+        }),
+      }),
+      env as never
+    );
+    expect(personalInfo.status).toBe(400);
+
+    const oversized = await deletion.fetch(
+      new Request('http://localhost/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hash_type: 'full',
+          hash_value: HASH,
+          padding: 'x'.repeat(3 * 1024),
+        }),
+      }),
+      env as never
+    );
+    expect(oversized.status).toBe(413);
   });
 
   it('returns status for an existing request', async () => {
@@ -145,7 +171,7 @@ describe('deletion routes', () => {
 
     const res = await deletion.fetch(new Request('http://localhost/req-2'), env as never);
     expect(res.status).toBe(200);
-    const json = await res.json() as any;
+    const json = (await res.json()) as any;
     expect(json.data.status).toBe('completed');
     expect(json.data.hash_type).toBe('hardware');
   });

@@ -50,7 +50,8 @@ export function getStorageCapabilities(): StorageCapabilities {
     localStorage: localStorageAvailable,
     sessionStorage: sessionStorageAvailable,
     indexedDB: typeof indexedDB !== 'undefined',
-    openDatabase: typeof (window as unknown as { openDatabase?: unknown }).openDatabase === 'function',
+    openDatabase:
+      typeof (window as unknown as { openDatabase?: unknown }).openDatabase === 'function',
   };
 }
 
@@ -216,11 +217,15 @@ export async function getPermissions(): Promise<Record<string, string>> {
 export function isFeatureAllowed(feature: string): boolean {
   try {
     if ('featurePolicy' in document) {
-      const policy = (document as unknown as { featurePolicy: { allowsFeature: (f: string) => boolean } }).featurePolicy;
+      const policy = (
+        document as unknown as { featurePolicy: { allowsFeature: (f: string) => boolean } }
+      ).featurePolicy;
       return policy.allowsFeature(feature);
     }
     if ('permissions' in document) {
-      const policy = (document as unknown as { permissions: { allowsFeature?: (f: string) => boolean } }).permissions;
+      const policy = (
+        document as unknown as { permissions: { allowsFeature?: (f: string) => boolean } }
+      ).permissions;
       if (policy.allowsFeature) {
         return policy.allowsFeature(feature);
       }
@@ -240,6 +245,8 @@ export interface WebRTCFingerprint {
   localIP: string | null;
   /** Public IP address (if leaked via STUN) */
   publicIP: string | null;
+  /** Whether host candidates were replaced with mDNS names */
+  mdnsObfuscated: boolean;
   /** Whether STUN server is reachable */
   stunAvailable: boolean;
   /** Detected IP type: 'ipv4', 'ipv6', 'both', 'none' */
@@ -259,6 +266,7 @@ export async function getWebRTCFingerprint(): Promise<WebRTCFingerprint> {
     available: typeof RTCPeerConnection !== 'undefined',
     localIP: null,
     publicIP: null,
+    mdnsObfuscated: false,
     stunAvailable: false,
     ipType: 'none',
     mediaDeviceCount: 0,
@@ -274,7 +282,10 @@ export async function getWebRTCFingerprint(): Promise<WebRTCFingerprint> {
     if (navigator.mediaDevices?.enumerateDevices) {
       const devices = await navigator.mediaDevices.enumerateDevices();
       result.mediaDeviceCount = devices.length;
-      const deviceKinds = devices.map(d => d.kind).sort().join(',');
+      const deviceKinds = devices
+        .map(d => d.kind)
+        .sort()
+        .join(',');
       result.mediaDeviceHash = await sha256(deviceKinds);
     }
   } catch {
@@ -282,7 +293,10 @@ export async function getWebRTCFingerprint(): Promise<WebRTCFingerprint> {
   }
 
   // WebRTC IP leak detection
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
+    let pc: RTCPeerConnection | null = null;
+    let settled = false;
+
     const updateIPType = () => {
       const hasIPv4 = (result.localIP?.includes('.') || result.publicIP?.includes('.')) ?? false;
       const hasIPv6 = (result.localIP?.includes(':') || result.publicIP?.includes(':')) ?? false;
@@ -295,42 +309,49 @@ export async function getWebRTCFingerprint(): Promise<WebRTCFingerprint> {
       }
     };
 
-    const timeout = setTimeout(() => {
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      pc?.close();
       updateIPType();
       resolve(result);
-    }, 3000);
+    };
+
+    const timeout = setTimeout(settle, 3000);
 
     try {
-      const pc = new RTCPeerConnection({
+      const connection = new RTCPeerConnection({
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
         ],
       });
+      pc = connection;
 
       const localIPs = new Set<string>();
       const publicIPs = new Set<string>();
 
-      pc.onicecandidate = (event) => {
+      connection.onicecandidate = event => {
         if (!event.candidate) {
-          // Gathering complete
-          clearTimeout(timeout);
-          pc.close();
-          updateIPType();
-          resolve(result);
+          settle();
           return;
         }
 
         const candidate = event.candidate.candidate;
         if (!candidate) return;
+        if (candidate.toLowerCase().includes('.local')) {
+          result.mdnsObfuscated = true;
+        }
 
         // Extract IP addresses from ICE candidate
         // Format: candidate:... typ host/srflx/relay
-        const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}|([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}|([a-f0-9]{1,4}:){1,7}:|:([a-f0-9]{1,4}:){1,7}|([a-f0-9]{1,4}:){1,6}:[a-f0-9]{1,4}/gi;
+        const ipRegex =
+          /([0-9]{1,3}\.){3}[0-9]{1,3}|([a-f0-9]{1,4}:){7}[a-f0-9]{1,4}|([a-f0-9]{1,4}:){1,7}:|:([a-f0-9]{1,4}:){1,7}|([a-f0-9]{1,4}:){1,6}:[a-f0-9]{1,4}/gi;
         const matches = candidate.match(ipRegex);
 
         if (matches) {
-          matches.forEach((ip) => {
+          matches.forEach(ip => {
             // Filter out mDNS addresses (.local)
             if (ip.endsWith('.local')) return;
 
@@ -349,27 +370,20 @@ export async function getWebRTCFingerprint(): Promise<WebRTCFingerprint> {
         }
       };
 
-      pc.onicegatheringstatechange = () => {
-        if (pc.iceGatheringState === 'complete') {
-          clearTimeout(timeout);
-          pc.close();
-          updateIPType();
-          resolve(result);
+      connection.onicegatheringstatechange = () => {
+        if (connection.iceGatheringState === 'complete') {
+          settle();
         }
       };
 
       // Create offer to trigger ICE gathering
-      pc.createDataChannel('fp');
-      pc.createOffer()
-        .then((offer) => pc.setLocalDescription(offer))
-        .catch(() => {
-          clearTimeout(timeout);
-          resolve(result);
-        });
-
+      connection.createDataChannel('fp');
+      connection
+        .createOffer()
+        .then(offer => connection.setLocalDescription(offer))
+        .catch(settle);
     } catch {
-      clearTimeout(timeout);
-      resolve(result);
+      settle();
     }
   });
 }

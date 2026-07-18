@@ -3,15 +3,35 @@ import { z } from 'zod';
 
 export const runtime = 'edge';
 
-const chatSchema = z.object({
-  prompt: z.string().min(1),
-  fingerprintData: z.record(z.string(), z.any()).optional(),
-  context: z.string().optional(),
-});
+const chatSchema = z
+  .object({
+    prompt: z.string().trim().min(1).max(1000),
+    fingerprintData: z
+      .record(
+        z.string().max(64),
+        z.union([z.string().max(1024), z.number(), z.boolean(), z.null()])
+      )
+      .refine(value => Object.keys(value).length <= 100, 'Too many fingerprint fields')
+      .optional(),
+    context: z.string().max(2000).optional(),
+  })
+  .strict();
+
+const MAX_CHAT_BODY_BYTES = 32 * 1024;
 
 export async function POST(request: Request) {
   try {
-    const json = await request.json();
+    const requestBody = await request.text();
+    if (requestBody.length > MAX_CHAT_BODY_BYTES) {
+      return NextResponse.json({ success: false, error: 'Request too large' }, { status: 413 });
+    }
+
+    let json: unknown;
+    try {
+      json = JSON.parse(requestBody);
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid JSON' }, { status: 400 });
+    }
     const parsed = chatSchema.safeParse(json);
 
     if (!parsed.success) {
@@ -23,10 +43,12 @@ export async function POST(request: Request) {
 
     const { prompt, fingerprintData, context } = parsed.data;
     const apiKey = process.env.OPENROUTER_API_KEY;
+    const providerEnabled = process.env.OPENROUTER_ENABLED === 'true';
     const model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
 
-    // Always return a response, even if API key is missing
-    if (!apiKey) {
+    // Provider calls are disabled by default. Enabling them requires moving
+    // this route behind a server-side abuse-control layer first.
+    if (!apiKey || !providerEnabled) {
       return NextResponse.json({
         success: true,
         message: {
@@ -43,7 +65,7 @@ export async function POST(request: Request) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           'HTTP-Referer': 'https://amiunique.io',
           'X-Title': 'AmiUnique Fingerprint Assistant',
         },
@@ -62,6 +84,7 @@ export async function POST(request: Request) {
           temperature: 0.7,
           max_tokens: 1024,
         }),
+        signal: AbortSignal.timeout(8000),
       });
 
       if (!response.ok) {
@@ -99,10 +122,7 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error('[AI_CHAT_ERROR]', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -129,7 +149,7 @@ Remember: The goal is to educate users about digital privacy and help them make 
 
 function buildUserPrompt(
   prompt: string,
-  fingerprintData?: Record<string, any>,
+  fingerprintData?: Record<string, string | number | boolean | null>,
   context?: string
 ): string {
   let fullPrompt = '';
@@ -149,7 +169,7 @@ function buildUserPrompt(
 
 function buildFallbackResponse(
   prompt: string,
-  fingerprintData?: Record<string, any>
+  fingerprintData?: Record<string, string | number | boolean | null>
 ): string {
   const lowerPrompt = prompt.toLowerCase();
 
@@ -190,7 +210,13 @@ Audio fingerprinting is part of our hardware-based "Gold Lock" system.`;
   }
 
   // Three-Lock system
-  if (lowerPrompt.includes('three') || lowerPrompt.includes('lock') || lowerPrompt.includes('gold') || lowerPrompt.includes('silver') || lowerPrompt.includes('bronze')) {
+  if (
+    lowerPrompt.includes('three') ||
+    lowerPrompt.includes('lock') ||
+    lowerPrompt.includes('gold') ||
+    lowerPrompt.includes('silver') ||
+    lowerPrompt.includes('bronze')
+  ) {
     return `Our Three-Lock System:
 
 **Gold Lock (Hardware):** Most stable - survives browser reinstalls. Uses canvas, WebGL, audio, GPU, screen specs, CPU cores, memory.
@@ -203,7 +229,12 @@ Each lock provides a different level of tracking persistence. Hardware-based tra
   }
 
   // Privacy advice
-  if (lowerPrompt.includes('private') || lowerPrompt.includes('protect') || lowerPrompt.includes('hide') || lowerPrompt.includes('anonymous')) {
+  if (
+    lowerPrompt.includes('private') ||
+    lowerPrompt.includes('protect') ||
+    lowerPrompt.includes('hide') ||
+    lowerPrompt.includes('anonymous')
+  ) {
     return `To improve your privacy:
 
 **Browser Level:**
@@ -225,7 +256,11 @@ Remember: Being completely unique can be as trackable as being common. Balance p
   }
 
   // General fingerprinting
-  if (lowerPrompt.includes('fingerprint') || lowerPrompt.includes('track') || lowerPrompt.includes('unique')) {
+  if (
+    lowerPrompt.includes('fingerprint') ||
+    lowerPrompt.includes('track') ||
+    lowerPrompt.includes('unique')
+  ) {
     return `Browser fingerprinting collects 80+ data points about your device to create a unique identifier without cookies. This includes hardware specs, software configuration, and network characteristics.
 
 ${fingerprintData ? 'Based on your scan, ' : ''}Common tracking methods include:

@@ -36,11 +36,12 @@ export function StatsContent() {
   const trendList = trends?.trends ?? [];
   const lastUpdated = safeStats.updated_at ? new Date(safeStats.updated_at) : null;
   const isCached = Boolean((safeStats as any)?._cached);
-  const sourceLabel = (safeStats as any)?._source === 'edge-cache'
-    ? 'Edge cache'
-    : (safeStats as any)?._source === 'local-cache'
-      ? 'Local cache'
-      : 'Origin';
+  const sourceLabel =
+    (safeStats as any)?._source === 'edge-cache'
+      ? 'Edge cache'
+      : (safeStats as any)?._source === 'local-cache'
+        ? 'Local cache'
+        : 'Origin';
 
   const hasError = Boolean(error);
 
@@ -49,7 +50,8 @@ export function StatsContent() {
   const firstDay = trendList[0];
   const weekGrowth =
     latestDay && firstDay
-      ? ((latestDay.total_visits - firstDay.total_visits) / Math.max(1, firstDay.total_visits)) * 100
+      ? ((latestDay.total_visits - firstDay.total_visits) / Math.max(1, firstDay.total_visits)) *
+        100
       : 0;
 
   return (
@@ -70,19 +72,19 @@ export function StatsContent() {
             </span>{' '}
             browser fingerprints analyzed worldwide.
           </p>
-              {lastUpdated && (
-                <p className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-3 justify-center">
-                  Last updated: {lastUpdated.toLocaleString()}
-                  {isCached && (
-                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                      Cached (≤120s)
-                    </span>
-                  )}
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    Source: {sourceLabel}
-                  </span>
-                </p>
+          {lastUpdated && (
+            <p className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-3 justify-center">
+              Last updated: {lastUpdated.toLocaleString()}
+              {isCached && (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                  Cached (≤120s)
+                </span>
               )}
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                Source: {sourceLabel}
+              </span>
+            </p>
+          )}
           {hasError && (
             <div className="flex items-center justify-center gap-3 text-sm text-amber-600 dark:text-amber-300">
               <span>Live data is temporarily unavailable; showing cached counters.</span>
@@ -106,19 +108,41 @@ export function StatsContent() {
 
             <div className="prose prose-slate dark:prose-invert max-w-none">
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Here&apos;s the deal. Every time you visit a website, your browser broadcasts a unique combination of signals&mdash;your screen size, installed fonts, graphics card, timezone, and about 80 other data points. We call this your <strong>browser fingerprint</strong>.
+                Here&apos;s the deal. Every time you visit a website, your browser broadcasts a
+                unique combination of signals&mdash;your screen size, installed fonts, graphics
+                card, timezone, and about 80 other data points. We call this your{' '}
+                <strong>browser fingerprint</strong>.
               </p>
 
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Think of it like walking into a room. Even without showing your ID, people can identify you by your height, hair color, voice, and the way you walk. Your browser does the same thing online. Research from <a href="https://dl.acm.org/doi/fullHtml/10.1145/3178876.3186097" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">INRIA&apos;s 2.2 million device study</a> shows that <strong>35.7% of desktop users have completely unique fingerprints</strong>&mdash;meaning they can be tracked across the web without cookies.
+                Think of it like walking into a room. Even without showing your ID, people can
+                identify you by your height, hair color, voice, and the way you walk. Your browser
+                does the same thing online. Research from{' '}
+                <a
+                  href="https://dl.acm.org/doi/fullHtml/10.1145/3178876.3186097"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  INRIA&apos;s 2.2 million device study
+                </a>{' '}
+                shows that{' '}
+                <strong>35.7% of desktop users have completely unique fingerprints</strong>
+                &mdash;meaning they can be tracked across the web without cookies.
               </p>
 
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                The statistics below show real patterns from our visitors. You&apos;ll see which browsers dominate, which operating systems are most common, and how device types break down. This isn&apos;t theoretical&mdash;this is actual data from people just like you testing their fingerprints.
+                The statistics below show real patterns from our visitors. You&apos;ll see which
+                browsers dominate, which operating systems are most common, and how device types
+                break down. This isn&apos;t theoretical&mdash;this is actual data from people just
+                like you testing their fingerprints.
               </p>
 
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                <strong>Why should you care?</strong> Because if you&apos;re using a rare browser/OS combination, you&apos;re easier to track. If you&apos;re in the majority, you blend in with the crowd. The numbers tell the story&mdash;scroll down to see where you might fit in.
+                <strong>Why should you care?</strong> Because if you&apos;re using a rare browser/OS
+                combination, you&apos;re easier to track. If you&apos;re in the majority, you blend
+                in with the crowd. The numbers tell the story&mdash;scroll down to see where you
+                might fit in.
               </p>
             </div>
 
@@ -172,9 +196,12 @@ export function StatsContent() {
               icon: TrendingUp,
               hint: 'Week over week',
               color: weekGrowth >= 0 ? 'text-emerald-500' : 'text-rose-500',
-              bg: weekGrowth >= 0 ? 'from-emerald-500/10 to-teal-500/5' : 'from-rose-500/10 to-red-500/5',
+              bg:
+                weekGrowth >= 0
+                  ? 'from-emerald-500/10 to-teal-500/5'
+                  : 'from-rose-500/10 to-red-500/5',
             },
-          ].map((stat) => (
+          ].map(stat => (
             <div
               key={stat.label}
               className="relative overflow-hidden rounded-3xl border border-white/20 bg-white/80 p-6 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80"
@@ -185,7 +212,9 @@ export function StatsContent() {
                   <stat.icon className={`h-5 w-5 ${stat.color}`} />
                   {stat.label}
                 </div>
-                <p className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                <p className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">
+                  {stat.value}
+                </p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">{stat.hint}</p>
               </div>
             </div>
@@ -294,28 +323,36 @@ export function StatsContent() {
               color: 'from-sky-500 to-cyan-500',
               stats: `${browserList.length + osList.length} dimensions`,
             },
-          ].map((card) => (
+          ].map(card => (
             <Link
               key={card.href}
               href={card.href}
               className="group relative overflow-hidden rounded-3xl border border-white/20 bg-white/80 p-8 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl dark:border-white/10 dark:bg-slate-900/80"
             >
               {/* Gradient background on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 transition-opacity duration-300 group-hover:opacity-5`} />
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 transition-opacity duration-300 group-hover:opacity-5`}
+              />
 
               <div className="relative">
-                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.color}`}>
+                <div
+                  className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.color}`}
+                >
                   <card.icon className="h-6 w-6 text-white" />
                 </div>
 
                 <p className="mt-6 text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                   Deep dive
                 </p>
-                <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{card.title}</h3>
+                <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+                  {card.title}
+                </h3>
                 <p className="mt-3 text-slate-600 dark:text-slate-400">{card.description}</p>
 
                 <div className="mt-6 flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{card.stats}</span>
+                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    {card.stats}
+                  </span>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 dark:text-indigo-400 group-hover:gap-2 transition-all">
                     Explore <ArrowRight className="h-4 w-4" />
                   </span>

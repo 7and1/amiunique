@@ -39,7 +39,8 @@ export default function ScanHistoryPage() {
           </div>
           <h1 className="text-4xl font-semibold tracking-tight">Fingerprint history</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Each scan stays inside your browser. Track how your uniqueness shifts after OS updates, VPN changes, or new privacy add-ons.
+            Each scan stays inside your browser. Track how your uniqueness shifts after OS updates,
+            VPN changes, or new privacy add-ons.
           </p>
           <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
@@ -62,7 +63,9 @@ export default function ScanHistoryPage() {
         {history.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-white/40 bg-white/60 p-12 text-center shadow-card dark:border-white/10 dark:bg-white/5">
             <p className="text-lg font-semibold mb-2">No scans yet</p>
-            <p className="text-muted-foreground mb-6">Run your first scan to populate this dashboard.</p>
+            <p className="text-muted-foreground mb-6">
+              Run your first scan to populate this dashboard.
+            </p>
             <Link
               href="/scan"
               className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-white shadow-lg hover:opacity-90"
@@ -80,7 +83,9 @@ export default function ScanHistoryPage() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm uppercase tracking-[0.35em] text-muted-foreground">{renderTimestamp(entry.createdAt)}</p>
+                    <p className="text-sm uppercase tracking-[0.35em] text-muted-foreground">
+                      {renderTimestamp(entry.createdAt)}
+                    </p>
                     <p className="text-2xl font-semibold text-foreground">{entry.message}</p>
                     <p className="text-sm text-muted-foreground">
                       {(entry.browser || 'Unknown browser') + ' · ' + (entry.os || 'Unknown OS')}
@@ -94,16 +99,22 @@ export default function ScanHistoryPage() {
                 </div>
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                   <div className="rounded-2xl border border-white/20 bg-white/60 p-4 dark:border-white/5 dark:bg-white/5">
-                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Uniqueness</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                      Exact matches
+                    </p>
                     <p className="mt-1 text-lg font-semibold">{entry.uniqueness}</p>
                   </div>
                   <div className="rounded-2xl border border-white/20 bg-white/60 p-4 dark:border-white/5 dark:bg-white/5">
-                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Gold · Silver</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                      Gold · Silver
+                    </p>
                     <p className="hash-text text-xs mt-2">{entry.hashes.gold.slice(0, 18)}…</p>
                     <p className="hash-text text-xs">{entry.hashes.silver.slice(0, 18)}…</p>
                   </div>
                   <div className="rounded-2xl border border-white/20 bg-white/60 p-4 dark:border-white/5 dark:bg-white/5">
-                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Bronze hash</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                      Bronze hash
+                    </p>
                     <p className="hash-text text-xs mt-2 break-all">{entry.hashes.bronze}</p>
                   </div>
                 </div>

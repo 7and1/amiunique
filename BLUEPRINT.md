@@ -36,16 +36,16 @@ zero cost infrastructure, world-class accuracy."
 
 ### Key Differentiators
 
-| Feature | amiunique.org | browserleaks.com | AmiUnique.io |
-|---------|---------------|------------------|--------------|
-| Detection Dimensions | ~55 | ~40 | **80+** |
-| Network Layer Fingerprint | No | Partial | **Full (CF Edge)** |
-| TLS/JA3 Fingerprint | No | No | **Yes** |
-| Real-time Uniqueness Score | Basic | No | **Advanced 3-Lock** |
-| Cross-Browser Tracking Demo | No | No | **Yes (Gold Lock)** |
-| Lie Detection | Basic | Basic | **Comprehensive** |
-| Infrastructure Cost | Unknown | Unknown | **$0-5/mo** |
-| Response Time | ~500ms | ~300ms | **<100ms (Edge)** |
+| Feature                     | amiunique.org | browserleaks.com | AmiUnique.io        |
+| --------------------------- | ------------- | ---------------- | ------------------- |
+| Detection Dimensions        | ~55           | ~40              | **80+**             |
+| Network Layer Fingerprint   | No            | Partial          | **Full (CF Edge)**  |
+| TLS/JA3 Fingerprint         | No            | No               | **Yes**             |
+| Real-time Uniqueness Score  | Basic         | No               | **Advanced 3-Lock** |
+| Cross-Browser Tracking Demo | No            | No               | **Yes (Gold Lock)** |
+| Lie Detection               | Basic         | Basic            | **Comprehensive**   |
+| Infrastructure Cost         | Unknown       | Unknown          | **$0-5/mo**         |
+| Response Time               | ~500ms        | ~300ms           | **<100ms (Edge)**   |
 
 ### Tech Stack Overview
 
@@ -180,14 +180,14 @@ zero cost infrastructure, world-class accuracy."
 
 ### 2.3 Technology Stack Details
 
-| Layer | Technology | Purpose | Why This Choice |
-|-------|------------|---------|-----------------|
-| **Frontend** | Next.js 14 (Static Export) | UI & Collection | SSG = Fast, SEO-friendly, deploys to Pages |
-| **Styling** | Tailwind CSS + shadcn/ui | Modern UI | Rapid development, consistent design |
-| **API** | Cloudflare Workers + Hono | Edge Computing | <50ms latency, access to request.cf |
-| **Database** | Cloudflare D1 | Storage | SQLite at edge, 5GB free, $0.75/million reads |
-| **Hashing** | Web Crypto API (SHA-256) | Fingerprint ID | Native, fast, consistent |
-| **Analytics** | Cloudflare Analytics | Monitoring | Built-in, free |
+| Layer         | Technology                 | Purpose         | Why This Choice                               |
+| ------------- | -------------------------- | --------------- | --------------------------------------------- |
+| **Frontend**  | Next.js 14 (Static Export) | UI & Collection | SSG = Fast, SEO-friendly, deploys to Pages    |
+| **Styling**   | Tailwind CSS + shadcn/ui   | Modern UI       | Rapid development, consistent design          |
+| **API**       | Cloudflare Workers + Hono  | Edge Computing  | <50ms latency, access to request.cf           |
+| **Database**  | Cloudflare D1              | Storage         | SQLite at edge, 5GB free, $0.75/million reads |
+| **Hashing**   | Web Crypto API (SHA-256)   | Fingerprint ID  | Native, fast, consistent                      |
+| **Analytics** | Cloudflare Analytics       | Monitoring      | Built-in, free                                |
 
 ---
 
@@ -225,41 +225,41 @@ The "Three-Lock" system creates **layered identity fingerprints** with different
 ```javascript
 // GOLD LOCK - Hardware Features Only (Most Stable)
 const goldString = [
-  hw_canvas_hash,      // Canvas 2D rendering
-  hw_webgl_hash,       // WebGL 3D rendering
-  hw_webgl_vendor,     // GPU vendor (unmasked)
-  hw_webgl_renderer,   // GPU model (unmasked)
-  hw_audio_hash,       // Audio oscillator fingerprint
-  hw_cpu_cores,        // Logical CPU cores
-  hw_memory,           // Device memory (GB)
-  hw_screen_resolution,// Physical screen size
-  hw_color_depth,      // Color depth (24/30/32)
-  hw_pixel_ratio,      // Device pixel ratio
-  hw_touch_points,     // Max touch points
-  hw_hdr_support,      // HDR capability
-  hw_color_gamut,      // P3/sRGB gamut
-  hw_math_precision,   // Float calculation precision
-  hw_codec_support,    // Video codec capabilities
-  hw_webgl_extensions  // WebGL extension list
+  hw_canvas_hash, // Canvas 2D rendering
+  hw_webgl_hash, // WebGL 3D rendering
+  hw_webgl_vendor, // GPU vendor (unmasked)
+  hw_webgl_renderer, // GPU model (unmasked)
+  hw_audio_hash, // Audio oscillator fingerprint
+  hw_cpu_cores, // Logical CPU cores
+  hw_memory, // Device memory (GB)
+  hw_screen_resolution, // Physical screen size
+  hw_color_depth, // Color depth (24/30/32)
+  hw_pixel_ratio, // Device pixel ratio
+  hw_touch_points, // Max touch points
+  hw_hdr_support, // HDR capability
+  hw_color_gamut, // P3/sRGB gamut
+  hw_math_precision, // Float calculation precision
+  hw_codec_support, // Video codec capabilities
+  hw_webgl_extensions, // WebGL extension list
 ].join('|');
 
 const goldHash = await sha256(goldString);
 
 // SILVER LOCK - Software Environment (Medium Stable)
 const silverString = [
-  sw_fonts_hash,       // Installed fonts
-  sw_platform,         // OS platform string
-  sw_user_agent,       // Full UA string
-  sw_language,         // Primary language
-  sw_languages,        // Language list (order matters)
-  sw_timezone,         // Timezone name
-  sw_timezone_offset,  // Timezone offset
-  sw_intl_calendar,    // Default calendar format
-  sw_intl_number,      // Number formatting style
-  sw_plugins_hash,     // Browser plugins
-  sw_mime_types,       // Supported MIME types
-  sw_cookies_enabled,  // Cookie status
-  sw_canvas_font_hash  // Font rendering metrics
+  sw_fonts_hash, // Installed fonts
+  sw_platform, // OS platform string
+  sw_user_agent, // Full UA string
+  sw_language, // Primary language
+  sw_languages, // Language list (order matters)
+  sw_timezone, // Timezone name
+  sw_timezone_offset, // Timezone offset
+  sw_intl_calendar, // Default calendar format
+  sw_intl_number, // Number formatting style
+  sw_plugins_hash, // Browser plugins
+  sw_mime_types, // Supported MIME types
+  sw_cookies_enabled, // Cookie status
+  sw_canvas_font_hash, // Font rendering metrics
 ].join('|');
 
 const silverHash = await sha256(silverString);
@@ -268,9 +268,9 @@ const silverHash = await sha256(silverString);
 const bronzeString = [
   goldString,
   silverString,
-  net_asn,            // ISP identifier
-  net_colo,           // CF datacenter
-  net_tls_cipher      // TLS cipher suite
+  net_asn, // ISP identifier
+  net_colo, // CF datacenter
+  net_tls_cipher, // TLS cipher suite
 ].join('|');
 
 const bronzeHash = await sha256(bronzeString);
@@ -278,13 +278,13 @@ const bronzeHash = await sha256(bronzeString);
 
 ### 3.3 Use Cases by Lock Type
 
-| Scenario | Lock Used | Why |
-|----------|-----------|-----|
-| "Is this the same physical device?" | Gold | Hardware doesn't change across browsers |
-| "Is this the same browser installation?" | Silver | Software config tied to browser instance |
-| "Is this the exact same session?" | Bronze | Network factors indicate session context |
-| "Did user change browsers but same device?" | Gold match, Silver mismatch | Cross-browser tracking detection |
-| "Did user use VPN?" | Bronze mismatch, Gold/Silver match | Network changed but device same |
+| Scenario                                    | Lock Used                          | Why                                      |
+| ------------------------------------------- | ---------------------------------- | ---------------------------------------- |
+| "Is this the same physical device?"         | Gold                               | Hardware doesn't change across browsers  |
+| "Is this the same browser installation?"    | Silver                             | Software config tied to browser instance |
+| "Is this the exact same session?"           | Bronze                             | Network factors indicate session context |
+| "Did user change browsers but same device?" | Gold match, Silver mismatch        | Cross-browser tracking detection         |
+| "Did user use VPN?"                         | Bronze mismatch, Gold/Silver match | Network changed but device same          |
 
 ---
 
@@ -300,130 +300,130 @@ const bronzeHash = await sha256(bronzeString);
 
 ### 4.1 Hardware & Rendering (20 Dimensions)
 
-| ID | JSON Key | Type | Lock | Source | Description |
-|----|----------|------|------|--------|-------------|
-| 01 | `hw_canvas_hash` | String | 🥇 | `canvas.toDataURL()` | 2D Canvas rendering fingerprint |
-| 02 | `hw_webgl_hash` | String | 🥇 | WebGL draw operations | 3D WebGL rendering fingerprint |
-| 03 | `hw_webgl_vendor` | String | 🥇 | `WEBGL_debug_renderer_info` | GPU vendor (unmasked) |
-| 04 | `hw_webgl_renderer` | String | 🥇 | `WEBGL_debug_renderer_info` | GPU model (unmasked) |
-| 05 | `hw_audio_hash` | String | 🥇 | `OfflineAudioContext` | Audio oscillator waveform hash |
-| 06 | `hw_cpu_cores` | Number | 🥇 | `navigator.hardwareConcurrency` | Logical CPU core count |
-| 07 | `hw_memory` | Number | 🥇 | `navigator.deviceMemory` | Device memory in GB |
-| 08 | `hw_screen_width` | Number | 🥇 | `screen.width` | Physical screen width |
-| 09 | `hw_screen_height` | Number | 🥇 | `screen.height` | Physical screen height |
-| 10 | `hw_color_depth` | Number | 🥇 | `screen.colorDepth` | Color depth (24/30/32 bits) |
-| 11 | `hw_pixel_ratio` | Number | 🥇 | `window.devicePixelRatio` | Retina/HiDPI pixel ratio |
-| 12 | `hw_hdr_support` | Boolean | 🥇 | `matchMedia('(dynamic-range: high)')` | HDR display capability |
-| 13 | `hw_color_gamut` | String | 🥇 | `matchMedia('(color-gamut: *)')` | Color gamut (srgb/p3/rec2020) |
-| 14 | `hw_contrast_pref` | String | 📊 | `matchMedia('(prefers-contrast: *)')` | Contrast preference |
-| 15 | `hw_touch_points` | Number | 🥇 | `navigator.maxTouchPoints` | Maximum touch points |
-| 16 | `hw_vr_displays` | Boolean | 👁️ | `navigator.getVRDisplays` | VR device connected |
-| 17 | `hw_gamepads` | Number | 👁️ | `navigator.getGamepads` | Connected gamepad count |
-| 18 | `hw_math_tan` | String | 🥇 | `Math.tan(-1e300)` | Float precision fingerprint |
-| 19 | `hw_math_sin` | String | 🥇 | `Math.sin(1)` | Float precision fingerprint |
-| 20 | `hw_webgl_extensions` | String | 🥇 | `gl.getSupportedExtensions()` | WebGL extension list hash |
+| ID  | JSON Key              | Type    | Lock | Source                                | Description                     |
+| --- | --------------------- | ------- | ---- | ------------------------------------- | ------------------------------- |
+| 01  | `hw_canvas_hash`      | String  | 🥇   | `canvas.toDataURL()`                  | 2D Canvas rendering fingerprint |
+| 02  | `hw_webgl_hash`       | String  | 🥇   | WebGL draw operations                 | 3D WebGL rendering fingerprint  |
+| 03  | `hw_webgl_vendor`     | String  | 🥇   | `WEBGL_debug_renderer_info`           | GPU vendor (unmasked)           |
+| 04  | `hw_webgl_renderer`   | String  | 🥇   | `WEBGL_debug_renderer_info`           | GPU model (unmasked)            |
+| 05  | `hw_audio_hash`       | String  | 🥇   | `OfflineAudioContext`                 | Audio oscillator waveform hash  |
+| 06  | `hw_cpu_cores`        | Number  | 🥇   | `navigator.hardwareConcurrency`       | Logical CPU core count          |
+| 07  | `hw_memory`           | Number  | 🥇   | `navigator.deviceMemory`              | Device memory in GB             |
+| 08  | `hw_screen_width`     | Number  | 🥇   | `screen.width`                        | Physical screen width           |
+| 09  | `hw_screen_height`    | Number  | 🥇   | `screen.height`                       | Physical screen height          |
+| 10  | `hw_color_depth`      | Number  | 🥇   | `screen.colorDepth`                   | Color depth (24/30/32 bits)     |
+| 11  | `hw_pixel_ratio`      | Number  | 🥇   | `window.devicePixelRatio`             | Retina/HiDPI pixel ratio        |
+| 12  | `hw_hdr_support`      | Boolean | 🥇   | `matchMedia('(dynamic-range: high)')` | HDR display capability          |
+| 13  | `hw_color_gamut`      | String  | 🥇   | `matchMedia('(color-gamut: *)')`      | Color gamut (srgb/p3/rec2020)   |
+| 14  | `hw_contrast_pref`    | String  | 📊   | `matchMedia('(prefers-contrast: *)')` | Contrast preference             |
+| 15  | `hw_touch_points`     | Number  | 🥇   | `navigator.maxTouchPoints`            | Maximum touch points            |
+| 16  | `hw_vr_displays`      | Boolean | 👁️   | `navigator.getVRDisplays`             | VR device connected             |
+| 17  | `hw_gamepads`         | Number  | 👁️   | `navigator.getGamepads`               | Connected gamepad count         |
+| 18  | `hw_math_tan`         | String  | 🥇   | `Math.tan(-1e300)`                    | Float precision fingerprint     |
+| 19  | `hw_math_sin`         | String  | 🥇   | `Math.sin(1)`                         | Float precision fingerprint     |
+| 20  | `hw_webgl_extensions` | String  | 🥇   | `gl.getSupportedExtensions()`         | WebGL extension list hash       |
 
 ---
 
 ### 4.2 System & OS Environment (15 Dimensions)
 
-| ID | JSON Key | Type | Lock | Source | Description |
-|----|----------|------|------|--------|-------------|
-| 21 | `sys_platform` | String | 🥈 | `navigator.platform` | OS platform identifier |
-| 22 | `sys_user_agent` | String | 🥈 | `navigator.userAgent` | Full User-Agent string |
-| 23 | `sys_language` | String | 🥈 | `navigator.language` | Primary browser language |
-| 24 | `sys_languages` | Array | 🥈 | `navigator.languages` | Language preference list |
-| 25 | `sys_timezone` | String | 🥈 | `Intl.DateTimeFormat().resolvedOptions().timeZone` | Timezone name |
-| 26 | `sys_tz_offset` | Number | 🥈 | `new Date().getTimezoneOffset()` | Timezone offset (minutes) |
-| 27 | `sys_intl_calendar` | String | 🥈 | `Intl.DateTimeFormat().resolvedOptions().calendar` | Default calendar system |
-| 28 | `sys_intl_number` | String | 🥈 | `Intl.NumberFormat().resolvedOptions()` | Number formatting locale |
-| 29 | `sys_intl_collation` | String | 🥈 | `Intl.Collator().resolvedOptions()` | String collation rules |
-| 30 | `sys_fonts_hash` | String | 🥈 | Font enumeration technique | Installed fonts fingerprint |
-| 31 | `sys_dark_mode` | Boolean | 📊 | `matchMedia('(prefers-color-scheme: dark)')` | Dark mode enabled |
-| 32 | `sys_reduced_motion` | Boolean | 📊 | `matchMedia('(prefers-reduced-motion)')` | Reduced motion preference |
-| 33 | `sys_inverted_colors` | Boolean | 📊 | `matchMedia('(inverted-colors)')` | Inverted colors enabled |
-| 34 | `sys_forced_colors` | Boolean | 📊 | `matchMedia('(forced-colors)')` | High contrast mode |
-| 35 | `sys_pointer_type` | String | 🥈 | `matchMedia('(any-pointer: *)')` | Pointer precision (fine/coarse) |
+| ID  | JSON Key              | Type    | Lock | Source                                             | Description                     |
+| --- | --------------------- | ------- | ---- | -------------------------------------------------- | ------------------------------- |
+| 21  | `sys_platform`        | String  | 🥈   | `navigator.platform`                               | OS platform identifier          |
+| 22  | `sys_user_agent`      | String  | 🥈   | `navigator.userAgent`                              | Full User-Agent string          |
+| 23  | `sys_language`        | String  | 🥈   | `navigator.language`                               | Primary browser language        |
+| 24  | `sys_languages`       | Array   | 🥈   | `navigator.languages`                              | Language preference list        |
+| 25  | `sys_timezone`        | String  | 🥈   | `Intl.DateTimeFormat().resolvedOptions().timeZone` | Timezone name                   |
+| 26  | `sys_tz_offset`       | Number  | 🥈   | `new Date().getTimezoneOffset()`                   | Timezone offset (minutes)       |
+| 27  | `sys_intl_calendar`   | String  | 🥈   | `Intl.DateTimeFormat().resolvedOptions().calendar` | Default calendar system         |
+| 28  | `sys_intl_number`     | String  | 🥈   | `Intl.NumberFormat().resolvedOptions()`            | Number formatting locale        |
+| 29  | `sys_intl_collation`  | String  | 🥈   | `Intl.Collator().resolvedOptions()`                | String collation rules          |
+| 30  | `sys_fonts_hash`      | String  | 🥈   | Font enumeration technique                         | Installed fonts fingerprint     |
+| 31  | `sys_dark_mode`       | Boolean | 📊   | `matchMedia('(prefers-color-scheme: dark)')`       | Dark mode enabled               |
+| 32  | `sys_reduced_motion`  | Boolean | 📊   | `matchMedia('(prefers-reduced-motion)')`           | Reduced motion preference       |
+| 33  | `sys_inverted_colors` | Boolean | 📊   | `matchMedia('(inverted-colors)')`                  | Inverted colors enabled         |
+| 34  | `sys_forced_colors`   | Boolean | 📊   | `matchMedia('(forced-colors)')`                    | High contrast mode              |
+| 35  | `sys_pointer_type`    | String  | 🥈   | `matchMedia('(any-pointer: *)')`                   | Pointer precision (fine/coarse) |
 
 ---
 
 ### 4.3 Browser Capabilities (15 Dimensions)
 
-| ID | JSON Key | Type | Lock | Source | Description |
-|----|----------|------|------|--------|-------------|
-| 36 | `cap_cookies` | Boolean | 🥈 | `navigator.cookieEnabled` | Cookies enabled |
-| 37 | `cap_local_storage` | Boolean | 🥈 | `window.localStorage` test | LocalStorage available |
-| 38 | `cap_session_storage` | Boolean | 🥈 | `window.sessionStorage` test | SessionStorage available |
-| 39 | `cap_indexed_db` | Boolean | 🥈 | `window.indexedDB` test | IndexedDB available |
-| 40 | `cap_open_database` | Boolean | 🥈 | `window.openDatabase` test | WebSQL available |
-| 41 | `cap_service_worker` | Boolean | 🥈 | `navigator.serviceWorker` | Service Worker support |
-| 42 | `cap_web_worker` | Boolean | 🥈 | `window.Worker` | Web Worker support |
-| 43 | `cap_wasm` | Boolean | 🥈 | `window.WebAssembly` | WebAssembly support |
-| 44 | `cap_shared_array` | Boolean | 🥈 | `window.SharedArrayBuffer` | SharedArrayBuffer (COOP/COEP) |
-| 45 | `cap_bluetooth` | Boolean | 👁️ | `navigator.bluetooth` | Web Bluetooth API |
-| 46 | `cap_usb` | Boolean | 👁️ | `navigator.usb` | WebUSB API |
-| 47 | `cap_permissions` | Object | 👁️ | `navigator.permissions.query()` | Permission states |
-| 48 | `cap_plugins_hash` | String | 🥈 | `navigator.plugins` | Plugin list fingerprint |
-| 49 | `cap_mime_types` | String | 🥈 | `navigator.mimeTypes` | MIME types fingerprint |
-| 50 | `cap_pdf_viewer` | Boolean | 🥈 | `navigator.pdfViewerEnabled` | Built-in PDF viewer |
+| ID  | JSON Key              | Type    | Lock | Source                          | Description                   |
+| --- | --------------------- | ------- | ---- | ------------------------------- | ----------------------------- |
+| 36  | `cap_cookies`         | Boolean | 🥈   | `navigator.cookieEnabled`       | Cookies enabled               |
+| 37  | `cap_local_storage`   | Boolean | 🥈   | `window.localStorage` test      | LocalStorage available        |
+| 38  | `cap_session_storage` | Boolean | 🥈   | `window.sessionStorage` test    | SessionStorage available      |
+| 39  | `cap_indexed_db`      | Boolean | 🥈   | `window.indexedDB` test         | IndexedDB available           |
+| 40  | `cap_open_database`   | Boolean | 🥈   | `window.openDatabase` test      | WebSQL available              |
+| 41  | `cap_service_worker`  | Boolean | 🥈   | `navigator.serviceWorker`       | Service Worker support        |
+| 42  | `cap_web_worker`      | Boolean | 🥈   | `window.Worker`                 | Web Worker support            |
+| 43  | `cap_wasm`            | Boolean | 🥈   | `window.WebAssembly`            | WebAssembly support           |
+| 44  | `cap_shared_array`    | Boolean | 🥈   | `window.SharedArrayBuffer`      | SharedArrayBuffer (COOP/COEP) |
+| 45  | `cap_bluetooth`       | Boolean | 👁️   | `navigator.bluetooth`           | Web Bluetooth API             |
+| 46  | `cap_usb`             | Boolean | 👁️   | `navigator.usb`                 | WebUSB API                    |
+| 47  | `cap_permissions`     | Object  | 👁️   | `navigator.permissions.query()` | Permission states             |
+| 48  | `cap_plugins_hash`    | String  | 🥈   | `navigator.plugins`             | Plugin list fingerprint       |
+| 49  | `cap_mime_types`      | String  | 🥈   | `navigator.mimeTypes`           | MIME types fingerprint        |
+| 50  | `cap_pdf_viewer`      | Boolean | 🥈   | `navigator.pdfViewerEnabled`    | Built-in PDF viewer           |
 
 ---
 
 ### 4.4 Media Codecs (10 Dimensions)
 
-| ID | JSON Key | Type | Lock | Source | Description |
-|----|----------|------|------|--------|-------------|
-| 51 | `med_audio_mp3` | String | 🥈 | `audio.canPlayType('audio/mpeg')` | MP3 support |
-| 52 | `med_audio_aac` | String | 🥈 | `audio.canPlayType('audio/aac')` | AAC support |
-| 53 | `med_audio_ogg` | String | 🥈 | `audio.canPlayType('audio/ogg')` | Ogg Vorbis support |
-| 54 | `med_audio_wav` | String | 🥈 | `audio.canPlayType('audio/wav')` | WAV support |
-| 55 | `med_audio_opus` | String | 🥈 | `audio.canPlayType('audio/opus')` | Opus support |
-| 56 | `med_video_h264` | String | 🥈 | `video.canPlayType('video/mp4; codecs="avc1"')` | H.264 support |
-| 57 | `med_video_h265` | String | 🥈 | `video.canPlayType('video/mp4; codecs="hev1"')` | H.265/HEVC support |
-| 58 | `med_video_vp8` | String | 🥈 | `video.canPlayType('video/webm; codecs="vp8"')` | VP8 support |
-| 59 | `med_video_vp9` | String | 🥈 | `video.canPlayType('video/webm; codecs="vp9"')` | VP9 support |
-| 60 | `med_video_av1` | String | 🥈 | `video.canPlayType('video/mp4; codecs="av01"')` | AV1 support |
+| ID  | JSON Key         | Type   | Lock | Source                                          | Description        |
+| --- | ---------------- | ------ | ---- | ----------------------------------------------- | ------------------ |
+| 51  | `med_audio_mp3`  | String | 🥈   | `audio.canPlayType('audio/mpeg')`               | MP3 support        |
+| 52  | `med_audio_aac`  | String | 🥈   | `audio.canPlayType('audio/aac')`                | AAC support        |
+| 53  | `med_audio_ogg`  | String | 🥈   | `audio.canPlayType('audio/ogg')`                | Ogg Vorbis support |
+| 54  | `med_audio_wav`  | String | 🥈   | `audio.canPlayType('audio/wav')`                | WAV support        |
+| 55  | `med_audio_opus` | String | 🥈   | `audio.canPlayType('audio/opus')`               | Opus support       |
+| 56  | `med_video_h264` | String | 🥈   | `video.canPlayType('video/mp4; codecs="avc1"')` | H.264 support      |
+| 57  | `med_video_h265` | String | 🥈   | `video.canPlayType('video/mp4; codecs="hev1"')` | H.265/HEVC support |
+| 58  | `med_video_vp8`  | String | 🥈   | `video.canPlayType('video/webm; codecs="vp8"')` | VP8 support        |
+| 59  | `med_video_vp9`  | String | 🥈   | `video.canPlayType('video/webm; codecs="vp9"')` | VP9 support        |
+| 60  | `med_video_av1`  | String | 🥈   | `video.canPlayType('video/mp4; codecs="av01"')` | AV1 support        |
 
 ---
 
 ### 4.5 Network & Edge Fingerprint (15 Dimensions)
 
-*Injected by Cloudflare Worker from `request.cf` - Cannot be spoofed by client*
+_Injected by Cloudflare Worker from `request.cf` - Cannot be spoofed by client_
 
-| ID | JSON Key | Type | Lock | Source | Description |
-|----|----------|------|------|--------|-------------|
-| 61 | `net_ip_hash` | String | 🥉 | `SHA256(request.headers.get('CF-Connecting-IP'))` | IP address hash |
-| 62 | `net_asn` | Number | 🥉 | `request.cf.asn` | Autonomous System Number |
-| 63 | `net_asn_org` | String | 🥉 | `request.cf.asOrganization` | ISP/Org name |
-| 64 | `net_colo` | String | 🥉 | `request.cf.colo` | CF datacenter code |
-| 65 | `net_country` | String | 🥉 | `request.cf.country` | ISO country code |
-| 66 | `net_city` | String | 👁️ | `request.cf.city` | City name |
-| 67 | `net_region` | String | 👁️ | `request.cf.region` | Region/State |
-| 68 | `net_postal` | String | 👁️ | `request.cf.postalCode` | Postal code |
-| 69 | `net_latitude` | Number | 👁️ | `request.cf.latitude` | Latitude |
-| 70 | `net_longitude` | Number | 👁️ | `request.cf.longitude` | Longitude |
-| 71 | `net_tls_version` | String | 🥉 | `request.cf.tlsVersion` | TLS version (1.2/1.3) |
-| 72 | `net_tls_cipher` | String | 🥉 | `request.cf.tlsCipher` | TLS cipher suite (JA3 partial) |
-| 73 | `net_http_protocol` | String | 🥉 | `request.cf.httpProtocol` | HTTP protocol (h2/h3) |
-| 74 | `net_tcp_rtt` | Number | 👁️ | `request.cf.clientTcpRtt` | TCP round-trip time |
-| 75 | `net_bot_score` | Number | 👁️ | `request.cf.botManagement.score` | Bot detection score |
+| ID  | JSON Key            | Type   | Lock | Source                                            | Description                    |
+| --- | ------------------- | ------ | ---- | ------------------------------------------------- | ------------------------------ |
+| 61  | `net_ip_hash`       | String | 🥉   | `SHA256(request.headers.get('CF-Connecting-IP'))` | IP address hash                |
+| 62  | `net_asn`           | Number | 🥉   | `request.cf.asn`                                  | Autonomous System Number       |
+| 63  | `net_asn_org`       | String | 🥉   | `request.cf.asOrganization`                       | ISP/Org name                   |
+| 64  | `net_colo`          | String | 🥉   | `request.cf.colo`                                 | CF datacenter code             |
+| 65  | `net_country`       | String | 🥉   | `request.cf.country`                              | ISO country code               |
+| 66  | `net_city`          | String | 👁️   | `request.cf.city`                                 | City name                      |
+| 67  | `net_region`        | String | 👁️   | `request.cf.region`                               | Region/State                   |
+| 68  | `net_postal`        | String | 👁️   | `request.cf.postalCode`                           | Postal code                    |
+| 69  | `net_latitude`      | Number | 👁️   | `request.cf.latitude`                             | Latitude                       |
+| 70  | `net_longitude`     | Number | 👁️   | `request.cf.longitude`                            | Longitude                      |
+| 71  | `net_tls_version`   | String | 🥉   | `request.cf.tlsVersion`                           | TLS version (1.2/1.3)          |
+| 72  | `net_tls_cipher`    | String | 🥉   | `request.cf.tlsCipher`                            | TLS cipher suite (JA3 partial) |
+| 73  | `net_http_protocol` | String | 🥉   | `request.cf.httpProtocol`                         | HTTP protocol (h2/h3)          |
+| 74  | `net_tcp_rtt`       | Number | 👁️   | `request.cf.clientTcpRtt`                         | TCP round-trip time            |
+| 75  | `net_bot_score`     | Number | 👁️   | `request.cf.botManagement.score`                  | Bot detection score            |
 
 ---
 
 ### 4.6 Behavior & Lie Detection (5+ Dimensions)
 
-| ID | JSON Key | Type | Lock | Source | Description |
-|----|----------|------|------|--------|-------------|
-| 76 | `aux_battery_level` | Number | 👁️ | `navigator.getBattery()` | Battery percentage |
-| 77 | `aux_battery_charging` | Boolean | 👁️ | `navigator.getBattery()` | Charging status |
-| 78 | `aux_window_width` | Number | 👁️ | `window.innerWidth` | Browser window width |
-| 79 | `aux_window_height` | Number | 👁️ | `window.innerHeight` | Browser window height |
-| 80 | `aux_webrtc_ip` | String | 👁️ | WebRTC ICE candidates | Local/Public IP leak |
-| 81 | `lie_os_mismatch` | Boolean | 👁️ | UA vs platform check | OS spoofing detected |
-| 82 | `lie_browser_mismatch` | Boolean | 👁️ | UA vs features check | Browser spoofing detected |
-| 83 | `lie_resolution_mismatch` | Boolean | 👁️ | Screen vs available check | Resolution spoofing |
-| 84 | `lie_timezone_mismatch` | Boolean | 👁️ | TZ vs offset check | Timezone spoofing |
-| 85 | `lie_webgl_mismatch` | Boolean | 👁️ | Renderer vs UA check | GPU spoofing |
+| ID  | JSON Key                  | Type    | Lock | Source                    | Description               |
+| --- | ------------------------- | ------- | ---- | ------------------------- | ------------------------- |
+| 76  | `aux_battery_level`       | Number  | 👁️   | `navigator.getBattery()`  | Battery percentage        |
+| 77  | `aux_battery_charging`    | Boolean | 👁️   | `navigator.getBattery()`  | Charging status           |
+| 78  | `aux_window_width`        | Number  | 👁️   | `window.innerWidth`       | Browser window width      |
+| 79  | `aux_window_height`       | Number  | 👁️   | `window.innerHeight`      | Browser window height     |
+| 80  | `aux_webrtc_ip`           | String  | 👁️   | WebRTC ICE candidates     | Local/Public IP leak      |
+| 81  | `lie_os_mismatch`         | Boolean | 👁️   | UA vs platform check      | OS spoofing detected      |
+| 82  | `lie_browser_mismatch`    | Boolean | 👁️   | UA vs features check      | Browser spoofing detected |
+| 83  | `lie_resolution_mismatch` | Boolean | 👁️   | Screen vs available check | Resolution spoofing       |
+| 84  | `lie_timezone_mismatch`   | Boolean | 👁️   | TZ vs offset check        | Timezone spoofing         |
+| 85  | `lie_webgl_mismatch`      | Boolean | 👁️   | Renderer vs UA check      | GPU spoofing              |
 
 ---
 
@@ -537,12 +537,12 @@ SELECT
 
 ### 6.1 API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/analyze` | Submit fingerprint, get analysis |
-| `GET` | `/api/stats` | Get global statistics |
-| `GET` | `/api/stats/distribution/:type` | Get specific distribution data |
-| `GET` | `/api/health` | Health check endpoint |
+| Method | Endpoint                        | Description                      |
+| ------ | ------------------------------- | -------------------------------- |
+| `POST` | `/api/analyze`                  | Submit fingerprint, get analysis |
+| `GET`  | `/api/stats`                    | Get global statistics            |
+| `GET`  | `/api/stats/distribution/:type` | Get specific distribution data   |
+| `GET`  | `/api/health`                   | Health check endpoint            |
 
 ### 6.2 Main Worker Code
 
@@ -590,7 +590,7 @@ function parseUserAgent(ua: string): { browser: string; version: string; os: str
   return { browser, version, os };
 }
 
-app.post('/api/analyze', async (c) => {
+app.post('/api/analyze', async c => {
   const db = c.env.DB;
   const request = c.req.raw;
 
@@ -615,7 +615,7 @@ app.post('/api/analyze', async (c) => {
       net_tls_cipher: cf.tlsCipher,
       net_http_protocol: cf.httpProtocol,
       net_tcp_rtt: cf.clientTcpRtt,
-      net_bot_score: cf.botManagement?.score
+      net_bot_score: cf.botManagement?.score,
     };
 
     // 3. Calculate Three-Lock Hashes
@@ -638,7 +638,7 @@ app.post('/api/analyze', async (c) => {
       clientData.hw_color_gamut,
       clientData.hw_math_tan,
       clientData.hw_math_sin,
-      clientData.hw_webgl_extensions
+      clientData.hw_webgl_extensions,
     ].join('|');
     const hardwareHash = await sha256(goldComponents);
 
@@ -659,7 +659,7 @@ app.post('/api/analyze', async (c) => {
       // Media codecs
       clientData.med_video_h264,
       clientData.med_video_h265,
-      clientData.med_video_av1
+      clientData.med_video_av1,
     ].join('|');
     const softwareHash = await sha256(silverComponents);
 
@@ -669,7 +669,7 @@ app.post('/api/analyze', async (c) => {
       silverComponents,
       netData.net_asn,
       netData.net_colo,
-      netData.net_tls_cipher
+      netData.net_tls_cipher,
     ].join('|');
     const fullHash = await sha256(bronzeComponents);
 
@@ -686,38 +686,44 @@ app.post('/api/analyze', async (c) => {
     // 5. Parallel database operations
     const [insertResult, uniqueCheck, hardwareCheck, totalCount] = await Promise.all([
       // Insert new visit
-      db.prepare(`
+      db
+        .prepare(
+          `
         INSERT INTO visits (
           id, created_at, hardware_hash, software_hash, full_hash,
           meta_browser, meta_browser_version, meta_os, meta_device_type,
           meta_country, meta_screen, meta_gpu_vendor, raw_json
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        visitId,
-        now,
-        hardwareHash,
-        softwareHash,
-        fullHash,
-        uaInfo.browser,
-        uaInfo.version,
-        uaInfo.os,
-        deviceType,
-        netData.net_country,
-        screenRes,
-        clientData.hw_webgl_vendor,
-        JSON.stringify(fullReport)
-      ).run(),
+      `
+        )
+        .bind(
+          visitId,
+          now,
+          hardwareHash,
+          softwareHash,
+          fullHash,
+          uaInfo.browser,
+          uaInfo.version,
+          uaInfo.os,
+          deviceType,
+          netData.net_country,
+          screenRes,
+          clientData.hw_webgl_vendor,
+          JSON.stringify(fullReport)
+        )
+        .run(),
 
       // Check full hash uniqueness
-      db.prepare('SELECT COUNT(*) as count FROM visits WHERE full_hash = ?')
-        .bind(fullHash).first(),
+      db.prepare('SELECT COUNT(*) as count FROM visits WHERE full_hash = ?').bind(fullHash).first(),
 
       // Check hardware hash (cross-browser tracking)
-      db.prepare('SELECT COUNT(*) as count FROM visits WHERE hardware_hash = ?')
-        .bind(hardwareHash).first(),
+      db
+        .prepare('SELECT COUNT(*) as count FROM visits WHERE hardware_hash = ?')
+        .bind(hardwareHash)
+        .first(),
 
       // Get total fingerprint count
-      db.prepare('SELECT COUNT(*) as count FROM visits').first()
+      db.prepare('SELECT COUNT(*) as count FROM visits').first(),
     ]);
 
     // 6. Calculate results
@@ -750,12 +756,12 @@ app.post('/api/analyze', async (c) => {
       meta: {
         id: visitId,
         timestamp: now,
-        processing_time_ms: Date.now() - now
+        processing_time_ms: Date.now() - now,
       },
       hashes: {
-        gold: hardwareHash,      // Hardware fingerprint
-        silver: softwareHash,    // Software fingerprint
-        bronze: fullHash         // Full session fingerprint
+        gold: hardwareHash, // Hardware fingerprint
+        silver: softwareHash, // Software fingerprint
+        bronze: fullHash, // Full session fingerprint
       },
       result: {
         is_unique: isUnique,
@@ -766,7 +772,7 @@ app.post('/api/analyze', async (c) => {
         total_fingerprints: totalFingerprints,
         tracking_risk: trackingRisk,
         message: message,
-        cross_browser_detected: isDeviceTracked
+        cross_browser_detected: isDeviceTracked,
       },
       // Return full data for frontend visualization
       details: fullReport,
@@ -776,40 +782,42 @@ app.post('/api/analyze', async (c) => {
         browser_mismatch: clientData.lie_browser_mismatch || false,
         resolution_mismatch: clientData.lie_resolution_mismatch || false,
         timezone_mismatch: clientData.lie_timezone_mismatch || false,
-        webgl_mismatch: clientData.lie_webgl_mismatch || false
-      }
+        webgl_mismatch: clientData.lie_webgl_mismatch || false,
+      },
     });
-
   } catch (error) {
     console.error('Analysis error:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to analyze fingerprint',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to analyze fingerprint',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
 // Stats endpoint
-app.get('/api/stats', async (c) => {
+app.get('/api/stats', async c => {
   const db = c.env.DB;
 
   const [total, uniqueFull, uniqueHardware] = await Promise.all([
     db.prepare('SELECT COUNT(*) as count FROM visits').first(),
     db.prepare('SELECT COUNT(DISTINCT full_hash) as count FROM visits').first(),
-    db.prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits').first()
+    db.prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits').first(),
   ]);
 
   return c.json({
     total_fingerprints: (total as any)?.count || 0,
     unique_sessions: (uniqueFull as any)?.count || 0,
     unique_devices: (uniqueHardware as any)?.count || 0,
-    updated_at: Date.now()
+    updated_at: Date.now(),
   });
 });
 
 // Health check
-app.get('/api/health', (c) => {
+app.get('/api/health', c => {
   return c.json({ status: 'ok', timestamp: Date.now() });
 });
 
@@ -1013,14 +1021,14 @@ export async function getWebGLFingerprint(): Promise<{
       gl.getParameter(gl.MAX_TEXTURE_SIZE),
       gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE),
       vendor,
-      renderer
+      renderer,
     ].join('|');
 
     return {
       hash: await hashString(params),
       vendor: vendor || '',
       renderer: renderer || '',
-      extensions: await hashString(extensions)
+      extensions: await hashString(extensions),
     };
   } catch {
     return { hash: 'error', vendor: '', renderer: '', extensions: '' };
@@ -1083,7 +1091,7 @@ export function getScreenInfo(): {
     width: screen.width,
     height: screen.height,
     colorDepth: screen.colorDepth,
-    pixelRatio: window.devicePixelRatio || 1
+    pixelRatio: window.devicePixelRatio || 1,
   };
 }
 
@@ -1095,14 +1103,14 @@ export function getHardwareInfo(): {
   return {
     cpuCores: navigator.hardwareConcurrency || 0,
     memory: (navigator as any).deviceMemory || 0,
-    touchPoints: navigator.maxTouchPoints || 0
+    touchPoints: navigator.maxTouchPoints || 0,
   };
 }
 
 export function getMathFingerprint(): { tan: string; sin: string } {
   return {
     tan: Math.tan(-1e300).toString(),
-    sin: Math.sin(1).toString()
+    sin: Math.sin(1).toString(),
   };
 }
 
@@ -1144,7 +1152,7 @@ export function getMediaFeatures(): {
     reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     invertedColors: matchMedia('(inverted-colors: inverted)').matches,
     forcedColors: matchMedia('(forced-colors: active)').matches,
-    pointerType
+    pointerType,
   };
 }
 
@@ -1160,7 +1168,7 @@ export function getNavigatorInfo(): {
     platform: navigator.platform,
     userAgent: navigator.userAgent,
     language: navigator.language,
-    languages: [...navigator.languages]
+    languages: [...navigator.languages],
   };
 }
 
@@ -1170,7 +1178,7 @@ export function getTimezoneInfo(): {
 } {
   return {
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    offset: new Date().getTimezoneOffset()
+    offset: new Date().getTimezoneOffset(),
   };
 }
 
@@ -1186,26 +1194,57 @@ export function getIntlInfo(): {
   return {
     calendar: dateOpts.calendar || 'gregory',
     numberFormat: `${numOpts.locale}-${numOpts.numberingSystem}`,
-    collation: collOpts.collation || 'default'
+    collation: collOpts.collation || 'default',
   };
 }
 
 export async function getFontsFingerprint(): Promise<string> {
   // Font detection using canvas measurement
   const testFonts = [
-    'Arial', 'Arial Black', 'Arial Narrow', 'Calibri', 'Cambria',
-    'Cambria Math', 'Comic Sans MS', 'Consolas', 'Courier', 'Courier New',
-    'Georgia', 'Helvetica', 'Impact', 'Lucida Console', 'Lucida Sans Unicode',
-    'Microsoft Sans Serif', 'Palatino Linotype', 'Segoe UI', 'Tahoma',
-    'Times', 'Times New Roman', 'Trebuchet MS', 'Verdana',
+    'Arial',
+    'Arial Black',
+    'Arial Narrow',
+    'Calibri',
+    'Cambria',
+    'Cambria Math',
+    'Comic Sans MS',
+    'Consolas',
+    'Courier',
+    'Courier New',
+    'Georgia',
+    'Helvetica',
+    'Impact',
+    'Lucida Console',
+    'Lucida Sans Unicode',
+    'Microsoft Sans Serif',
+    'Palatino Linotype',
+    'Segoe UI',
+    'Tahoma',
+    'Times',
+    'Times New Roman',
+    'Trebuchet MS',
+    'Verdana',
     // Chinese fonts
-    'Microsoft YaHei', 'SimHei', 'SimSun', 'NSimSun', 'FangSong', 'KaiTi',
+    'Microsoft YaHei',
+    'SimHei',
+    'SimSun',
+    'NSimSun',
+    'FangSong',
+    'KaiTi',
     // Japanese fonts
-    'MS Gothic', 'MS Mincho', 'Meiryo',
+    'MS Gothic',
+    'MS Mincho',
+    'Meiryo',
     // Korean fonts
-    'Malgun Gothic', 'Gulim', 'Dotum',
+    'Malgun Gothic',
+    'Gulim',
+    'Dotum',
     // Mac fonts
-    'Menlo', 'Monaco', 'SF Pro', 'Helvetica Neue', 'Apple Color Emoji'
+    'Menlo',
+    'Monaco',
+    'SF Pro',
+    'Helvetica Neue',
+    'Apple Color Emoji',
   ];
 
   const canvas = document.createElement('canvas');
@@ -1247,20 +1286,24 @@ export function getStorageCapabilities(): {
     localStorage = !!window.localStorage;
     window.localStorage.setItem('test', 'test');
     window.localStorage.removeItem('test');
-  } catch { localStorage = false; }
+  } catch {
+    localStorage = false;
+  }
 
   try {
     sessionStorage = !!window.sessionStorage;
     window.sessionStorage.setItem('test', 'test');
     window.sessionStorage.removeItem('test');
-  } catch { sessionStorage = false; }
+  } catch {
+    sessionStorage = false;
+  }
 
   return {
     cookies: navigator.cookieEnabled,
     localStorage,
     sessionStorage,
     indexedDB: !!window.indexedDB,
-    openDatabase: !!(window as any).openDatabase
+    openDatabase: !!(window as any).openDatabase,
   };
 }
 
@@ -1280,7 +1323,7 @@ export function getAPICapabilities(): {
     sharedArray: typeof SharedArrayBuffer !== 'undefined',
     bluetooth: 'bluetooth' in navigator,
     usb: 'usb' in navigator,
-    pdfViewer: (navigator as any).pdfViewerEnabled ?? false
+    pdfViewer: (navigator as any).pdfViewerEnabled ?? false,
   };
 }
 
@@ -1327,7 +1370,7 @@ export function getCodecSupport(): {
     h265: video.canPlayType('video/mp4; codecs="hev1"') || 'no',
     vp8: video.canPlayType('video/webm; codecs="vp8"') || 'no',
     vp9: video.canPlayType('video/webm; codecs="vp9"') || 'no',
-    av1: video.canPlayType('video/mp4; codecs="av01.0.00M.08"') || 'no'
+    av1: video.canPlayType('video/mp4; codecs="av01.0.00M.08"') || 'no',
   };
 }
 
@@ -1357,9 +1400,7 @@ export function detectLies(data: Partial<FingerprintData>): {
   }
 
   // Resolution mismatch
-  const resolutionMismatch =
-    screen.availWidth > screen.width ||
-    screen.availHeight > screen.height;
+  const resolutionMismatch = screen.availWidth > screen.width || screen.availHeight > screen.height;
 
   // Timezone mismatch
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -1375,8 +1416,10 @@ export function detectLies(data: Partial<FingerprintData>): {
       webglMismatch = true;
     }
     // If UA says mobile but renderer is desktop GPU
-    if ((ua.includes('iPhone') || ua.includes('Android')) &&
-        (renderer.includes('GeForce') || renderer.includes('Radeon'))) {
+    if (
+      (ua.includes('iPhone') || ua.includes('Android')) &&
+      (renderer.includes('GeForce') || renderer.includes('Radeon'))
+    ) {
       webglMismatch = true;
     }
   }
@@ -1386,7 +1429,7 @@ export function detectLies(data: Partial<FingerprintData>): {
     browser: browserMismatch,
     resolution: resolutionMismatch,
     timezone: timezoneMismatch,
-    webgl: webglMismatch
+    webgl: webglMismatch,
   };
 }
 
@@ -1394,21 +1437,15 @@ export function detectLies(data: Partial<FingerprintData>): {
 
 export async function collectFingerprint(): Promise<FingerprintData> {
   // Run all collectors in parallel where possible
-  const [
-    canvasHash,
-    webglData,
-    audioHash,
-    fontsHash,
-    pluginsHash,
-    mimeTypesHash
-  ] = await Promise.all([
-    getCanvasFingerprint(),
-    getWebGLFingerprint(),
-    getAudioFingerprint(),
-    getFontsFingerprint(),
-    getPluginsFingerprint(),
-    getMimeTypesFingerprint()
-  ]);
+  const [canvasHash, webglData, audioHash, fontsHash, pluginsHash, mimeTypesHash] =
+    await Promise.all([
+      getCanvasFingerprint(),
+      getWebGLFingerprint(),
+      getAudioFingerprint(),
+      getFontsFingerprint(),
+      getPluginsFingerprint(),
+      getMimeTypesFingerprint(),
+    ]);
 
   const screenInfo = getScreenInfo();
   const hardwareInfo = getHardwareInfo();
@@ -1425,7 +1462,7 @@ export async function collectFingerprint(): Promise<FingerprintData> {
     hw_webgl_vendor: webglData.vendor,
     hw_webgl_renderer: webglData.renderer,
     sys_user_agent: navInfo.userAgent,
-    sys_platform: navInfo.platform
+    sys_platform: navInfo.platform,
   };
 
   const lies = detectLies(partialData);
@@ -1508,7 +1545,7 @@ export async function collectFingerprint(): Promise<FingerprintData> {
     lie_browser_mismatch: lies.browser,
     lie_resolution_mismatch: lies.resolution,
     lie_timezone_mismatch: lies.timezone,
-    lie_webgl_mismatch: lies.webgl
+    lie_webgl_mismatch: lies.webgl,
   };
 }
 ```
@@ -1778,32 +1815,32 @@ wrangler secret put API_SECRET
 
 ### 10.1 Cloudflare Pricing Breakdown
 
-| Service | Free Tier | Paid Tier ($5/mo Workers Paid) |
-|---------|-----------|-------------------------------|
-| **Workers** | 100K requests/day | 10M requests/month |
-| **D1** | 5GB storage, 5M reads/day | 25GB, 50B reads/month |
-| **Pages** | Unlimited sites | Unlimited |
-| **Analytics** | Basic | Advanced |
+| Service       | Free Tier                 | Paid Tier ($5/mo Workers Paid) |
+| ------------- | ------------------------- | ------------------------------ |
+| **Workers**   | 100K requests/day         | 10M requests/month             |
+| **D1**        | 5GB storage, 5M reads/day | 25GB, 50B reads/month          |
+| **Pages**     | Unlimited sites           | Unlimited                      |
+| **Analytics** | Basic                     | Advanced                       |
 
 ### 10.2 Projected Usage (Month 1-3)
 
-| Metric | Estimate | Cost |
-|--------|----------|------|
-| Daily visitors | 1,000 | $0 |
-| API requests/day | 1,500 | $0 (within free tier) |
-| D1 reads/day | 3,000 | $0 (within free tier) |
-| D1 writes/day | 1,000 | $0 (within free tier) |
-| Storage | <100MB | $0 |
-| **Total** | | **$0/month** |
+| Metric           | Estimate | Cost                  |
+| ---------------- | -------- | --------------------- |
+| Daily visitors   | 1,000    | $0                    |
+| API requests/day | 1,500    | $0 (within free tier) |
+| D1 reads/day     | 3,000    | $0 (within free tier) |
+| D1 writes/day    | 1,000    | $0 (within free tier) |
+| Storage          | <100MB   | $0                    |
+| **Total**        |          | **$0/month**          |
 
 ### 10.3 Scaling Projections
 
-| Daily Visitors | Monthly Cost | Notes |
-|----------------|--------------|-------|
-| 1,000 | $0 | Free tier sufficient |
-| 10,000 | $5 | Workers Paid recommended |
-| 100,000 | $5-25 | May need D1 paid tier |
-| 1,000,000 | $25-100 | Enterprise features needed |
+| Daily Visitors | Monthly Cost | Notes                      |
+| -------------- | ------------ | -------------------------- |
+| 1,000          | $0           | Free tier sufficient       |
+| 10,000         | $5           | Workers Paid recommended   |
+| 100,000        | $5-25        | May need D1 paid tier      |
+| 1,000,000      | $25-100      | Enterprise features needed |
 
 ---
 
@@ -1946,24 +1983,24 @@ wrangler secret put API_SECRET
 
 ### 12.1 Feature Comparison Matrix
 
-| Feature | AmiUnique.org | BrowserLeaks | Panopticlick | **AmiUnique.io** |
-|---------|--------------|--------------|--------------|-----------------|
-| Detection Dimensions | ~55 | ~40 | ~25 | **80+** |
-| Canvas Fingerprint | ✅ | ✅ | ✅ | ✅ |
-| WebGL Fingerprint | ✅ | ✅ | ❌ | ✅ |
-| Audio Fingerprint | ✅ | ✅ | ❌ | ✅ |
-| Font Detection | ✅ | ✅ | ✅ | ✅ |
-| TLS/JA3 Fingerprint | ❌ | ❌ | ❌ | **✅** |
-| Network Layer (ASN/Colo) | ❌ | Partial | ❌ | **✅** |
-| HTTP/2/3 Protocol Detection | ❌ | ❌ | ❌ | **✅** |
-| Video Codec Detection | ❌ | ❌ | ❌ | **✅** |
-| CSS Media Query FP | ❌ | ❌ | ❌ | **✅** |
-| Cross-Browser Tracking | ❌ | ❌ | ❌ | **✅** |
-| Lie Detection | Basic | Basic | ❌ | **Advanced** |
-| Real-time Stats | ✅ | ❌ | ✅ | ✅ |
-| API Access | ❌ | ❌ | ❌ | **✅** |
-| Response Time | ~500ms | ~300ms | ~400ms | **<100ms** |
-| Open Source | ✅ | ❌ | ✅ | ✅ |
+| Feature                     | AmiUnique.org | BrowserLeaks | Panopticlick | **AmiUnique.io** |
+| --------------------------- | ------------- | ------------ | ------------ | ---------------- |
+| Detection Dimensions        | ~55           | ~40          | ~25          | **80+**          |
+| Canvas Fingerprint          | ✅            | ✅           | ✅           | ✅               |
+| WebGL Fingerprint           | ✅            | ✅           | ❌           | ✅               |
+| Audio Fingerprint           | ✅            | ✅           | ❌           | ✅               |
+| Font Detection              | ✅            | ✅           | ✅           | ✅               |
+| TLS/JA3 Fingerprint         | ❌            | ❌           | ❌           | **✅**           |
+| Network Layer (ASN/Colo)    | ❌            | Partial      | ❌           | **✅**           |
+| HTTP/2/3 Protocol Detection | ❌            | ❌           | ❌           | **✅**           |
+| Video Codec Detection       | ❌            | ❌           | ❌           | **✅**           |
+| CSS Media Query FP          | ❌            | ❌           | ❌           | **✅**           |
+| Cross-Browser Tracking      | ❌            | ❌           | ❌           | **✅**           |
+| Lie Detection               | Basic         | Basic        | ❌           | **Advanced**     |
+| Real-time Stats             | ✅            | ❌           | ✅           | ✅               |
+| API Access                  | ❌            | ❌           | ❌           | **✅**           |
+| Response Time               | ~500ms        | ~300ms       | ~400ms       | **<100ms**       |
+| Open Source                 | ✅            | ❌           | ✅           | ✅               |
 
 ### 12.2 Unique Selling Points
 
@@ -2019,6 +2056,7 @@ NEXT_PUBLIC_SITE_URL=https://amiunique.io
 ## Appendix C: Cloudflare API Token Scopes
 
 Required permissions for deployment:
+
 - Account: Cloudflare Pages:Edit
 - Account: Workers Scripts:Edit
 - Account: D1:Edit
@@ -2032,4 +2070,4 @@ Required permissions for deployment:
 
 ---
 
-*This document serves as the complete technical specification for AmiUnique.io. All implementation should follow this blueprint to ensure consistency and completeness.*
+_This document serves as the complete technical specification for AmiUnique.io. All implementation should follow this blueprint to ensure consistency and completeness._

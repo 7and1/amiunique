@@ -25,7 +25,7 @@ export default function ResultLoading() {
 
             {/* Stats grid skeleton */}
             <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3].map(i => (
                 <div key={i} className="text-center">
                   <div className="h-8 w-16 mx-auto bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-1" />
                   <div className="h-3 w-20 mx-auto bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
@@ -35,11 +35,23 @@ export default function ResultLoading() {
           </div>
         </div>
 
+        {/* Network reputation skeleton */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="frosted-card grid gap-6 lg:grid-cols-2">
+            <div className="h-40 rounded-2xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+            <div className="space-y-4 py-2">
+              <div className="h-4 w-36 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-5 w-full bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+              <div className="h-5 w-3/4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+
         {/* Three-Lock hashes skeleton */}
         <div className="max-w-4xl mx-auto mb-8">
           <div className="h-6 w-56 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-4" />
           <div className="grid md:grid-cols-3 gap-4">
-            {['gold', 'silver', 'bronze'].map((lock) => (
+            {['gold', 'silver', 'bronze'].map(lock => (
               <div
                 key={lock}
                 className="p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
@@ -60,7 +72,7 @@ export default function ResultLoading() {
         <div className="max-w-4xl mx-auto">
           <div className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-4" />
           <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5].map(i => (
               <div
                 key={i}
                 className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"

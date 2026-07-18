@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { DistributionItem } from '@/lib/api';
 
 interface ChartDataItem extends DistributionItem {
@@ -25,7 +17,13 @@ interface DistributionBarChartProps {
   layout?: 'vertical' | 'horizontal';
 }
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartDataItem }> }) => {
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: ChartDataItem }>;
+}) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -49,7 +47,7 @@ export function DistributionBarChart({
   layout = 'horizontal',
 }: DistributionBarChartProps) {
   // Transform data to have consistent 'label' field
-  const chartData: ChartDataItem[] = data.map((item) => ({
+  const chartData: ChartDataItem[] = data.map(item => ({
     ...item,
     label: item.name || item.code || item.resolution || item.vendor || 'Unknown',
   }));
@@ -79,7 +77,7 @@ export function DistributionBarChart({
               tick={{ fontSize: 12 }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `${value}%`}
+              tickFormatter={value => `${value}%`}
               className="text-slate-500 dark:text-slate-400"
             />
             <YAxis
@@ -113,10 +111,7 @@ export function DistributionBarChart({
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={chartData}
-          margin={{ top: 5, right: 10, left: 10, bottom: 25 }}
-        >
+        <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 25 }}>
           {showGrid && (
             <CartesianGrid
               strokeDasharray="3 3"
@@ -139,7 +134,7 @@ export function DistributionBarChart({
             tick={{ fontSize: 12 }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => `${value}%`}
+            tickFormatter={value => `${value}%`}
             className="text-slate-500 dark:text-slate-400"
           />
           <Tooltip content={<CustomTooltip />} />

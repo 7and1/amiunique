@@ -101,10 +101,9 @@ function Card({ card, index }: { card: FingerprintCard; index: number }) {
       )}
     >
       {/* Gradient background based on group */}
-      <div className={cn(
-        'absolute inset-0 bg-gradient-to-br opacity-50',
-        groupColors[card.group]
-      )} />
+      <div
+        className={cn('absolute inset-0 bg-gradient-to-br opacity-50', groupColors[card.group])}
+      />
 
       {/* Hover gradient border effect */}
       <div className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -174,10 +173,12 @@ function StatusBadge({ status }: { status: FingerprintCard['status'] }) {
   const { icon: Icon, label, classes } = config[status];
 
   return (
-    <span className={cn(
-      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium',
-      classes
-    )}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium',
+        classes
+      )}
+    >
       <Icon className="h-3 w-3" />
       {label}
     </span>
