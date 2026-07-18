@@ -4,18 +4,20 @@
     "Wrangler authentication for direct production operations"
   ],
   "custom_domains": ["amiunique.io"],
-  "deploy_command": "GitHub Actions: Deploy to Cloudflare",
+  "deploy_command": "OpenClaw + Wrangler direct deployment (GitHub Actions after account runner gate is cleared)",
   "kind": "cloudflare",
   "known_warnings": [
-    "Static Next.js bootstrap requires script-src 'unsafe-inline'"
+    "Static Next.js bootstrap requires script-src 'unsafe-inline'",
+    "GitHub-hosted runners are blocked before job startup by an account billing/spending-limit gate"
   ],
-  "last_known_good": "2026-07-18 security audit, dependency audit, lint, tests, build, and local browser E2E",
-  "latest_smoke_artifacts": [
-    "/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-104047"
-  ],
+  "last_known_good": "2026-07-18 production Worker, Pages, D1 privacy migration, IPBot, headers, and 12/12 Chrome acceptance",
+  "latest_smoke_artifacts": ["/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020"],
   "openclaw_project": "oc-amiunique-9d723bfb",
   "openclaw_role": "local testing, preview, browser QA, and artifact collection",
-  "operator_notes": [],
+  "operator_notes": [
+    "Worker version 8b98237b-047d-414f-ba90-3d342e6478e0",
+    "Pages deployment 73ef358e-2c0c-4a0e-9572-b2a06946789d"
+  ],
   "pages_project": "amiunique",
   "pages_url": "https://amiunique.io",
   "platform": "cloudflare",
@@ -30,5 +32,5 @@
     "machine": "ops/current-state.json"
   },
   "status_rule": "Confirm historical deployment from recorded state, public URLs, and smoke evidence before drawing conclusions from current authentication.",
-  "updated_at": "2026-07-18T10:45:39Z"
+  "updated_at": "2026-07-18T11:12:18Z"
 }

@@ -12,11 +12,10 @@ sources, pull requests could reach production deploy jobs, the dependency audit 
 and high advisories, production rate limiting used a non-atomic KV counter, and D1 persistence
 included a reversible IP hash and overly precise network metadata.
 
-Those blockers have been remediated in the current worktree. Git history scanning found no committed
-credential, dependency audit now reports no known vulnerability, and the complete lint/test/build
-gate passes on OpenClaw. Public release remains contingent on applying the included production
-privacy migration, deploying this exact commit, completing browser acceptance, and rerunning the
-final staged-secret scan.
+Those blockers have been remediated. Git history scanning found no committed credential, dependency
+audit reports no known vulnerability, and the complete lint/test/build gate passes on OpenClaw. The
+privacy migration, Worker and Pages deployments, production IPBot smoke, cache-privacy checks,
+security-header checks, and real-browser acceptance all passed before the repository was made public.
 
 ## Remediated findings
 
@@ -103,13 +102,14 @@ final staged-secret scan.
 
 ### SEC-10 — Medium — Third-party and browser hardening gaps
 
-- Google STUN use is now accurately disclosed at
-  `apps/web/src/app/legal/privacy/page.tsx:81-92`; candidate IPs are removed before response and
-  persistence.
-- JSON-LD escapes `<` before script injection (`apps/web/src/components/seo/json-ld.tsx:13-14`).
-- Pages adds CSP and Permissions-Policy in `apps/web/public/_headers:2-5`.
-- The dormant AI provider proxy is disabled by default and adds a strict request schema, 32 KiB body
-  limit, and upstream timeout (`apps/web/src/app/api/ai/chat/route.ts:4-50`).
+- STUN: `legal/privacy/page.tsx:81-92`.
+  Candidate IPs are removed before response and persistence.
+- JSON-LD: `seo/json-ld.tsx:13-14`.
+  The serializer escapes `<` before script injection.
+- Pages adds HSTS, CSP, and Permissions-Policy in `apps/web/public/_headers:2-6`.
+- AI proxy: `api/ai/chat/route.ts:4-50`.
+  The dormant route is disabled by default and adds a strict request schema, 32 KiB body limit, and
+  upstream timeout.
 
 ## Residual risks and accepted boundaries
 
@@ -123,15 +123,32 @@ final staged-secret scan.
    in the 10-commit history; publishing the repository will make that ordinary Git metadata public.
 4. The AI route is not emitted by the current static Pages deployment. Provider mode must remain
    disabled until it is moved behind server-side abuse control and consent handling.
+5. GitHub-hosted Actions runners are currently blocked before job startup by the account's
+   billing/spending-limit state. Direct Cloudflare deployment was independently validated; required
+   status checks should not be made merge-blocking until the account gate is cleared.
 
 ## Validation evidence
 
-- `gitleaks git --redact=100 .` — pass, zero findings across all 10 commits.
+- `gitleaks git --redact=100 --no-banner` — pass, zero findings across the complete Git history.
+- `gitleaks git --staged --redact=100 --no-banner` — pass before each local release commit.
 - `pnpm audit --audit-level=low` — pass, no known vulnerabilities.
 - `pnpm lint` — pass, all four workspace tasks.
 - `pnpm test` — pass.
 - `pnpm build` — pass.
 - `git diff --check` — pass.
+- D1 Time Travel bookmark recorded before migration; production privacy migration processed seven
+  queries successfully. Post-migration counts: 3,408 retained visits, zero expired visits, zero
+  rows with legacy network fields, and all three retry columns present.
+- Production Worker `8b98237b-047d-414f-ba90-3d342e6478e0` and Pages deployment
+  `73ef358e-2c0c-4a0e-9572-b2a06946789d` deployed successfully.
+- `8.8.8.8` live IPBot smoke: HTTP 200, risk score 12, band `excellent`, ASN `AS15169`; rate-limit
+  tier `pro`, limit 600.
+- Production self-IP smoke: HTTP 200, intelligence available, private/no-store response, hashed KV
+  cache key, and no raw provider IP in the cached value.
+- Cache-busted production header probe confirmed HSTS, CSP, Permissions-Policy,
+  `X-Content-Type-Options`, `X-Frame-Options`, and Referrer-Policy.
+- Production Chrome acceptance: 12/12 Playwright checks passed; artifact
+  `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020`.
 
-Production migration, deployment, staged Gitleaks, GitHub Actions, and public browser acceptance are
-recorded in the release closeout after execution.
+GitHub Actions was also triggered, but GitHub rejected every job before runner startup because of the
+account billing/spending-limit gate. No application step failed, and no secret was exposed in logs.
