@@ -103,6 +103,11 @@ const DEFAULT_RETRY_DELAYS_MS = [400, 800];
 const MAX_RESPONSE_BYTES = 64 * 1024;
 // Top-level field projection keeps responses and cache entries small
 const FIELDS = 'score,classification,network';
+const ASN_NUMBER_SCHEMA = z.preprocess(value => {
+  if (typeof value !== 'string') return value;
+  const match = /^(?:AS)?(\d+)$/i.exec(value.trim());
+  return match ? Number(match[1]) : value;
+}, z.number().int().min(0).max(4_294_967_295));
 
 const IPIntelDataSchema = z
   .object({
@@ -129,7 +134,8 @@ const IPIntelDataSchema = z
       .optional(),
     network: z
       .object({
-        asn: z.number().int().min(0).max(4_294_967_295).optional(),
+        // IPBot currently serializes ASN values as either 15169 or "AS15169".
+        asn: ASN_NUMBER_SCHEMA.optional(),
         org: z.string().max(256).optional(),
         category: z.string().max(128).optional(),
         operator: z.string().max(256).optional(),

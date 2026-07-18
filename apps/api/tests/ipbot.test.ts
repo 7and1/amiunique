@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { lookupIP, isHighRisk, summarizeIPIntel, type IPIntelData } from '../src/lib/ipbot.js';
+import { sha256 } from '../src/lib/hash.js';
 import type { Env } from '../src/types/env.js';
 
 type PutOptions = { expirationTtl?: number };
-const EIGHT_EIGHT_EIGHT_EIGHT_CACHE_KEY =
-  'ipintel:838c4c2573848f58e74332341a7ca6bc5cd86a8aec7d644137d53b4d597f10f5';
-const ONE_TWO_THREE_FOUR_CACHE_KEY =
-  'ipintel:6694f83c9f476da31f5df6bcc520034e7e57d421d247b9d34f49edbfc84a764c';
+
+async function cacheKeyFor(ip: string): Promise<string> {
+  return `ipintel:${await sha256(ip)}`;
+}
 
 function createMockKV() {
   const store = new Map<string, string>();
@@ -111,9 +112,29 @@ describe('lookupIP', () => {
     expect(result).not.toBeNull();
     expect(result!.cached).toBe(false);
     expect(result!.data.score?.risk_score).toBe(12);
-    expect(kv.putOptions.get(EIGHT_EIGHT_EIGHT_EIGHT_CACHE_KEY)?.expirationTtl).toBe(24 * 60 * 60);
+    const cacheKey = await cacheKeyFor('8.8.8.8');
+    expect(kv.putOptions.get(cacheKey)?.expirationTtl).toBe(24 * 60 * 60);
     expect([...kv.store.keys()].join()).not.toContain('8.8.8.8');
-    expect(kv.store.get(EIGHT_EIGHT_EIGHT_EIGHT_CACHE_KEY)).not.toContain('8.8.8.8');
+    expect(kv.store.get(cacheKey)).not.toContain('8.8.8.8');
+  });
+
+  it('normalizes provider ASN strings before returning and caching', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          ...SAMPLE_DATA,
+          network: { asn: 'AS15169', org: 'Google LLC' },
+        })
+      )
+    );
+    const { env, kv } = createEnv();
+
+    const result = await lookupIP('8.8.8.8', env);
+    const cached = JSON.parse(kv.store.get(await cacheKeyFor('8.8.8.8')) || '{}');
+
+    expect(result?.data.network?.asn).toBe(15169);
+    expect(cached.data.network.asn).toBe(15169);
   });
 
   it('serves cached result without fetching', async () => {
@@ -121,7 +142,7 @@ describe('lookupIP', () => {
     vi.stubGlobal('fetch', fetchMock);
     const { env, kv } = createEnv();
     kv.store.set(
-      EIGHT_EIGHT_EIGHT_EIGHT_CACHE_KEY,
+      await cacheKeyFor('8.8.8.8'),
       JSON.stringify({ data: SAMPLE_DATA, fetched_at: 123 })
     );
 
@@ -140,7 +161,7 @@ describe('lookupIP', () => {
     const result = await lookupIP('1.2.3.4', env);
 
     expect(result!.data.score?.band).toBe('danger');
-    expect(kv.putOptions.get(ONE_TWO_THREE_FOUR_CACHE_KEY)?.expirationTtl).toBe(60 * 60);
+    expect(kv.putOptions.get(await cacheKeyFor('1.2.3.4'))?.expirationTtl).toBe(60 * 60);
   });
 
   it('retries after 429 and succeeds', async () => {
