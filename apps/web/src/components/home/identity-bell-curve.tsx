@@ -73,7 +73,7 @@ export function IdentityBellCurve({ percentile, rarityLabel, verdict }: Identity
               Where you sit on the bell curve
             </h3>
             <p className="mt-2 max-w-lg text-sm text-slate-600 dark:text-slate-400">
-              Percentile computed across our database of 2M+ fingerprints in real-time.
+              Percentile computed against the live fingerprint corpus in real time.
             </p>
           </div>
 

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Fingerprint, LockKeyhole, Network, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ChevronDown, Fingerprint, LockKeyhole, Network, ShieldCheck } from 'lucide-react';
 import { IPReport } from '@/components/ip/ip-report';
-import { BreadcrumbJsonLd, WebApplicationJsonLd } from '@/components/seo/json-ld';
+import { BreadcrumbJsonLd, FAQJsonLd, WebApplicationJsonLd } from '@/components/seo/json-ld';
 
 export const metadata: Metadata = {
   title: 'What Does My IP Reveal? Network Privacy Check',
@@ -47,6 +47,29 @@ const observableFacts = [
   },
 ];
 
+const ipFaqs = [
+  {
+    question: 'Can a website see my exact home address from my IP?',
+    answer:
+      'No. IP geolocation resolves to a broad city or region at best, and is often off by tens of kilometres — mobile carriers and VPNs shift it further. What an IP reliably reveals is the network operator (ISP, carrier, company, or datacenter), not a street address.',
+  },
+  {
+    question: 'Does AmiUnique store my IP address?',
+    answer:
+      'No. Your raw IP address is never stored — not even in hashed form. The report on this page is generated for your current connection only, and the database keeps just derived summaries such as a network risk band.',
+  },
+  {
+    question: 'Can I look up someone else’s IP address here?',
+    answer:
+      'No. There is deliberately no IP search box. This page only reports on the connection you are visiting from, which keeps the tool useful for self-audits without enabling lookups of other people.',
+  },
+  {
+    question: 'Does a VPN make me anonymous?',
+    answer:
+      'A VPN changes the IP and network operator that websites observe, but your browser fingerprint — canvas, fonts, hardware and WebRTC signals — stays linkable across connections. Run the full scan to check both layers together.',
+  },
+];
+
 export default function IPPage() {
   return (
     <div className="py-10 sm:py-14">
@@ -68,6 +91,7 @@ export default function IPPage() {
           { name: 'My IP', url: 'https://amiunique.io/ip' },
         ]}
       />
+      <FAQJsonLd questions={ipFaqs} />
 
       <div className="container mx-auto max-w-5xl px-4">
         <header className="max-w-3xl">
@@ -121,6 +145,31 @@ export default function IPPage() {
           </dl>
         </section>
 
+        <section className="mt-14" aria-labelledby="ip-faq-heading">
+          <h2 id="ip-faq-heading" className="text-2xl font-semibold sm:text-3xl">
+            IP privacy questions
+          </h2>
+          <div className="mt-6 space-y-4">
+            {ipFaqs.map(faq => (
+              <details
+                key={faq.question}
+                className="group rounded-2xl border border-slate-200 bg-white/70 dark:border-slate-800 dark:bg-white/5"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-left font-medium [&::-webkit-details-marker]:hidden">
+                  {faq.question}
+                  <ChevronDown
+                    className="h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none"
+                    aria-hidden="true"
+                  />
+                </summary>
+                <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                  {faq.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         <section className="mt-12 rounded-3xl border border-primary/20 bg-primary/5 p-6 sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-2xl">
@@ -131,7 +180,7 @@ export default function IPPage() {
               </p>
             </div>
             <Link
-              href="/scan"
+              href="/?scan=1#scan"
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Run full privacy scan

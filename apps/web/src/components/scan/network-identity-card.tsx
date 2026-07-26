@@ -19,6 +19,8 @@ export type NetworkIdentityDetails = Pick<
 interface NetworkIdentityCardProps {
   intel: PublicIPIntel | null | undefined;
   details: NetworkIdentityDetails;
+  /** Reputation lookup still in flight — renders a checking state instead of unavailable */
+  pending?: boolean;
   privacyNote?: string;
   unavailableDescription?: string;
 }
@@ -82,9 +84,38 @@ function formatNetwork(intel: PublicIPIntel, details: NetworkIdentityDetails): s
 export function NetworkIdentityCard({
   intel,
   details,
+  pending = false,
   privacyNote = 'No raw IP address is shown.',
   unavailableDescription = 'Your fingerprint scan completed, but the optional reputation provider did not return data. This is an unknown state, not a clean or risky verdict.',
 }: NetworkIdentityCardProps) {
+  if (!intel && pending) {
+    return (
+      <section
+        className="frosted-card"
+        aria-labelledby="network-reputation-heading"
+        aria-busy="true"
+      >
+        <div className="flex items-start gap-4">
+          <div className="rounded-2xl bg-indigo-50 p-3 text-indigo-500 motion-safe:animate-pulse dark:bg-indigo-500/10 dark:text-indigo-300">
+            <Network className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Network layer
+            </p>
+            <h2 id="network-reputation-heading" className="mt-1 text-xl font-semibold">
+              Checking network reputation…
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              The reputation lookup is still in flight. Results will appear here without re-running
+              the scan. {privacyNote}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (!intel) {
     return (
       <section className="frosted-card" aria-labelledby="network-reputation-heading">

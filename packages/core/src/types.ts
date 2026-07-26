@@ -358,6 +358,11 @@ export interface AnalysisResult {
   };
   details: AnalysisDetails;
   ip_intel?: IPIntelSummary | null;
+  /**
+   * 'available' = ip_intel resolved in-response; 'pending' = lookup still in flight
+   * (client should follow up via GET /api/ip-intel); 'unavailable' = lookup failed open.
+   */
+  ip_intel_status?: 'available' | 'pending' | 'unavailable';
   consistency?: ConsistencyReport;
   lies: {
     os_mismatch: boolean;

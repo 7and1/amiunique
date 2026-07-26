@@ -10,7 +10,8 @@ import {
 import { getStorageCapabilities, getAPICapabilities } from '@amiunique/core';
 import { getLieFlags } from '@amiunique/core';
 
-const liteSteps = [
+/** Ordered step labels reported by collectFingerprintLite — progress UIs render this list. */
+export const LITE_COLLECTOR_STEPS = [
   'Canvas fingerprint',
   'WebGL fingerprint',
   'Screen info',
@@ -20,7 +21,9 @@ const liteSteps = [
   'Storage capabilities',
   'API capabilities',
   'Lie detection',
-];
+] as const;
+
+const liteSteps = LITE_COLLECTOR_STEPS;
 
 /**
  * Lightweight collector that skips heavy probes (audio, fonts, plugins, mime types, codec sweeps)

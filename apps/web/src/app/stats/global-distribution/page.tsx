@@ -1,5 +1,6 @@
 import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
 import { DistributionContent } from './distribution-content';
+import { statsSnapshotSeed } from '@/lib/stats-seed';
 
 export const metadata = {
   title: 'Browser Distribution Analytics | Global Fingerprint Demographics',
@@ -18,7 +19,7 @@ export default function GlobalDistributionPage() {
   return (
     <>
       <BreadcrumbJsonLd items={breadcrumbs} />
-      <DistributionContent />
+      <DistributionContent initial={statsSnapshotSeed} />
     </>
   );
 }

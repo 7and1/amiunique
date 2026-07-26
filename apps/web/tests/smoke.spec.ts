@@ -1,12 +1,20 @@
 import { test, expect } from '@playwright/test';
 
+// Indexable pages plus the redirect shells kept for old links —
+// every route must answer < 400 even before public/_redirects kicks in.
 const routes = [
   '/',
-  '/scan',
-  '/scan/result',
+  '/ip',
   '/stats',
   '/stats/global-distribution',
   '/stats/fingerprints',
+  '/developers',
+  '/legal/privacy',
+  '/legal/terms',
+  '/legal/opt-out',
+  '/scan',
+  '/scan/result',
+  '/scan/history',
   '/developers/api-docs',
 ];
 

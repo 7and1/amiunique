@@ -206,6 +206,36 @@ export async function collectFingerprint(): Promise<FingerprintData> {
 export type CollectionProgressCallback = (dimension: string, index: number, total: number) => void;
 
 /**
+ * Ordered step labels reported by collectFingerprintWithProgress.
+ * Progress UIs should render this exact list so the timeline matches reality.
+ */
+export const FULL_COLLECTOR_STEPS = [
+  'Canvas fingerprint',
+  'WebGL fingerprint',
+  'Audio fingerprint',
+  'Font detection',
+  'Screen info',
+  'Hardware info',
+  'Math precision',
+  'Media features',
+  'Navigator info',
+  'Timezone info',
+  'Intl settings',
+  'Storage capabilities',
+  'API capabilities',
+  'Plugins detection',
+  'MIME types',
+  'Audio codecs',
+  'Video codecs',
+  'Battery status',
+  'Permissions',
+  'WebRTC fingerprint',
+  'Client Hints',
+  'Speech synthesis',
+  'Lie detection',
+] as const;
+
+/**
  * Collect fingerprint with progress updates
  * Useful for animated UI during collection
  * @param onProgress - Callback for progress updates
@@ -214,34 +244,8 @@ export type CollectionProgressCallback = (dimension: string, index: number, tota
 export async function collectFingerprintWithProgress(
   onProgress: CollectionProgressCallback
 ): Promise<FingerprintData> {
-  const dimensions = [
-    'Canvas fingerprint',
-    'WebGL fingerprint',
-    'Audio fingerprint',
-    'Font detection',
-    'Screen info',
-    'Hardware info',
-    'Math precision',
-    'Media features',
-    'Navigator info',
-    'Timezone info',
-    'Intl settings',
-    'Storage capabilities',
-    'API capabilities',
-    'Plugins detection',
-    'MIME types',
-    'Audio codecs',
-    'Video codecs',
-    'Battery status',
-    'Permissions',
-    'WebRTC fingerprint',
-    'Client Hints',
-    'Speech synthesis',
-    'Lie detection',
-  ];
-
   let progress = 0;
-  const total = dimensions.length;
+  const total = FULL_COLLECTOR_STEPS.length;
 
   const reportProgress = (dimension: string) => {
     onProgress(dimension, ++progress, total);

@@ -1,0 +1,8 @@
+# Old multi-page routes now live inline on the homepage.
+# Exact rules only — /scan/history/ must stay reachable (client drawer shell).
+/scan / 301
+/scan/ / 301
+/scan/result / 301
+/scan/result/ / 301
+/developers/api-docs /developers/ 301
+/developers/api-docs/ /developers/ 301

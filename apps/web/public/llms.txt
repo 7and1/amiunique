@@ -1,0 +1,26 @@
+# AmiUnique.io
+
+> Free, open-source browser fingerprint test. One click scans 80+ signals (canvas, WebGL, audio, fonts, screen, codecs, WebRTC exposure, network context) locally in your browser and shows how identifiable you are against a live corpus of real scans (~3,200 fingerprints as of July 2026).
+
+Key facts:
+
+- The scan runs only when the visitor clicks the button; nothing is collected before that. Signals are read locally and only derived hashes leave the browser.
+- Results use the Three-Lock model: Gold Lock = hardware-level hash (survives browser reinstalls), Silver Lock = software/browser hash, Bronze Lock = full session hash including network context (ASN, TLS, datacenter).
+- Privacy: raw IP addresses are never stored — not even hashed. WebRTC candidate IPs are stripped in both directions and never enter the database. Fingerprints are retained at most 90 days; deletion can be requested at /legal/opt-out.
+- There is no arbitrary IP lookup: the /ip page reports only on the visitor's own current connection.
+- Statistics pages publish aggregate distributions (browser, OS, device, country, screen) from the same corpus, updated continuously at the edge.
+- The code is open source (MIT); the service is free with no account.
+
+## Core pages
+
+- [Browser fingerprint test](https://amiunique.io/): run the 80+ signal scan and see uniqueness, Three-Lock hashes, and per-dimension breakdowns
+- [What does my IP reveal](https://amiunique.io/ip/): self-only network privacy report (operator, approximate location, reputation signals)
+- [Fingerprint statistics](https://amiunique.io/stats/): live corpus totals and distributions
+- [Developer API](https://amiunique.io/developers/): free JSON API for fingerprint analysis and aggregate stats
+- [Privacy policy](https://amiunique.io/legal/privacy/): retention, minimization, and deletion guarantees
+
+## Optional
+
+- [Daily fingerprint trends](https://amiunique.io/stats/fingerprints/): 30-day collection and uniqueness trends
+- [Global distribution](https://amiunique.io/stats/global-distribution/): browser, OS, device, country and screen breakdowns
+- [Opt-out / data deletion](https://amiunique.io/legal/opt-out/): GDPR deletion request form

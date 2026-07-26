@@ -2,12 +2,12 @@
 
 import { Globe, Monitor, Smartphone, BarChart2, Cpu, MapPin, Layers, Database } from 'lucide-react';
 import { DistributionPieChart, DistributionBarChart, DeviceDonutChart } from './charts';
-import { useGlobalDistributionData } from '@/hooks/use-stats';
+import { useGlobalDistributionData, type StatsSeed } from '@/hooks/use-stats';
 import { GlobalDistributionSkeleton } from '@/components/ui/skeleton';
 
-export function DistributionContent() {
+export function DistributionContent({ initial }: { initial?: StatsSeed }) {
   const { stats, browsers, os, devices, countries, screens, loading, error } =
-    useGlobalDistributionData();
+    useGlobalDistributionData(initial);
 
   if (loading) {
     return <GlobalDistributionSkeleton />;

@@ -350,7 +350,7 @@ analyze.post('/', async c => {
       graceTimer = setTimeout(() => resolve(IP_INTEL_PENDING), IP_INTEL_GRACE_MS);
     });
     const raced = await Promise.race([ipIntelPromise, grace]);
-    clearTimeout(graceTimer);
+    if (graceTimer !== undefined) clearTimeout(graceTimer);
 
     let ipIntel: IPIntelResult | null = null;
     let ipIntelStatus: IPIntelStatus;

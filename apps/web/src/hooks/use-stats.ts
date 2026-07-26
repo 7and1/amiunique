@@ -18,98 +18,33 @@ interface UseDataResult<T> {
   data: T | null;
   loading: boolean;
   error: Error | null;
-}
-
-/**
- * Hook for fetching global stats
- */
-export function useGlobalStats(): UseDataResult<GlobalStats> & { refresh: () => void } {
-  const [data, setData] = useState<GlobalStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchStats = useCallback(() => {
-    setLoading(true);
-    getGlobalStats()
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
-
-  return { data, loading, error, refresh: fetchStats };
-}
-
-/**
- * Hook for fetching browser distribution
- */
-export function useBrowserDistribution(
-  limit = 10
-): UseDataResult<DistributionResponse> & { refresh: () => void } {
-  const [data, setData] = useState<DistributionResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    getBrowserDistribution(limit)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [limit]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refresh: fetchData };
-}
-
-/**
- * Hook for fetching OS distribution
- */
-export function useOSDistribution(
-  limit = 10
-): UseDataResult<DistributionResponse> & { refresh: () => void } {
-  const [data, setData] = useState<DistributionResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    getOSDistribution(limit)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [limit]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refresh: fetchData };
-}
-
-/**
- * Hook for fetching device distribution
- */
-export function useDeviceDistribution(): UseDataResult<DistributionResponse> & {
   refresh: () => void;
-} {
-  const [data, setData] = useState<DistributionResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+}
+
+export interface DailyTrendsPayload {
+  trends: DailyTrendItem[];
+  period_days: number;
+}
+
+/**
+ * Shared fetch-on-mount state. When `initial` is provided (a build-time
+ * snapshot), it renders immediately — including at static export time — and
+ * the live fetch upgrades it in the background without flashing a skeleton.
+ */
+function useFetchedData<T>(fetcher: () => Promise<T>, initial?: T): UseDataResult<T> {
+  const [data, setData] = useState<T | null>(initial ?? null);
+  const [loading, setLoading] = useState(initial == null);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(() => {
-    setLoading(true);
-    getDeviceDistribution()
-      .then(setData)
+    fetcher()
+      .then(result => {
+        setData(result);
+        setError(null);
+      })
       .catch(setError)
       .finally(() => setLoading(false));
-  }, []);
+  }, [fetcher]);
 
   useEffect(() => {
     fetchData();
@@ -118,90 +53,92 @@ export function useDeviceDistribution(): UseDataResult<DistributionResponse> & {
   return { data, loading, error, refresh: fetchData };
 }
 
-/**
- * Hook for fetching country distribution
- */
+export function useGlobalStats(initial?: GlobalStats): UseDataResult<GlobalStats> {
+  return useFetchedData(
+    useCallback(() => getGlobalStats(), []),
+    initial
+  );
+}
+
+export function useBrowserDistribution(
+  limit = 10,
+  initial?: DistributionResponse
+): UseDataResult<DistributionResponse> {
+  return useFetchedData(
+    useCallback(() => getBrowserDistribution(limit), [limit]),
+    initial
+  );
+}
+
+export function useOSDistribution(
+  limit = 10,
+  initial?: DistributionResponse
+): UseDataResult<DistributionResponse> {
+  return useFetchedData(
+    useCallback(() => getOSDistribution(limit), [limit]),
+    initial
+  );
+}
+
+export function useDeviceDistribution(
+  initial?: DistributionResponse
+): UseDataResult<DistributionResponse> {
+  return useFetchedData(
+    useCallback(() => getDeviceDistribution(), []),
+    initial
+  );
+}
+
 export function useCountryDistribution(
-  limit = 20
-): UseDataResult<DistributionResponse> & { refresh: () => void } {
-  const [data, setData] = useState<DistributionResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    getCountryDistribution(limit)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [limit]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refresh: fetchData };
+  limit = 20,
+  initial?: DistributionResponse
+): UseDataResult<DistributionResponse> {
+  return useFetchedData(
+    useCallback(() => getCountryDistribution(limit), [limit]),
+    initial
+  );
 }
 
-/**
- * Hook for fetching screen distribution
- */
 export function useScreenDistribution(
-  limit = 15
-): UseDataResult<DistributionResponse> & { refresh: () => void } {
-  const [data, setData] = useState<DistributionResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    getScreenDistribution(limit)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [limit]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refresh: fetchData };
+  limit = 15,
+  initial?: DistributionResponse
+): UseDataResult<DistributionResponse> {
+  return useFetchedData(
+    useCallback(() => getScreenDistribution(limit), [limit]),
+    initial
+  );
 }
 
-/**
- * Hook for fetching daily trends
- */
 export function useDailyTrends(
-  days = 30
-): UseDataResult<{ trends: DailyTrendItem[]; period_days: number }> & { refresh: () => void } {
-  const [data, setData] = useState<{ trends: DailyTrendItem[]; period_days: number } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  days = 30,
+  initial?: DailyTrendsPayload
+): UseDataResult<DailyTrendsPayload> {
+  return useFetchedData(
+    useCallback(() => getDailyTrends(days), [days]),
+    initial
+  );
+}
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    getDailyTrends(days)
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [days]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refresh: fetchData };
+/** Build-time snapshot seeds accepted by the combined page hooks. */
+export interface StatsSeed {
+  stats?: GlobalStats;
+  browsers?: DistributionResponse;
+  os?: DistributionResponse;
+  devices?: DistributionResponse;
+  countries?: DistributionResponse;
+  screens?: DistributionResponse;
+  trends?: DailyTrendsPayload;
 }
 
 /**
  * Combined hook for stats page - fetches all data in parallel
  */
-export function useStatsPageData() {
-  const stats = useGlobalStats();
-  const browsers = useBrowserDistribution(5);
-  const os = useOSDistribution(5);
-  const devices = useDeviceDistribution();
-  const trends = useDailyTrends(7);
+export function useStatsPageData(seed?: StatsSeed) {
+  const stats = useGlobalStats(seed?.stats);
+  const browsers = useBrowserDistribution(5, seed?.browsers);
+  const os = useOSDistribution(5, seed?.os);
+  const devices = useDeviceDistribution(seed?.devices);
+  const trends = useDailyTrends(7, seed?.trends);
 
   const loading =
     stats.loading || browsers.loading || os.loading || devices.loading || trends.loading;
@@ -227,13 +164,13 @@ export function useStatsPageData() {
 /**
  * Combined hook for global distribution page
  */
-export function useGlobalDistributionData() {
-  const stats = useGlobalStats();
-  const browsers = useBrowserDistribution(8);
-  const os = useOSDistribution(8);
-  const countries = useCountryDistribution(10);
-  const screens = useScreenDistribution(10);
-  const devices = useDeviceDistribution();
+export function useGlobalDistributionData(seed?: StatsSeed) {
+  const stats = useGlobalStats(seed?.stats);
+  const browsers = useBrowserDistribution(8, seed?.browsers);
+  const os = useOSDistribution(8, seed?.os);
+  const countries = useCountryDistribution(10, seed?.countries);
+  const screens = useScreenDistribution(10, seed?.screens);
+  const devices = useDeviceDistribution(seed?.devices);
 
   const loading =
     stats.loading ||
@@ -272,9 +209,9 @@ export function useGlobalDistributionData() {
 /**
  * Combined hook for fingerprints page
  */
-export function useFingerprintsPageData() {
-  const stats = useGlobalStats();
-  const trends = useDailyTrends(30);
+export function useFingerprintsPageData(seed?: StatsSeed) {
+  const stats = useGlobalStats(seed?.stats);
+  const trends = useDailyTrends(30, seed?.trends);
 
   const loading = stats.loading || trends.loading;
 

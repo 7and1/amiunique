@@ -34,7 +34,7 @@ export default function NotFound() {
             Go home
           </Link>
           <Link
-            href="/scan"
+            href="/?scan=1#scan"
             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
           >
             <Search className="h-4 w-4" />

@@ -2,11 +2,11 @@
 
 import { CalendarDays, Activity, TrendingUp, Users } from 'lucide-react';
 import { TrendLineChart } from './trend-chart';
-import { useFingerprintsPageData } from '@/hooks/use-stats';
+import { useFingerprintsPageData, type StatsSeed } from '@/hooks/use-stats';
 import { FingerprintsPageSkeleton } from '@/components/ui/skeleton';
 
-export function FingerprintsContent() {
-  const { stats, trends: trendsPayload, loading, error } = useFingerprintsPageData();
+export function FingerprintsContent({ initial }: { initial?: StatsSeed }) {
+  const { stats, trends: trendsPayload, loading, error } = useFingerprintsPageData(initial);
 
   if (loading) {
     return <FingerprintsPageSkeleton />;

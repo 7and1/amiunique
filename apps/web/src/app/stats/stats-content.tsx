@@ -12,12 +12,13 @@ import {
   Zap,
   Shield,
 } from 'lucide-react';
-import { useStatsPageData } from '@/hooks/use-stats';
+import { useStatsPageData, type StatsSeed } from '@/hooks/use-stats';
 import { StatsPageSkeleton } from '@/components/ui/skeleton';
 import { DistributionPieChart, DistributionBarChart, TrendsAreaChart } from '@/components/charts';
 
-export function StatsContent() {
-  const { stats, browsers, os, devices, trends, loading, error, refresh } = useStatsPageData();
+export function StatsContent({ initial }: { initial?: StatsSeed }) {
+  const { stats, browsers, os, devices, trends, loading, error, refresh } =
+    useStatsPageData(initial);
 
   if (loading) {
     return <StatsPageSkeleton />;
@@ -368,7 +369,7 @@ export function StatsContent() {
             Want to see where you fit in these statistics?
           </p>
           <Link
-            href="/scan"
+            href="/?scan=1#scan"
             className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/25"
           >
             <Fingerprint className="h-6 w-6" />

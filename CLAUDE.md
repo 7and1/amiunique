@@ -84,26 +84,27 @@ Located in `apps/api/src/lib/three-lock.ts`:
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
-| `packages/core/src/collect.ts` | Main fingerprint collection orchestrator |
-| `packages/core/src/types.ts` | `FingerprintData` interface (80+ fields) |
-| `apps/api/src/lib/three-lock.ts` | Gold/Silver/Bronze hash calculation |
-| `apps/api/src/routes/analyze.ts` | Main analysis endpoint |
-| `apps/api/schema.sql` | D1 tables: visits, stats_cache, daily_stats, deletion_requests |
-| `apps/web/src/lib/scan-flow.tsx` | Frontend scan UI flow |
+| File                             | Purpose                                                        |
+| -------------------------------- | -------------------------------------------------------------- |
+| `packages/core/src/collect.ts`   | Main fingerprint collection orchestrator                       |
+| `packages/core/src/types.ts`     | `FingerprintData` interface (80+ fields)                       |
+| `apps/api/src/lib/three-lock.ts` | Gold/Silver/Bronze hash calculation                            |
+| `apps/api/src/routes/analyze.ts` | Main analysis endpoint                                         |
+| `apps/api/schema.sql`            | D1 tables: visits, stats_cache, daily_stats, deletion_requests |
+| `apps/web/src/lib/scan-flow.tsx` | Frontend scan UI flow                                          |
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/analyze` | Submit fingerprint, get Three-Lock analysis |
-| GET | `/api/stats` | Global statistics (total, unique counts) |
-| GET | `/api/health` | Health check |
+| Method | Endpoint       | Description                                 |
+| ------ | -------------- | ------------------------------------------- |
+| POST   | `/api/analyze` | Submit fingerprint, get Three-Lock analysis |
+| GET    | `/api/stats`   | Global statistics (total, unique counts)    |
+| GET    | `/api/health`  | Health check                                |
 
 ## Database Schema (D1)
 
 Main table: `visits` with indexes on all hash columns and meta fields.
+
 - Three-Lock hashes: `hardware_hash`, `software_hash`, `full_hash`
 - Quick aggregation: `meta_browser`, `meta_os`, `meta_country`, `meta_screen`, `meta_gpu_vendor`
 - Full data: `raw_json` (complete 80+ dimension payload)

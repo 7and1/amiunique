@@ -3,6 +3,8 @@
  * Helps search engines understand our content better
  */
 
+import { faqs } from '@/data/faqs';
+
 interface OrganizationJsonLdProps {
   name?: string;
   url?: string;
@@ -294,31 +296,51 @@ export function StatsDatasetJsonLd({
   );
 }
 
-// Default FAQ items for the homepage
-export const defaultFAQs = [
-  {
-    question: 'What is browser fingerprinting?',
-    answer:
-      'Browser fingerprinting is a technique that collects information about your browser and device to create a unique identifier. This includes your screen resolution, installed fonts, browser plugins, timezone, and many other attributes that, when combined, can uniquely identify you across websites.',
-  },
-  {
-    question: 'How unique is my browser fingerprint?',
-    answer:
-      'Most browser fingerprints are surprisingly unique. Our database shows that over 90% of browsers have a unique combination of attributes. Factors like installed fonts, screen resolution, and graphics card information contribute most to uniqueness.',
-  },
-  {
-    question: 'Can I prevent browser fingerprinting?',
-    answer:
-      'While difficult to completely prevent, you can reduce your fingerprint uniqueness by using privacy-focused browsers like Tor or Brave, disabling JavaScript, using standard screen resolutions, and minimizing installed fonts and plugins.',
-  },
-  {
-    question: 'Is browser fingerprinting legal?',
-    answer:
-      'Browser fingerprinting legality varies by jurisdiction. Under GDPR in Europe, it may require user consent. Many websites use it for fraud prevention, security, and analytics. Our tool helps you understand what information is exposed.',
-  },
-  {
-    question: 'What are the Three-Lock hashes?',
-    answer:
-      'AmiUnique.io uses a Three-Lock system: Gold Lock (hardware fingerprint surviving browser reinstalls), Silver Lock (software fingerprint tied to browser installation), and Bronze Lock (full session fingerprint including network factors).',
-  },
-];
+interface TechArticleJsonLdProps {
+  headline: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  dateModified: string;
+}
+
+export function TechArticleJsonLd({
+  headline,
+  description,
+  url,
+  datePublished,
+  dateModified,
+}: TechArticleJsonLdProps) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline,
+    description,
+    url,
+    datePublished,
+    dateModified,
+    author: {
+      '@type': 'Organization',
+      name: 'AmiUnique.io',
+      url: 'https://amiunique.io',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'AmiUnique.io',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://amiunique.io/logo.png',
+      },
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
+    />
+  );
+}
+
+// Default FAQ items for the homepage — sourced from src/data/faqs.ts
+export const defaultFAQs = faqs;

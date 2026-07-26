@@ -2,11 +2,13 @@
 
 import { cn } from '@/lib/utils';
 
-type RarityLevel = 'common' | 'uncommon' | 'rare' | 'very-rare' | 'unique';
+export type RarityLevel = 'common' | 'uncommon' | 'rare' | 'very-rare' | 'unique';
 
 interface RarityBadgeProps {
   level: RarityLevel;
   showLabel?: boolean;
+  /** Marks the level as a heuristic estimate (renders an "est." suffix) */
+  estimated?: boolean;
   size?: 'sm' | 'md';
   className?: string;
 }
@@ -53,6 +55,7 @@ const rarityConfig: Record<
 export function RarityBadge({
   level,
   showLabel = false,
+  estimated = false,
   size = 'sm',
   className,
 }: RarityBadgeProps) {
@@ -67,7 +70,7 @@ export function RarityBadge({
         size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm',
         className
       )}
-      title={config.description}
+      title={estimated ? `${config.description} (estimated)` : config.description}
     >
       <span
         className={cn(
@@ -81,6 +84,7 @@ export function RarityBadge({
         )}
       />
       {showLabel && config.label}
+      {estimated && <span className="font-normal opacity-70">est.</span>}
     </span>
   );
 }

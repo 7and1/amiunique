@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ApiStatusPill } from '@/components/ui/api-status-pill';
 import { useApiHealth } from '@/hooks/use-api-health';
+import { MobileNav } from './mobile-nav';
+import { ThemeToggle } from './theme-toggle';
 
 export function HeaderNav() {
   const {
@@ -32,7 +34,7 @@ export function HeaderNav() {
           aria-label="Primary"
         >
           {[
-            { label: 'Scan', href: '/scan', mobile: true },
+            { label: 'Scan', href: '/#scan', mobile: true },
             { label: 'My IP', href: '/ip', mobile: true },
             { label: 'Statistics', href: '/stats', mobile: false },
             { label: 'Developers', href: '/developers', mobile: false },
@@ -56,6 +58,8 @@ export function HeaderNav() {
             error={apiHealthError}
             onRetry={refreshHealth}
           />
+          <ThemeToggle className="hidden md:inline-flex" />
+          <MobileNav />
         </nav>
       </div>
     </header>

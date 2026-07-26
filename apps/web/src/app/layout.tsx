@@ -15,8 +15,9 @@ const fontMono = GeistMono;
 
 const themeInitScript = `(() => {
   try {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark', prefersDark);
+    const stored = localStorage.getItem('au_theme');
+    const dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', dark);
   } catch (_) {}
 })();`;
 

@@ -1,5 +1,6 @@
 import { StatsDatasetJsonLd, BreadcrumbJsonLd } from '@/components/seo/json-ld';
 import { StatsContent } from './stats-content';
+import { statsSnapshotSeed, snapshotGeneratedAt, snapshotGlobal } from '@/lib/stats-seed';
 
 export const metadata = {
   title: 'Browser Fingerprint Statistics — Live Open Dataset',
@@ -15,8 +16,8 @@ export default function StatsPage() {
         name="AmiUnique.io Browser Fingerprint Statistics"
         description="Aggregated browser fingerprint statistics (browsers, OS, devices, geography, screens) from the AmiUnique.io edge network."
         url="https://amiunique.io/stats"
-        lastUpdated={new Date().toISOString()}
-        total={2000000}
+        lastUpdated={snapshotGeneratedAt}
+        total={snapshotGlobal.total_fingerprints}
       />
       <BreadcrumbJsonLd
         items={[
@@ -24,7 +25,7 @@ export default function StatsPage() {
           { name: 'Statistics', url: 'https://amiunique.io/stats' },
         ]}
       />
-      <StatsContent />
+      <StatsContent initial={statsSnapshotSeed} />
     </>
   );
 }

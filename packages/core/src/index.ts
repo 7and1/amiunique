@@ -26,7 +26,11 @@ export type {
 } from './types.js';
 
 // Main collection functions
-export { collectFingerprint, collectFingerprintWithProgress } from './collect.js';
+export {
+  collectFingerprint,
+  collectFingerprintWithProgress,
+  FULL_COLLECTOR_STEPS,
+} from './collect.js';
 export type { CollectionProgressCallback } from './collect.js';
 
 // Utilities

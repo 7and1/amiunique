@@ -1,19 +1,22 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { Fingerprint, Sparkles, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useScanFlow } from '@/lib/scan-flow';
+
+interface ScanButtonProps {
+  /** Called after startScan() kicks off (e.g. to scroll to the inline #scan section) */
+  onActivate?: () => void;
+}
 
 /**
  * Premium Scan Button Component
  * Neo-SaaS design with scanner beam animation, double border effect,
  * and expanding state during scan
  */
-export function ScanButton() {
-  const router = useRouter();
+export function ScanButton({ onActivate }: ScanButtonProps) {
   const { phase, progress, startScan, error } = useScanFlow();
 
   const scanning = phase === 'collecting' || phase === 'analyzing';
@@ -39,7 +42,7 @@ export function ScanButton() {
   const handleClick = () => {
     if (!scanning) {
       startScan().catch(() => {});
-      router.push('/scan');
+      onActivate?.();
     }
   };
 

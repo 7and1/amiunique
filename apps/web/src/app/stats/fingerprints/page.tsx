@@ -1,5 +1,6 @@
 import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
 import { FingerprintsContent } from './fingerprints-content';
+import { statsSnapshotSeed } from '@/lib/stats-seed';
 
 export const metadata = {
   title: 'Daily Fingerprint Trends | Browser Tracking Statistics',
@@ -18,7 +19,7 @@ export default function FingerprintsStatsPage() {
   return (
     <>
       <BreadcrumbJsonLd items={breadcrumbs} />
-      <FingerprintsContent />
+      <FingerprintsContent initial={statsSnapshotSeed} />
     </>
   );
 }

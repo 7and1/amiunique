@@ -1,22 +1,14 @@
 import type { Metadata } from 'next';
-import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
 
+// The scan experience now lives inline on the homepage; this route is kept as
+// a redirect shell for old links. public/_redirects serves a real 301 on
+// Cloudflare Pages before this page is ever reached.
 export const metadata: Metadata = {
-  title: 'Scan Your Browser Fingerprint | AmiUnique.io',
-  description:
-    'Free browser fingerprint test - analyze 80+ dimensions to see how unique and trackable your browser is. Real-time scanning with Three-Lock hash system.',
+  title: 'Scan Your Browser Fingerprint',
+  robots: { index: false, follow: false },
+  alternates: { canonical: '/' },
 };
 
 export default function ScanLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <BreadcrumbJsonLd
-        items={[
-          { name: 'Home', url: 'https://amiunique.io' },
-          { name: 'Scan', url: 'https://amiunique.io/scan' },
-        ]}
-      />
-      {children}
-    </>
-  );
+  return children;
 }
