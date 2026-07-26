@@ -3,39 +3,43 @@
     "GitHub Actions Cloudflare deployment secrets",
     "Wrangler authentication for direct production operations"
   ],
-  "custom_domains": ["amiunique.io"],
-  "deploy_command": "OpenClaw + Wrangler direct deployment (GitHub Actions after account runner gate is cleared)",
+  "custom_domains": [
+    "amiunique.io"
+  ],
+  "deploy_command": "git push origin main -> GitHub Actions 'Deploy to Cloudflare' (test-gated); wrangler direct remains the manual fallback",
   "kind": "cloudflare",
   "known_warnings": [
     "Static Next.js bootstrap requires script-src 'unsafe-inline'",
-    "GitHub-hosted runners are blocked before job startup by an account billing/spending-limit gate",
-    "Full pnpm test has one unrelated deletion oversized-body assertion drift: expected 413, received 400"
+    "CI setup actions still emit Node 20 deprecation annotations (runtime already on Node 22)"
   ],
-  "last_known_good": "2026-07-20 production Worker and Pages with idempotent scan refresh handling, corrected hardware-observation labeling, healthy D1/IPBot bindings, and 12/12 Chrome acceptance",
+  "last_known_good": "2026-07-26 single-page scan experience + SEO/GEO release: consent-gated inline scan, stats snapshot prerender, llms.txt/_redirects/robots AI rules, D1 0003 pre-aggregation applied, 23/23 Chrome production acceptance",
   "latest_smoke_artifacts": [
-    "/Users/openclaw/artifacts/oc-amiunique-9d723bfb/prod-f7a9f0a4"
+    "/Users/openclaw/artifacts/oc-amiunique-9d723bfb/prod-20260726-spa"
   ],
   "openclaw_project": "oc-amiunique-9d723bfb",
   "openclaw_role": "local testing, preview, browser QA, and artifact collection",
   "operator_notes": [
-    "Worker version 2b722ee8-61b3-47ef-8b2f-68395787035c",
-    "Pages deployment f7a9f0a4-5618-4869-8c6e-0bac061df40a"
+    "Worker version 955ac6bd-5aea-4087-ba0e-cefa589fd23f",
+    "Pages deployment 40acd5d0 (https://40acd5d0.amiunique.pages.dev)",
+    "D1 time-travel bookmark pre-0003: 00009bf9-00000166-000050b4-535f637783d422b3e7ff1bacc75dc230"
   ],
   "pages_project": "amiunique",
   "pages_url": "https://amiunique.io",
   "platform": "cloudflare",
-  "production_urls": ["https://amiunique.io"],
+  "production_urls": [
+    "https://amiunique.io"
+  ],
   "project": "amiunique",
   "project_root": ".",
   "repository_visibility": "public",
   "schema_version": 1,
-  "source_repository": "https://github.com/7and1/amiunique/",
   "smoke_command": "PLAYWRIGHT_BASE_URL=https://amiunique.io PLAYWRIGHT_CHANNEL=chrome pnpm --filter @amiunique/web test:e2e",
+  "source_repository": "https://github.com/7and1/amiunique/",
   "state_files": {
     "human": "PROJECT_STATE.md",
     "ledger": "ops/deploy-ledger.jsonl",
     "machine": "ops/current-state.json"
   },
   "status_rule": "Confirm historical deployment from recorded state, public URLs, and smoke evidence before drawing conclusions from current authentication.",
-  "updated_at": "2026-07-20T05:50:57Z"
+  "updated_at": "2026-07-26T23:55:00Z"
 }

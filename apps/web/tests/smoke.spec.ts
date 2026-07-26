@@ -24,6 +24,8 @@ for (const route of routes) {
   test(`loads ${route} without 404`, async ({ page }) => {
     const res = await page.goto(`${base}${route}`);
     expect(res?.status()).toBeLessThan(400);
-    await expect(page.locator('body')).not.toContainText('404');
+    // Target the not-found heading specifically — a raw '404' body check
+    // false-positives on the header's API latency chip (e.g. "404 ms").
+    await expect(page.getByRole('heading', { name: 'Page not found' })).toHaveCount(0);
   });
 }

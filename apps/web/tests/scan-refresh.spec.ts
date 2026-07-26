@@ -32,7 +32,9 @@ test.describe('restored results never trigger a scan', () => {
     });
 
     await page.goto('/scan');
-    await page.waitForURL('**/?scan=1#scan');
+    // Production serves a real 301 to / via public/_redirects; the dev server
+    // falls through to the RedirectNotice shell which replaces to /?scan=1#scan.
+    await page.waitForURL(url => !url.pathname.startsWith('/scan'));
 
     // ?scan=1 only scrolls to the section — a restored result must stay restored.
     await expect(page.getByText('Restored from your last scan in this session.')).toBeVisible();
