@@ -170,7 +170,8 @@ export interface DistributionItem {
   resolution?: string;
   vendor?: string;
   count: number;
-  percentage: string;
+  /** Legacy live-count routes send strings; pre-aggregated reads send numbers. */
+  percentage: string | number;
 }
 
 /**
@@ -180,6 +181,8 @@ export interface DistributionResponse {
   success: boolean;
   data: {
     distribution: DistributionItem[];
+    /** Pre-aggregated responses report the tail beyond the top-N buckets. */
+    other?: { count: number; percentage: number } | null;
     total: number;
     updated_at: number;
   };

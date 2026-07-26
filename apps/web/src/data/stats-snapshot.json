@@ -1,237 +1,248 @@
 {
-  "generated_at": "2026-07-26T16:16:31.585Z",
+  "generated_at": "2026-07-26T23:40:04.317Z",
   "global": {
-    "total_fingerprints": 3226,
-    "unique_sessions": 2655,
-    "unique_devices": 2417,
-    "updated_at": 1785082559963
+    "total_fingerprints": 3242,
+    "unique_sessions": 2667,
+    "unique_devices": 2427,
+    "updated_at": 1785109201218
   },
   "browsers": {
     "distribution": [
       {
         "name": "Firefox",
         "count": 1679,
-        "percentage": "52.0"
+        "percentage": 51.8
       },
       {
         "name": "Chrome",
         "count": 1093,
-        "percentage": "33.9"
+        "percentage": 33.7
       },
       {
         "name": "Safari",
-        "count": 294,
-        "percentage": "9.1"
+        "count": 310,
+        "percentage": 9.6
       },
       {
         "name": "Edge",
         "count": 76,
-        "percentage": "2.4"
+        "percentage": 2.3
       },
       {
         "name": "Brave",
         "count": 29,
-        "percentage": "0.9"
+        "percentage": 0.9
       },
       {
         "name": "Unknown",
         "count": 25,
-        "percentage": "0.8"
+        "percentage": 0.8
       },
       {
         "name": "Opera",
         "count": 22,
-        "percentage": "0.7"
+        "percentage": 0.7
       },
       {
         "name": "IE",
         "count": 4,
-        "percentage": "0.1"
+        "percentage": 0.1
       },
       {
         "name": "Samsung",
         "count": 4,
-        "percentage": "0.1"
+        "percentage": 0.1
       }
     ],
-    "total": 3226,
-    "updated_at": 1785082590202
+    "other": null,
+    "total": 3242,
+    "updated_at": 1785109201010
   },
   "os": {
     "distribution": [
       {
         "name": "Windows",
         "count": 1210,
-        "percentage": "37.5"
+        "percentage": 37.3
       },
       {
         "name": "Android",
         "count": 766,
-        "percentage": "23.7"
+        "percentage": 23.6
       },
       {
         "name": "Linux",
         "count": 715,
-        "percentage": "22.2"
+        "percentage": 22.1
       },
       {
         "name": "macOS",
-        "count": 509,
-        "percentage": "15.8"
+        "count": 525,
+        "percentage": 16.2
       },
       {
         "name": "Unknown",
         "count": 25,
-        "percentage": "0.8"
+        "percentage": 0.8
       },
       {
         "name": "ChromeOS",
         "count": 1,
-        "percentage": "0.0"
+        "percentage": 0
       }
     ],
-    "total": 3226,
-    "updated_at": 1785082591596
+    "other": null,
+    "total": 3242,
+    "updated_at": 1785109201010
   },
   "devices": {
     "distribution": [
       {
         "name": "desktop",
         "count": 1600,
-        "percentage": "49.6"
+        "percentage": 49.4
       },
       {
         "name": "mobile",
-        "count": 1036,
-        "percentage": "32.1"
+        "count": 1050,
+        "percentage": 32.4
       },
       {
         "name": "tablet",
-        "count": 590,
-        "percentage": "18.3"
+        "count": 592,
+        "percentage": 18.3
       }
     ],
-    "total": 3226,
-    "updated_at": 1785082589667
+    "other": null,
+    "total": 3242,
+    "updated_at": 1785109201216
   },
   "countries": {
     "distribution": [
       {
         "code": "US",
         "count": 593,
-        "percentage": "25.1"
+        "percentage": 18.3
       },
       {
         "code": "T1",
         "count": 511,
-        "percentage": "21.7"
+        "percentage": 15.8
       },
       {
         "code": "DE",
-        "count": 304,
-        "percentage": "12.9"
+        "count": 317,
+        "percentage": 9.8
       },
       {
         "code": "AU",
         "count": 231,
-        "percentage": "9.8"
+        "percentage": 7.1
       },
       {
         "code": "SE",
         "count": 180,
-        "percentage": "7.6"
+        "percentage": 5.6
       },
       {
         "code": "FR",
         "count": 176,
-        "percentage": "7.5"
+        "percentage": 5.4
       },
       {
         "code": "NL",
         "count": 133,
-        "percentage": "5.6"
+        "percentage": 4.1
       },
       {
         "code": "BR",
         "count": 80,
-        "percentage": "3.4"
+        "percentage": 2.5
       },
       {
         "code": "CH",
         "count": 78,
-        "percentage": "3.3"
+        "percentage": 2.4
       },
       {
         "code": "GB",
         "count": 73,
-        "percentage": "3.1"
+        "percentage": 2.3
       }
     ],
-    "total": 2359,
-    "updated_at": 1785082589663
+    "other": {
+      "count": 870,
+      "percentage": 26.8
+    },
+    "total": 3242,
+    "updated_at": 1785109201218
   },
   "screens": {
     "distribution": [
       {
         "resolution": "1920x1080",
         "count": 345,
-        "percentage": "24.5"
+        "percentage": 10.7
       },
       {
         "resolution": "1800x900",
         "count": 214,
-        "percentage": "15.2"
+        "percentage": 6.6
       },
       {
         "resolution": "1400x900",
         "count": 198,
-        "percentage": "14.1"
+        "percentage": 6.1
       },
       {
         "resolution": "1536x864",
         "count": 166,
-        "percentage": "11.8"
+        "percentage": 5.1
       },
       {
         "resolution": "2560x1440",
         "count": 117,
-        "percentage": "8.3"
+        "percentage": 3.6
       },
       {
         "resolution": "414x896",
-        "count": 86,
-        "percentage": "6.1"
+        "count": 94,
+        "percentage": 2.9
       },
       {
         "resolution": "384x832",
         "count": 82,
-        "percentage": "5.8"
+        "percentage": 2.5
       },
       {
         "resolution": "360x800",
         "count": 70,
-        "percentage": "5.0"
+        "percentage": 2.2
       },
       {
         "resolution": "1600x900",
         "count": 66,
-        "percentage": "4.7"
+        "percentage": 2
       },
       {
         "resolution": "1400x700",
         "count": 62,
-        "percentage": "4.4"
+        "percentage": 1.9
       }
     ],
-    "total": 1406,
-    "updated_at": 1785082590033
+    "other": {
+      "count": 1824,
+      "percentage": 56.3
+    },
+    "total": 3238,
+    "updated_at": 1785109201218
   },
   "daily": {
     "trends": [
       {
         "date": "2026-06-26",
-        "total_visits": 4,
-        "unique_devices": 4
+        "total_visits": 45,
+        "unique_devices": 18
       },
       {
         "date": "2026-06-27",
@@ -380,11 +391,11 @@
       },
       {
         "date": "2026-07-26",
-        "total_visits": 12,
-        "unique_devices": 11
+        "total_visits": 28,
+        "unique_devices": 22
       }
     ],
     "period_days": 30,
-    "updated_at": 1785082589719
+    "updated_at": 1785109202871
   }
 }

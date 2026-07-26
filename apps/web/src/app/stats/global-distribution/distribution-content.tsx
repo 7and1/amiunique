@@ -27,7 +27,7 @@ export function DistributionContent({ initial }: { initial?: StatsSeed }) {
     (list || []).map(item => ({
       name: item[labelKey] || 'Unknown',
       value: item.count || 0,
-      percentage: parseFloat(item.percentage) || 0,
+      percentage: parseFloat(String(item.percentage)) || 0,
     }));
 
   const browserData = toChartData(browsers?.data?.distribution ?? [], 'name');
