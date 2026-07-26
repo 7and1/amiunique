@@ -13,19 +13,21 @@ Current production-state summary. Keep this file short and factual.
   after the account runner billing gate is cleared
 - Smoke command: `PLAYWRIGHT_BASE_URL=https://amiunique.io PLAYWRIGHT_CHANNEL=chrome pnpm --filter @amiunique/web test:e2e`
 - OpenClaw project: `oc-amiunique-9d723bfb`
-- Last known good: production Worker, Pages, D1 privacy migration, IPBot, security headers, and 12/12
-  Chrome acceptance passed on 2026-07-18
-- Worker version: `8b98237b-047d-414f-ba90-3d342e6478e0`
-- Pages deployment: `73ef358e-2c0c-4a0e-9572-b2a06946789d`
+- Last known good: production Worker and Pages with idempotent scan refresh handling, corrected
+  hardware-observation labeling, healthy D1/IPBot bindings, and 12/12 Chrome acceptance passed on
+  2026-07-20
+- Worker version: `2b722ee8-61b3-47ef-8b2f-68395787035c`
+- Pages deployment: `f7a9f0a4-5618-4869-8c6e-0bac061df40a`
 - Latest smoke artifacts:
-  - `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111020`
-  - `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/20260718-111933`
+  - `/Users/openclaw/artifacts/oc-amiunique-9d723bfb/prod-f7a9f0a4`
 
 ## Known Warnings
 
 - The static Next.js bootstrap currently requires `script-src 'unsafe-inline'`; all other script sources are restricted to self.
 - GitHub-hosted runners are blocked before startup by an account billing/spending-limit gate; direct
   Cloudflare deployment is working.
+- Full `pnpm test` currently has one unrelated deletion oversized-body assertion drift (expected
+  413, received 400); the analyze and web suites pass.
 - Production deployment and post-deploy browser acceptance are recorded in `ops/deploy-ledger.jsonl`.
 
 ## Status Rule
