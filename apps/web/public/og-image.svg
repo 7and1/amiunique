@@ -64,7 +64,7 @@
 
     <!-- Subtitle -->
     <text x="200" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#94a3b8">
-      Browser Fingerprinting Detection Platform
+      Free Browser Fingerprint Test
     </text>
 
     <!-- Three Lock badges -->
@@ -106,15 +106,15 @@
       <rect x="0" y="0" width="1000" height="80" rx="16" fill="#1e293b" stroke="#334155" stroke-width="1"/>
 
       <g transform="translate(40, 28)">
-        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Total Fingerprints</text>
-        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">2M+</text>
+        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Raw IP Stored</text>
+        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">Never</text>
       </g>
 
       <line x1="250" y1="15" x2="250" y2="65" stroke="#334155" stroke-width="1"/>
 
       <g transform="translate(290, 28)">
-        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Global Latency</text>
-        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">&lt;100ms</text>
+        <text font-family="system-ui, sans-serif" font-size="14" fill="#64748b" text-transform="uppercase" letter-spacing="2">Data Retention</text>
+        <text y="30" font-family="system-ui, sans-serif" font-size="24" fill="white" font-weight="700">90 Days</text>
       </g>
 
       <line x1="500" y1="15" x2="500" y2="65" stroke="#334155" stroke-width="1"/>

@@ -5,6 +5,7 @@ export const metadata = {
   title: 'Browser Distribution Analytics | Global Fingerprint Demographics',
   description:
     'See browser, operating system, device type, and geographic distribution of browser fingerprints. Chrome vs Firefox vs Safari market share from fingerprint data.',
+  alternates: { canonical: '/stats/global-distribution' },
 };
 
 const breadcrumbs = [

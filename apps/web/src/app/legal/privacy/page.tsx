@@ -4,6 +4,7 @@ export const metadata = {
   title: 'Privacy Policy | Browser Fingerprint Data Protection',
   description:
     'AmiUnique.io privacy policy explains how we collect, minimize, and protect browser fingerprint data with 90-day retention and deletion rights.',
+  alternates: { canonical: '/legal/privacy' },
 };
 
 export default function PrivacyPage() {

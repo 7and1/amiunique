@@ -34,10 +34,11 @@ interface ScanFlowContextValue {
   durationMs: number | null;
 }
 
+// total: 0 = indeterminate; the first collector callback supplies the real total (23 full / 9 lite)
 const defaultProgress: ScanProgress = {
   dimension: 'Initializing collectors…',
   index: 0,
-  total: 32,
+  total: 0,
 };
 
 const SCAN_RESULT_KEY = 'scanResult';

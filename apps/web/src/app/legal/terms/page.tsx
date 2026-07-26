@@ -3,6 +3,7 @@ import { FileText, AlertCircle, Scale } from 'lucide-react';
 export const metadata = {
   title: 'Terms of Service',
   description: 'AmiUnique.io terms of service - Rules and guidelines for using our service.',
+  alternates: { canonical: '/legal/terms' },
 };
 
 export default function TermsPage() {

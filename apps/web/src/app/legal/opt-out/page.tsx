@@ -5,6 +5,7 @@ export const metadata = {
   title: 'Delete My Browser Fingerprint Data | GDPR Data Removal',
   description:
     'Request deletion of your browser fingerprint data from AmiUnique.io. Exercise your GDPR and CCPA rights to remove your digital identity information.',
+  alternates: { canonical: '/legal/opt-out' },
 };
 
 export default function OptOutPage() {

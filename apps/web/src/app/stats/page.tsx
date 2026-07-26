@@ -2,9 +2,10 @@ import { StatsDatasetJsonLd, BreadcrumbJsonLd } from '@/components/seo/json-ld';
 import { StatsContent } from './stats-content';
 
 export const metadata = {
-  title: 'Browser Fingerprint Statistics | Global Distribution Analytics',
+  title: 'Browser Fingerprint Statistics — Live Open Dataset',
   description:
-    'Real-time browser fingerprint statistics from millions of analyzed visitors. See global browser, OS, device, and geographic distribution data.',
+    'Live browser fingerprint statistics from real scans: browser, OS, device, screen and country distributions from the AmiUnique.io open dataset.',
+  alternates: { canonical: '/stats' },
 };
 
 export default function StatsPage() {

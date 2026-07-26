@@ -76,7 +76,7 @@ export function OptOutForm() {
         <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/60 px-4 py-1 text-sm text-muted-foreground dark:bg-white/10">
           <ShieldCheck className="h-4 w-4" /> Privacy request
         </div>
-        <h1 className="text-4xl font-semibold tracking-tight">Opt-out & deletion</h1>
+        <h2 className="text-4xl font-semibold tracking-tight">Opt-out & deletion</h2>
         <p className="text-muted-foreground">
           Provide the hash from your scan result and we will purge it from the database. API
           submission keeps a receipt and skips the email dance.

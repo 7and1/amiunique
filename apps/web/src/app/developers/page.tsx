@@ -17,9 +17,10 @@ import {
 import { HowToJsonLd } from '@/components/seo/json-ld';
 
 export const metadata = {
-  title: 'Developer Documentation | AmiUnique.io',
+  title: 'Browser Fingerprinting API — Free Developer Docs',
   description:
-    'Complete API reference and integration guide for AmiUnique.io browser fingerprinting platform. 80+ dimensions, edge-first architecture, sub-100ms global latency.',
+    'Complete API reference and integration guide for the AmiUnique.io browser fingerprinting API. 80+ dimensions, Three-Lock hashes, free to use.',
+  alternates: { canonical: '/developers' },
 };
 
 const integrationSteps = [

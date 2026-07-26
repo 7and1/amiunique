@@ -7,14 +7,8 @@ import { ClientShell } from '@/components/layout/client-shell';
 import { Toaster } from '@/components/ui/toast';
 import { HeaderNav } from '@/components/layout/header-nav';
 import Link from 'next/link';
-import {
-  OrganizationJsonLd,
-  WebApplicationJsonLd,
-  FAQJsonLd,
-  defaultFAQs,
-} from '@/components/seo/json-ld';
+import { OrganizationJsonLd } from '@/components/seo/json-ld';
 import { SkipToContent } from '@/components/a11y';
-import { FingerprintAssistant } from '@/components/ai';
 
 const fontSans = GeistSans;
 const fontMono = GeistMono;
@@ -91,9 +85,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  alternates: {
-    canonical: 'https://amiunique.io',
-  },
 };
 
 export const viewport: Viewport = {
@@ -120,8 +111,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://amiunique-api.7and1.workers.dev" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} suppressHydrationWarning />
         <OrganizationJsonLd />
-        <WebApplicationJsonLd />
-        <FAQJsonLd questions={defaultFAQs} />
       </head>
       <body className="bg-background text-foreground antialiased">
         <SkipToContent />
@@ -184,7 +173,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </footer>
           </div>
         </ClientShell>
-        <FingerprintAssistant />
         <Toaster />
       </body>
     </html>

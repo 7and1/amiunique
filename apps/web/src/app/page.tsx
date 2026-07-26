@@ -1,9 +1,10 @@
 import { HomeContent } from './home-content';
 
 export const metadata = {
-  title: 'Am I Unique? Free Browser Fingerprint Test | 80+ Dimensions',
+  title: { absolute: 'Am I Unique? Free Browser Fingerprint Test — AmiUnique.io' },
   description:
-    'Test how unique your browser fingerprint is with our free tool. Analyze 80+ dimensions including canvas, WebGL, audio fingerprinting. See your tracking risk in seconds.',
+    'Run a free browser fingerprint test across 80+ signals — canvas, WebGL, audio, fonts, network. See how identifiable you are and which layer exposes you.',
+  alternates: { canonical: '/' },
 };
 
 export default function HomePage() {
