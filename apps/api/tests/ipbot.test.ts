@@ -164,6 +164,17 @@ describe('lookupIP', () => {
     expect(kv.putOptions.get(await cacheKeyFor('1.2.3.4'))?.expirationTtl).toBe(60 * 60);
   });
 
+  it('does not retry by default', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ error: 'rate limited' }, 429));
+    vi.stubGlobal('fetch', fetchMock);
+    const { env } = createEnv();
+
+    const result = await lookupIP('8.8.8.8', env);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result).toBeNull();
+  });
+
   it('retries after 429 and succeeds', async () => {
     const fetchMock = vi
       .fn()
@@ -232,6 +243,64 @@ describe('lookupIP', () => {
 
     expect(result!.cached).toBe(false);
     expect(result!.data.ip).toBeUndefined();
+  });
+
+  it('skips the provider once the daily budget is spent but still serves cache', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(SAMPLE_DATA));
+    vi.stubGlobal('fetch', fetchMock);
+    const { env, kv } = createEnv();
+    const today = new Date().toISOString().slice(0, 10);
+    kv.store.set(`ipbot:budget:${today}`, JSON.stringify(2000));
+
+    // Cold lookup is refused rather than charged to the provider
+    expect(await lookupIP('8.8.8.8', env)).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    // A cached address is unaffected by the budget
+    kv.store.set(
+      await cacheKeyFor('1.2.3.4'),
+      JSON.stringify({ data: SAMPLE_DATA, fetched_at: 456 })
+    );
+    const cached = await lookupIP('1.2.3.4', env);
+
+    expect(cached!.cached).toBe(true);
+    expect(cached!.data.score?.risk_score).toBe(12);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('counts cold fetches against the daily budget without logging the address', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(SAMPLE_DATA)));
+    const { env, kv } = createEnv();
+    const budget = `ipbot:budget:${new Date().toISOString().slice(0, 10)}`;
+
+    await lookupIP('8.8.8.8', env);
+    expect(kv.store.get(budget)).toBe('1');
+    expect(kv.putOptions.get(budget)?.expirationTtl).toBe(2 * 24 * 60 * 60);
+
+    await lookupIP('9.9.9.9', env);
+    expect(kv.store.get(budget)).toBe('2');
+    expect(budget).not.toContain('8.8.8.8');
+  });
+
+  it('fetches anyway when the budget counter cannot be read', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(SAMPLE_DATA));
+    vi.stubGlobal('fetch', fetchMock);
+    const kv = {
+      get: vi.fn().mockImplementation((key: string) => {
+        if (key.startsWith('ipbot:budget:')) return Promise.reject(new Error('KV unavailable'));
+        return Promise.resolve(null);
+      }),
+      put: vi.fn().mockResolvedValue(undefined),
+    } as unknown as KVNamespace;
+
+    const result = await lookupIP('8.8.8.8', {
+      IPBOT_API_ORIGIN: 'https://ipbot.test',
+      IPBOT_API_KEY: 'test-key',
+      RATE_LIMIT_KV: kv,
+    } as Env);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result!.cached).toBe(false);
   });
 
   it('does not call the provider when a required cache cannot be read', async () => {

@@ -7,7 +7,7 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { Env, CFRequest, CFProperties } from '../types/env.js';
-import { uuidv4 } from '../lib/hash.js';
+import { deriveIdempotentVisitId, uuidv4 } from '../lib/hash.js';
 import {
   calculateThreeLocks,
   type ClientFingerprint,
@@ -16,8 +16,9 @@ import {
 import { parseUserAgent, determineDeviceType } from '../lib/ua-parser.js';
 import { FingerprintSchema } from '../lib/validation.js';
 import { analyzeLimiter } from '../middleware/rate-limit.js';
+import { requireClientIP } from '../middleware/require-client-ip.js';
 import { getClientIP, isValidIP } from '../lib/ip-utils.js';
-import { lookupIP, summarizeIPIntel } from '../lib/ipbot.js';
+import { lookupIP, summarizeIPIntel, type IPIntelResult } from '../lib/ipbot.js';
 import { buildConsistencyReport } from '../lib/cross-check.js';
 import { redactFingerprintForPersistence, redactFingerprintForResponse } from '../lib/privacy.js';
 
@@ -29,6 +30,17 @@ const analyze = new Hono<{
 // Maximum payload size (50KB)
 const MAX_PAYLOAD_SIZE = 50 * 1024;
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * How long the response waits on IP intelligence before answering without it.
+ * The lookup keeps its full 5s budget in the background: on a timeout the
+ * client gets ip_intel_status 'pending' and polls GET /api/ip-intel, which by
+ * then reads the warmed KV entry.
+ */
+const IP_INTEL_GRACE_MS = 1500;
+const IP_INTEL_PENDING = Symbol('ip-intel-pending');
+
+export type IPIntelStatus = 'available' | 'unavailable' | 'pending';
 
 analyze.use(
   '*',
@@ -46,6 +58,7 @@ analyze.use(
       ),
   })
 );
+analyze.use('*', requireClientIP);
 analyze.use('*', analyzeLimiter);
 
 /**
@@ -165,8 +178,10 @@ analyze.post('/', async c => {
     );
     const screenRes = `${clientData.hw_screen_width || 0}x${clientData.hw_screen_height || 0}`;
 
-    // 8. Reuse a client submission ID across network retries
-    const visitId = idempotencyKey || uuidv4();
+    // 8. Reuse a client submission ID across network retries. The key selects
+    // the row deterministically but never becomes the primary key itself, so a
+    // caller cannot choose where its data lands.
+    const visitId = idempotencyKey ? await deriveIdempotentVisitId(idempotencyKey) : uuidv4();
     const now = Date.now();
 
     // 9. Insert first so every aggregate query observes one deterministic snapshot.
@@ -258,7 +273,9 @@ analyze.post('/', async c => {
       observationTimestamp = existingVisit.created_at || now;
     }
 
-    // 11. Read all post-insert counts from one database snapshot.
+    // 11. Read all post-insert counts from one database snapshot. The corpus
+    // size comes from the cron-maintained cache so the hot path never runs a
+    // full table COUNT(*); the live count remains the fallback.
     const observationCounts = await db
       .prepare(
         `SELECT
@@ -269,7 +286,10 @@ analyze.post('/', async c => {
             FROM visits
             WHERE hardware_hash = ?
           ) AS browser_variant_count,
-          (SELECT COUNT(*) FROM visits) AS total_count`
+          COALESCE(
+            (SELECT total_fingerprints FROM stats_cache WHERE id = 'global'),
+            (SELECT COUNT(*) FROM visits)
+          ) AS total_count`
       )
       .bind(hashes.bronze, hashes.gold, hashes.gold)
       .first<{
@@ -283,7 +303,14 @@ analyze.post('/', async c => {
     const exactMatchCount = observationCounts?.exact_count || 0;
     const hardwareMatchCount = observationCounts?.hardware_count || 0;
     const browserVariantCount = observationCounts?.browser_variant_count || 0;
-    const totalFingerprints = observationCounts?.total_count || 0;
+    // The cached corpus size lags by up to 5 minutes, so clamp it above the
+    // exact counts this request just observed. A subset can never exceed the
+    // whole, and "1 of 0" must never reach the client.
+    const totalFingerprints = Math.max(
+      observationCounts?.total_count || 0,
+      exactMatchCount,
+      hardwareMatchCount
+    );
     const isUnique = exactMatchCount === 1;
     const observationMatchRate = totalFingerprints === 0 ? 1 : exactMatchCount / totalFingerprints;
     const comparableObservations = Math.max(totalFingerprints - 1, 0);
@@ -315,13 +342,36 @@ analyze.post('/', async c => {
       message = `${exactMatchCount} identical fingerprints found - you blend in with the crowd.`;
     }
 
-    // 14. Await IP intelligence (already in flight since step 4a)
-    const ipIntel = await ipIntelPromise;
+    // 14. Give IP intelligence (in flight since step 4a) a short grace window.
+    // Past it the response ships without the summary and the lookup finishes in
+    // the background so the client's follow-up read hits a warm cache.
+    let graceTimer: ReturnType<typeof setTimeout> | undefined;
+    const grace = new Promise<typeof IP_INTEL_PENDING>(resolve => {
+      graceTimer = setTimeout(() => resolve(IP_INTEL_PENDING), IP_INTEL_GRACE_MS);
+    });
+    const raced = await Promise.race([ipIntelPromise, grace]);
+    clearTimeout(graceTimer);
+
+    let ipIntel: IPIntelResult | null = null;
+    let ipIntelStatus: IPIntelStatus;
+    if (raced === IP_INTEL_PENDING) {
+      ipIntelStatus = 'pending';
+      try {
+        c.executionCtx.waitUntil(ipIntelPromise);
+      } catch {
+        // No executionCtx outside the Worker runtime; the lookup already
+        // swallows its own errors, so there is nothing to keep alive.
+      }
+    } else {
+      ipIntel = raced;
+      ipIntelStatus = ipIntel ? 'available' : 'unavailable';
+    }
+
     const ipIntelSummary = summarizeIPIntel(ipIntel);
     const consistency = buildConsistencyReport(clientData, networkData, ipIntelSummary, clientIP);
     if (c.env.IPBOT_API_ORIGIN && c.env.IPBOT_API_KEY) {
       console.log(
-        `[analysis] ip_intel=${ipIntelSummary ? 'available' : 'unavailable'} contradictions=${consistency.contradiction_count} risk_signals=${consistency.risk_signal_count}`
+        `[analysis] ip_intel=${ipIntelStatus} contradictions=${consistency.contradiction_count} risk_signals=${consistency.risk_signal_count}`
       );
     }
 
@@ -352,6 +402,7 @@ analyze.post('/', async c => {
       },
       details: responseReport,
       ip_intel: ipIntelSummary,
+      ip_intel_status: ipIntelStatus,
       consistency,
       lies: {
         os_mismatch: clientData.lie_os_mismatch || false,

@@ -9,6 +9,7 @@ import type { Env } from '../types/env.js';
 import { DeletionRequestSchema } from '../lib/validation.js';
 import { uuidv4 } from '../lib/hash.js';
 import { deletionLimiter } from '../middleware/rate-limit.js';
+import { requireClientIP } from '../middleware/require-client-ip.js';
 
 const deletion = new Hono<{ Bindings: Env }>();
 
@@ -29,6 +30,7 @@ deletion.use(
       ),
   })
 );
+deletion.use('*', requireClientIP);
 deletion.use('*', deletionLimiter);
 
 /**

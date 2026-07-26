@@ -25,6 +25,20 @@ health.get('/', async c => {
     const dbLatency = Date.now() - dbStart;
     const dbOk = dbCheck?.ok === 1;
 
+    // Surface the GDPR deletion backlog: a queue that stops draining is a
+    // compliance problem the cron logs alone would not make visible.
+    const queue = await c.env.DB.prepare(
+      `SELECT
+         COUNT(*) as pending,
+         COALESCE(MAX(retry_count), 0) as max_retry_count,
+         MIN(created_at) as oldest_created_at
+       FROM deletion_requests
+       WHERE status = 'pending'`
+    ).first<{ pending: number; max_retry_count: number; oldest_created_at: number | null }>();
+
+    const pending = queue?.pending ?? 0;
+    const oldestCreatedAt = queue?.oldest_created_at ?? null;
+
     return c.json({
       status: dbOk ? 'healthy' : 'degraded',
       timestamp: Date.now(),
@@ -33,6 +47,12 @@ health.get('/', async c => {
       checks: {
         database: dbOk ? 'ok' : 'error',
         db_latency_ms: dbLatency,
+        deletion_queue: {
+          pending,
+          max_retry_count: queue?.max_retry_count ?? 0,
+          oldest_pending_age_ms:
+            pending > 0 && oldestCreatedAt !== null ? Date.now() - oldestCreatedAt : 0,
+        },
       },
     });
   } catch {

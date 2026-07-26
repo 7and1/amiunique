@@ -41,21 +41,11 @@ export interface IPIntelNetwork {
   [key: string]: unknown;
 }
 
-export interface IPIntelLocation {
-  country?: string;
-  country_code?: string;
-  region?: string;
-  city?: string;
-  timezone?: string;
-  [key: string]: unknown;
-}
-
 export interface IPIntelData {
   ip?: string;
   score?: IPIntelScore;
   classification?: IPIntelClassification;
   network?: IPIntelNetwork;
-  location?: IPIntelLocation;
 }
 
 export interface IPIntelResult {
@@ -93,14 +83,18 @@ export interface IPIntelSummary {
 }
 
 const CACHE_PREFIX = 'ipintel:';
+const BUDGET_PREFIX = 'ipbot:budget:';
 const DEFAULT_TTL_SECONDS = 24 * 60 * 60; // 24h for normal results
 const HIGH_RISK_TTL_SECONDS = 60 * 60; // 1h for high-risk results (re-check sooner)
 const HIGH_RISK_SCORE = 70;
 // Observed live TTFB fluctuates 1.2-3s (VPS backend); 5s keeps the fail-open
 // path rare while the lookup runs concurrently with D1 operations
 const DEFAULT_TIMEOUT_MS = 5000;
-const DEFAULT_RETRY_DELAYS_MS = [400, 800];
 const MAX_RESPONSE_BYTES = 64 * 1024;
+// Cold provider fetches allowed per UTC day. Cache hits are never charged, so
+// this caps provider spend without degrading repeat visitors.
+const DAILY_PROVIDER_BUDGET = 2000;
+const BUDGET_TTL_SECONDS = 2 * 24 * 60 * 60;
 // Top-level field projection keeps responses and cache entries small
 const FIELDS = 'score,classification,network';
 const ASN_NUMBER_SCHEMA = z.preprocess(value => {
@@ -179,6 +173,44 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/** Budget key holds no address material, only the UTC date */
+function budgetKey(): string {
+  return `${BUDGET_PREFIX}${new Date().toISOString().slice(0, 10)}`;
+}
+
+/**
+ * Best-effort daily spend guard around cold provider fetches.
+ * Returns false when today's budget is already spent. KV problems never block
+ * a lookup: the guard is an spend cap, not a correctness control.
+ */
+async function claimProviderBudget(kv: KVNamespace | undefined): Promise<boolean> {
+  if (!kv) return true;
+
+  const key = budgetKey();
+  let used = 0;
+  try {
+    const raw = await kv.get(key);
+    used = raw ? parseInt(raw, 10) : 0;
+    if (!Number.isFinite(used) || used < 0) used = 0;
+  } catch (err) {
+    console.warn('[ipbot] budget read failed:', err);
+    return true;
+  }
+
+  if (used >= DAILY_PROVIDER_BUDGET) {
+    console.warn(`[ipbot] daily provider budget exhausted (${used}/${DAILY_PROVIDER_BUDGET})`);
+    return false;
+  }
+
+  try {
+    await kv.put(key, String(used + 1), { expirationTtl: BUDGET_TTL_SECONDS });
+  } catch (err) {
+    console.warn('[ipbot] budget write failed:', err);
+  }
+
+  return true;
+}
+
 function projectCacheData(data: IPIntelData): IPIntelData {
   return {
     score: data.score
@@ -215,7 +247,9 @@ function projectCacheData(data: IPIntelData): IPIntelData {
 /**
  * Look up IP intelligence for an IP address.
  * Results are cached in KV: 24h by default, 1h for high-risk IPs.
- * Retries lightly on 429 (honoring Retry-After up to 2s), fails open on errors.
+ * Cold fetches are charged against a daily provider budget.
+ * No retries by default; callers opting into retryDelaysMs get 429 backoff
+ * (honoring Retry-After up to 2s). Fails open on every error.
  */
 export async function lookupIP(
   ip: string,
@@ -248,9 +282,12 @@ export async function lookupIP(
     return null;
   }
 
-  // 2. Fetch with light 429 backoff
+  // 2. Cold fetch: the single provider-spend choke point
+  if (!(await claimProviderBudget(kv))) return null;
+
+  // 3. Fetch, retrying only when the caller opts in via retryDelaysMs
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const retryDelays = options.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS;
+  const retryDelays = options.retryDelaysMs ?? [];
   const url = `${origin}/v1/ip/${encodeURIComponent(ip)}?fields=${FIELDS}`;
 
   let response: Response | null = null;
@@ -315,7 +352,7 @@ export async function lookupIP(
   }
   const data = validated.data;
 
-  // 3. Cache write (shorter TTL for high-risk IPs)
+  // 4. Cache write (shorter TTL for high-risk IPs)
   const fetchedAt = Date.now();
   if (kv) {
     const ttl = isHighRisk(data) ? HIGH_RISK_TTL_SECONDS : DEFAULT_TTL_SECONDS;

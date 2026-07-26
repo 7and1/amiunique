@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import app from '../src/index.js';
 import type { ConsistencyReport } from '../src/lib/cross-check.js';
-import { sha256 } from '../src/lib/hash.js';
+import { sha256, deriveIdempotentVisitId } from '../src/lib/hash.js';
 
 // Mock KV namespace for rate limiting
 const createMockKV = () => ({
@@ -274,10 +274,11 @@ describe('POST /api/analyze', () => {
       expect(typeof json.meta.processing_time_ms).toBe('number');
     });
 
-    it('should use the idempotency key as the visit ID and count after inserting', async () => {
+    it('should derive a server-side visit ID from the idempotency key and count after inserting', async () => {
       const db = createMockD1();
       const env = createEnv(db);
       const submissionId = '4d9c3c28-18f3-4e3e-92ba-7984e554f45e';
+      const derivedId = await deriveIdempotentVisitId(submissionId);
       const req = createRequest(validFingerprint, { 'Idempotency-Key': submissionId });
 
       const res = await app.fetch(req, env);
@@ -287,9 +288,15 @@ describe('POST /api/analyze', () => {
       const firstCountEvent = db.events.findIndex(event => event.startsWith('first:'));
 
       expect(res.status).toBe(200);
-      expect(json.meta.id).toBe(submissionId);
+      // The caller-chosen key must NOT become the primary key directly…
+      expect(json.meta.id).not.toBe(submissionId);
+      // …but the derived id is deterministic and UUID-shaped.
+      expect(json.meta.id).toBe(derivedId);
+      expect(json.meta.id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      );
       expect(insert?.sql).toContain('INSERT OR IGNORE INTO visits');
-      expect(insert?.values[0]).toBe(submissionId);
+      expect(insert?.values[0]).toBe(derivedId);
       expect(insertEvent).toBeGreaterThanOrEqual(0);
       expect(firstCountEvent).toBeGreaterThan(insertEvent);
     });
@@ -305,13 +312,14 @@ describe('POST /api/analyze', () => {
       });
       const env = createEnv(db);
       const submissionId = '46c54715-dfad-43d9-8e35-c2a47bc89428';
+      const derivedId = await deriveIdempotentVisitId(submissionId);
       const req = createRequest(validFingerprint, { 'Idempotency-Key': submissionId });
 
       const res = await app.fetch(req, env);
       const json = await readAnalyzeResponse(res);
 
       expect(res.status).toBe(200);
-      expect(json.meta.id).toBe(submissionId);
+      expect(json.meta.id).toBe(derivedId);
       expect(json.result.exact_match_count).toBe(1);
       expect(json.result.total_fingerprints).toBe(1);
     });
@@ -754,6 +762,72 @@ describe('POST /api/analyze', () => {
       expect(json.ip_intel).toBeNull();
       expect(timeoutSpy).toHaveBeenCalledWith(5000);
       expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should answer with ip_intel_status pending when the lookup outlives the 1500ms grace', async () => {
+      // Provider never answers within the grace window; the response must not wait for it.
+      const fetchMock = vi
+        .fn()
+        .mockImplementation(() => new Promise(resolve => setTimeout(resolve, 30_000)));
+      vi.stubGlobal('fetch', fetchMock);
+      const db = createMockD1();
+      const env = {
+        ...createEnv(db),
+        IPBOT_API_ORIGIN: 'https://ipbot.test',
+        IPBOT_API_KEY: 'test-key',
+      };
+      const waitUntil = vi.fn();
+      const req = createRequest(validFingerprint, { 'CF-Connecting-IP': '8.8.8.8' });
+
+      const started = Date.now();
+      const res = await app.fetch(req, env, {
+        waitUntil,
+        passThroughOnException: () => {},
+      } as unknown as ExecutionContext);
+      const elapsed = Date.now() - started;
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(200);
+      expect(json.ip_intel).toBeNull();
+      expect((json as { ip_intel_status?: string }).ip_intel_status).toBe('pending');
+      // Responded on the grace timer, not the 5000ms lookup timeout
+      expect(elapsed).toBeLessThan(4000);
+      // The in-flight lookup is parked on waitUntil to finish warming the KV cache
+      expect(waitUntil).toHaveBeenCalled();
+    }, 10_000);
+
+    it('should reject production requests without CF-Connecting-IP', async () => {
+      const db = createMockD1();
+      const env = {
+        ...createEnv(db),
+        ENVIRONMENT: 'production',
+      };
+      const req = createRequest(validFingerprint);
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(403);
+      expect(json.success).toBe(false);
+      expect(json.code).toBe('CLIENT_IP_UNAVAILABLE');
+    });
+
+    it('should clamp total_fingerprints to at least the match counts', async () => {
+      // Cached total (2) lags behind the live exact/hardware counts (5)
+      const db = createMockD1({
+        uniqueCount: 5,
+        hardwareCount: 5,
+        softwareVariantCount: 1,
+        totalCount: 2,
+      });
+      const env = createEnv(db);
+      const req = createRequest(validFingerprint);
+
+      const res = await app.fetch(req, env);
+      const json = await readAnalyzeResponse(res);
+
+      expect(res.status).toBe(200);
+      expect(json.result.total_fingerprints).toBe(5);
     });
 
     it('should handle database errors gracefully', async () => {

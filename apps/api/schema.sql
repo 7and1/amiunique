@@ -68,11 +68,15 @@ CREATE TABLE IF NOT EXISTS stats_cache (
     total_fingerprints INTEGER DEFAULT 0,
     unique_full_hash INTEGER DEFAULT 0,
     unique_hardware_hash INTEGER DEFAULT 0,
-    browser_distribution TEXT,              -- JSON: {"Chrome": 45.2, "Firefox": 12.1}
-    os_distribution TEXT,                   -- JSON: {"Windows": 65.3, "macOS": 20.1}
-    country_distribution TEXT,              -- JSON: {"US": 30.5, "DE": 8.2}
-    screen_distribution TEXT,               -- JSON: {"1920x1080": 35.2}
-    device_distribution TEXT                -- JSON: {"desktop": 72.1, "mobile": 25.3}
+    -- Pre-aggregated distributions, JSON StoredDistribution (see src/lib/stats-aggregation.ts):
+    -- {"v":1,"total":3200,"buckets":[{"name":"Chrome","count":1450}],"computed_at":1700000000000}
+    -- `total` is the true corpus denominator, not the sum of the stored buckets.
+    browser_distribution TEXT,
+    os_distribution TEXT,
+    country_distribution TEXT,
+    screen_distribution TEXT,
+    device_distribution TEXT,
+    gpu_distribution TEXT
 );
 
 -- ============================================

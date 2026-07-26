@@ -48,7 +48,18 @@ app.use('*', async (c, next) => {
 // Global middleware
 app.use('*', timing());
 app.use('*', logger(printRequestLog));
-app.use('*', secureHeaders());
+// A JSON-only API loads no subresources and is never framed, so the strictest
+// CSP is also the correct one. HSTS is preload-eligible.
+app.use(
+  '*',
+  secureHeaders({
+    strictTransportSecurity: 'max-age=31536000; includeSubDomains; preload',
+    contentSecurityPolicy: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  })
+);
 
 // CORS configuration
 app.use(

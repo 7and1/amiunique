@@ -40,7 +40,9 @@ describe.skipIf(!configured)('lookupIP (live)', () => {
     const first = await lookupIP('8.8.8.8', env);
     expect(first).not.toBeNull();
     expect(first!.cached).toBe(false);
-    expect(first!.data.ip).toBe('8.8.8.8');
+    // The response schema strips `ip`: the address never round-trips through
+    // our own payloads or cache entries.
+    expect(first!.data.score).toBeDefined();
     expect(typeof first!.data.score?.risk_score).toBe('number');
     console.log(
       `[live] 8.8.8.8 risk_score=${first!.data.score?.risk_score} band=${first!.data.score?.band} asn=${first!.data.network?.asn}`

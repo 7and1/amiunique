@@ -2,10 +2,23 @@
  * Scheduled Worker Handler
  * Processes background jobs on cron schedules:
  * - Deletion request processing (GDPR compliance)
- * - Stats cache refresh
+ * - Stats cache refresh (scalar counters + distributions + daily rollup)
+ * - Retention and privacy minimization, gated by a KV progress marker
  */
 
 import type { Env } from './types/env.js';
+import {
+  computeAllDistributions,
+  upsertDailyStats,
+  type DistributionKey,
+  type StoredDistribution,
+} from './lib/stats-aggregation.js';
+
+/** KV marker recording the last successful retention pass */
+const MAINTENANCE_MARKER_KEY = 'maint:last_success';
+const MAINTENANCE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+/** Requests that keep failing this many times need a human to look */
+const STUCK_RETRY_THRESHOLD = 3;
 
 /**
  * Process pending deletion requests
@@ -21,13 +34,13 @@ async function processDeletionRequests(
     // Get pending deletion requests (limit to 50 per run to avoid timeout)
     const pending = await db
       .prepare(
-        `SELECT id, hash_type, hash_value
+        `SELECT id, hash_type, hash_value, retry_count
          FROM deletion_requests
          WHERE status = 'pending'
          ORDER BY created_at ASC
          LIMIT 50`
       )
-      .all<{ id: string; hash_type: string; hash_value: string }>();
+      .all<{ id: string; hash_type: string; hash_value: string; retry_count: number | null }>();
 
     if (!pending.results || pending.results.length === 0) {
       return { processed: 0, errors: 0 };
@@ -115,6 +128,13 @@ async function processDeletionRequests(
             )
             .bind('Deletion processing failed; retry scheduled', Date.now(), request.id)
             .run();
+
+          const retryCount = (request.retry_count ?? 0) + 1;
+          if (retryCount >= STUCK_RETRY_THRESHOLD) {
+            console.warn(
+              `[deletion-queue] stuck request id=${request.id} retry_count=${retryCount}`
+            );
+          }
         } catch (updateErr) {
           console.error(`Failed to update retry count for ${request.id}:`, updateErr);
         }
@@ -129,13 +149,14 @@ async function processDeletionRequests(
 }
 
 /**
- * Refresh the global stats cache
- * Pre-aggregates expensive COUNT queries for fast API responses
+ * Refresh the global stats cache.
+ *
+ * Pre-aggregates the expensive COUNT queries and all six distributions so the
+ * read path never scans visits, then rolls up daily_stats.
  */
 async function refreshStatsCache(db: D1Database): Promise<boolean> {
   try {
-    // Calculate aggregated stats
-    const [total, uniqueFull, uniqueHardware] = await Promise.all([
+    const [total, uniqueFull, uniqueHardware, distributions] = await Promise.all([
       db.prepare('SELECT COUNT(*) as count FROM visits').first<{ count: number }>(),
       db
         .prepare('SELECT COUNT(DISTINCT full_hash) as count FROM visits')
@@ -143,26 +164,59 @@ async function refreshStatsCache(db: D1Database): Promise<boolean> {
       db
         .prepare('SELECT COUNT(DISTINCT hardware_hash) as count FROM visits')
         .first<{ count: number }>(),
+      computeAllDistributions(db),
     ]);
 
     const now = Date.now();
+    const json = (key: DistributionKey): string =>
+      JSON.stringify(distributions[key] satisfies StoredDistribution);
 
-    // Update or insert cache entry
+    // One row holds the whole snapshot, so a single INSERT OR REPLACE keeps the
+    // scalar counters and every distribution consistent with each other.
     await db
       .prepare(
         `INSERT OR REPLACE INTO stats_cache
-         (id, total_fingerprints, unique_full_hash, unique_hardware_hash, updated_at)
-         VALUES ('global', ?, ?, ?, ?)`
+         (id, total_fingerprints, unique_full_hash, unique_hardware_hash, updated_at,
+          browser_distribution, os_distribution, country_distribution,
+          screen_distribution, device_distribution, gpu_distribution)
+         VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .bind(total?.count || 0, uniqueFull?.count || 0, uniqueHardware?.count || 0, now)
+      .bind(
+        total?.count || 0,
+        uniqueFull?.count || 0,
+        uniqueHardware?.count || 0,
+        now,
+        json('browser'),
+        json('os'),
+        json('country'),
+        json('screen'),
+        json('device'),
+        json('gpu')
+      )
       .run();
 
     console.log(
-      `Stats cache refreshed: ${total?.count} total, ${uniqueFull?.count} unique sessions`
+      `Stats cache refreshed: ${total?.count} total, ${uniqueFull?.count} unique sessions, ${DISTRIBUTION_COUNT} distributions`
     );
     return true;
   } catch (err) {
     console.error('Failed to refresh stats cache:', err);
+    return false;
+  }
+}
+
+const DISTRIBUTION_COUNT = 6;
+
+/**
+ * Roll up today's and yesterday's daily_stats rows.
+ * Yesterday is recomputed so late-arriving observations are not lost.
+ */
+async function refreshDailyStats(db: D1Database): Promise<boolean> {
+  try {
+    await upsertDailyStats(db, 2);
+    return true;
+  } catch (err) {
+    console.error('Failed to upsert daily stats:', err);
     return false;
   }
 }
@@ -173,7 +227,7 @@ async function refreshStatsCache(db: D1Database): Promise<boolean> {
  */
 async function enforcePrivacyMinimization(
   db: D1Database
-): Promise<{ visits: number; receipts: number }> {
+): Promise<{ ok: boolean; visits: number; receipts: number }> {
   try {
     const [visitResult, receiptResult] = await Promise.all([
       db
@@ -217,12 +271,13 @@ async function enforcePrivacyMinimization(
     ]);
 
     return {
+      ok: true,
       visits: visitResult.meta?.changes ?? 0,
       receipts: receiptResult.meta?.changes ?? 0,
     };
   } catch (err) {
     console.error('Failed to enforce privacy minimization:', err);
-    return { visits: 0, receipts: 0 };
+    return { ok: false, visits: 0, receipts: 0 };
   }
 }
 
@@ -234,7 +289,7 @@ async function cleanupOldData(
   db: D1Database,
   retentionDays = 90,
   deletionReceiptDays = 30
-): Promise<{ visits: number; receipts: number }> {
+): Promise<{ ok: boolean; visits: number; receipts: number }> {
   try {
     const cutoffTime = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
     const receiptCutoff = Date.now() - deletionReceiptDays * 24 * 60 * 60 * 1000;
@@ -259,10 +314,55 @@ async function cleanupOldData(
       );
     }
 
-    return { visits, receipts };
+    return { ok: true, visits, receipts };
   } catch (err) {
     console.error('Failed to cleanup old data:', err);
-    return { visits: 0, receipts: 0 };
+    return { ok: false, visits: 0, receipts: 0 };
+  }
+}
+
+/**
+ * Run retention + minimization at most once a day, tracked by a KV marker
+ * instead of a fixed weekly cron slot: a missed tick no longer delays the pass
+ * by a whole week.
+ *
+ * The work is idempotent, so a KV read failure runs it rather than skipping it.
+ * The marker is only written after a clean pass, which means a failure is
+ * retried on the next hourly tick.
+ */
+async function runDueMaintenance(db: D1Database, kv: KVNamespace | undefined): Promise<void> {
+  let due = true;
+
+  if (kv) {
+    try {
+      const marker = await kv.get(MAINTENANCE_MARKER_KEY);
+      const lastSuccess = marker ? parseInt(marker, 10) : NaN;
+      if (Number.isFinite(lastSuccess) && Date.now() - lastSuccess < MAINTENANCE_INTERVAL_MS) {
+        due = false;
+      }
+    } catch (err) {
+      console.warn('[maintenance] marker read failed; running anyway:', err);
+    }
+  }
+
+  if (!due) return;
+
+  const minimized = await enforcePrivacyMinimization(db);
+  const cleaned = await cleanupOldData(db, 90, 30);
+  console.log(
+    `Privacy maintenance: ${minimized.visits} visits and ${minimized.receipts} receipts minimized; ${cleaned.visits} visits and ${cleaned.receipts} receipts removed`
+  );
+
+  if (!minimized.ok || !cleaned.ok) {
+    console.error('[maintenance] pass incomplete; marker not advanced');
+    return;
+  }
+
+  if (!kv) return;
+  try {
+    await kv.put(MAINTENANCE_MARKER_KEY, String(Date.now()));
+  } catch (err) {
+    console.warn('[maintenance] marker write failed:', err);
   }
 }
 
@@ -288,17 +388,14 @@ export async function handleScheduled(
       `Deletion processing complete: ${result.processed} processed, ${result.errors} errors`
     );
 
-    // Also run weekly cleanup on Sunday at midnight
-    if (triggerTime.getUTCDay() === 0 && triggerTime.getUTCHours() === 0) {
-      const minimized = await enforcePrivacyMinimization(db);
-      const cleaned = await cleanupOldData(db, 90, 30);
-      console.log(
-        `Weekly privacy maintenance: ${minimized.visits} visits and ${minimized.receipts} receipts minimized; ${cleaned.visits} visits and ${cleaned.receipts} receipts removed`
-      );
-    }
+    // Retention runs whenever a day has passed since the last clean pass
+    await runDueMaintenance(db, env.RATE_LIMIT_KV);
   } else if (cronPattern === '*/5 * * * *') {
-    // Every 5 minutes: Refresh stats cache
+    // Every 5 minutes: Refresh stats cache and the daily rollup
     const success = await refreshStatsCache(db);
-    console.log(`Stats cache refresh: ${success ? 'success' : 'failed'}`);
+    const dailySuccess = await refreshDailyStats(db);
+    console.log(
+      `Stats cache refresh: ${success ? 'success' : 'failed'}; daily rollup: ${dailySuccess ? 'success' : 'failed'}`
+    );
   }
 }
