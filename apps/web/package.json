@@ -22,7 +22,7 @@
     "geist": "1.5.1",
     "lucide-react": "^0.468.0",
     "next": "16.2.11",
-    "react": "19.2.1",
+    "react": "19.2.8",
     "react-dom": "19.2.1",
     "recharts": "3.5.1",
     "sonner": "2.0.7",
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^9.0.0",
