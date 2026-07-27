@@ -1,0 +1,34 @@
+{
+  "period": "2026-07-26..2026-07-27",
+  "scope": "single-page UX + SEO/GEO release, dependency-security clearance, Dependabot queue drain",
+  "metrics": {
+    "commits": 19,
+    "files_changed": 107,
+    "insertions": 7117,
+    "deletions": 6913,
+    "test_files_touched": 11,
+    "test_file_ratio": "10%",
+    "commit_types": { "chore": 7, "docs": 4, "fix": 3, "ci": 3, "feat": 2 }
+  },
+  "releases": [
+    { "name": "single-page + SEO/GEO", "commits": "7247825..b15e394", "worker": "955ac6bd", "pages": "40acd5d0", "acceptance": "23/23 prod Chrome" },
+    { "name": "dependency security", "commits": "b696e11..aa07e34", "worker": "c967240a", "pages": "18c04532", "acceptance": "23/23 prod Chrome; audit 16→0" },
+    { "name": "dependabot drain", "commits": "c1ae478..f3e14b8", "acceptance": "22/23 batch + 1 standalone pass (latency flake)" }
+  ],
+  "wins": [
+    "Session-crash recovery from transcript jsonl (plan + last tool calls) resumed a dead session with zero rework",
+    "First fully green GitHub Actions pipeline (billing gate cleared) and first green Security Check in repo history",
+    "Dependabot queue 15→0 with every risky major (wrangler-action v4, gitleaks v3, brace-expansion cross-major force) verified live"
+  ],
+  "improvements": [
+    "Producer-before-consumer deploy ordering bit the build-time snapshot (type break on first CI run) — type consumers against both shapes before pushing pairs",
+    "Three pre-commit scanner structural false-positives (action SHAs, D1 bookmarks, lockfile integrity hashes) each cost a cycle — lockfiles now exempted wholesale",
+    "Prod acceptance raced the CD pipeline twice — acceptance must wait for deploy completion; slow suite time is the tell"
+  ],
+  "next_focus": [
+    "WebRTC-vs-connection-IP coherence check (PM-study P0 still unbuilt)",
+    "Dimension rarity endpoint once corpus reaches 20-50k (currently 3.2k)",
+    "Consider enabling repo auto-merge to smooth future Dependabot cycles (protection requires 1 review)"
+  ],
+  "lessons_appended": 6
+}
