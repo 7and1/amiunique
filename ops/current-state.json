@@ -42,5 +42,5 @@
     "machine": "ops/current-state.json"
   },
   "status_rule": "Confirm historical deployment from recorded state, public URLs, and smoke evidence before drawing conclusions from current authentication.",
-  "updated_at": "2026-07-27T14:45:00Z"
+  "updated_at": "2026-07-27T15:20:00Z"
 }
