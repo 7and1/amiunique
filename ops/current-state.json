@@ -22,7 +22,7 @@
     "Worker version c967240a-6a0b-4373-ad50-e0e577441743",
     "Pages deployment 18c04532 (https://18c04532.amiunique.pages.dev)",
     "D1 time-travel bookmark pre-0003: 00009bf9-00000166-000050b4-535f637783d422b3e7ff1bacc75dc230",
-    "Security Check workflow green since 2026-07-27 (audit clean: next 16.2.11, postcss 8.5.18, brace-expansion 5.0.8, js-yaml 4.3.0, sharp 0.35.0)"
+    "Security Check green; Dependabot queue cleared 2026-07-27 (actions majors merged, npm batch c1ae478, TS7 declined via ignore directive)"
   ],
   "pages_project": "amiunique",
   "pages_url": "https://amiunique.io",
@@ -42,5 +42,5 @@
     "machine": "ops/current-state.json"
   },
   "status_rule": "Confirm historical deployment from recorded state, public URLs, and smoke evidence before drawing conclusions from current authentication.",
-  "updated_at": "2026-07-27T12:49:40Z"
+  "updated_at": "2026-07-27T14:45:00Z"
 }
