@@ -16,7 +16,7 @@
   "dependencies": {
     "@amiunique/core": "workspace:*",
     "@radix-ui/react-dialog": "1.1.15",
-    "@radix-ui/react-tooltip": "1.2.8",
+    "@radix-ui/react-tooltip": "1.2.16",
     "clsx": "^2.1.0",
     "framer-motion": "12.42.2",
     "geist": "1.7.2",
