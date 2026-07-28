@@ -11,3 +11,6 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+
+# Patch/minor PRs are auto-approved and auto-merged by
+# .github/workflows/dependabot-auto-merge.yml; majors need manual review.
