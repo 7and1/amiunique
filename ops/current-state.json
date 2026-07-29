@@ -23,7 +23,7 @@
     "Pages deployment 18c04532 (https://18c04532.amiunique.pages.dev)",
     "D1 time-travel bookmark pre-0003: 00009bf9-00000166-000050b4-535f637783d422b3e7ff1bacc75dc230",
     "Security Check green; Dependabot queue cleared 2026-07-27 (actions majors merged, npm batch c1ae478, TS7 declined via ignore directive)",
-    "Dependabot auto-merge live since 2026-07-27: patch/minor PRs auto-approve + auto-merge via dependabot-auto-merge.yml; majors stay manual. Branch protection: 1 review + 3 required Security Check jobs."
+    "Dependabot auto-merge live (patch/minor): approve+merge via AUTOMERGE_PAT so merges trigger CD (GITHUB_TOKEN merges skip on:push — bit us 2026-07-28); majors manual. Protection: 1 review + 3 required Security Check jobs."
   ],
   "pages_project": "amiunique",
   "pages_url": "https://amiunique.io",
@@ -43,5 +43,5 @@
     "machine": "ops/current-state.json"
   },
   "status_rule": "Confirm historical deployment from recorded state, public URLs, and smoke evidence before drawing conclusions from current authentication.",
-  "updated_at": "2026-07-27T15:20:00Z"
+  "updated_at": "2026-07-29T08:55:00Z"
 }
