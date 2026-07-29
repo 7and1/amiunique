@@ -25,12 +25,15 @@ jobs:
 
       - name: Approve and enable auto-merge (patch/minor only)
         if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        # AUTOMERGE_PAT (repo owner), not GITHUB_TOKEN: merges pushed by the
+        # default token do NOT trigger on:push workflows, so auto-merged PRs
+        # would silently skip the Deploy pipeline (bit us on 2026-07-28).
         run: |
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTOMERGE_PAT }}
 
       - name: Leave majors for manual review
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
