@@ -185,6 +185,11 @@ export function VerdictCard({ result, onScanAgain, onOpenHistory }: VerdictCardP
         <MetricTile value={totalCount.toLocaleString()} label="Total analyzed" />
       </div>
 
+      <p className="mt-2 text-xs text-muted-foreground">
+        Counts are observations, not devices — they include your own earlier scans, so re-scanning
+        raises the match numbers and lowers the rarity estimate.
+      </p>
+
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         <NetworkChip intel={result.ip_intel} status={result.ip_intel_status} />
       </div>
@@ -193,7 +198,8 @@ export function VerdictCard({ result, onScanAgain, onOpenHistory }: VerdictCardP
         <div className="mt-4 rounded-lg bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
           <AlertTriangle className="mr-2 inline h-4 w-4" aria-hidden="true" />
           This hardware fingerprint has been observed with multiple software fingerprints (
-          {analysis.browser_variant_count} browser variants).
+          {analysis.browser_variant_count} browser variants). Scanning from another browser on
+          this device — or a browser update — also registers as a new variant.
         </div>
       )}
 
