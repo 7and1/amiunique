@@ -18,7 +18,7 @@
     "tail": "wrangler tail"
   },
   "dependencies": {
-    "hono": "4.12.32",
+    "hono": "4.12.34",
     "zod": "4.1.13"
   },
   "devDependencies": {
